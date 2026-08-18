@@ -1,6 +1,28 @@
-# Turing Machine Simulator
+# 图灵机模拟器
 
-A visual, programmable single-tape Turing machine simulator.
+一个可视化、可编程的单纸带确定性图灵机模拟器。
 
-The project is currently in the planning phase. Requirements and design documents will be reviewed before implementation begins.
+## 首版能力
 
+- 可向左右扩展的稀疏纸带和读写头跟随
+- 单步、连续运行、暂停、重置、调速和步数限制
+- 纯文本与结构化规则表双编辑方式
+- 一进制加一、二进制加一、回文判断、忙碌海狸示例
+- 本地自动保存、项目 JSON 导入导出、执行日志 CSV 导出
+- 接受、拒绝、普通停机和缺少规则的明确反馈
+
+## 本地运行
+
+```bash
+npm install
+npm run dev
+```
+
+构建与测试：
+
+```bash
+npm test
+npm run build
+```
+
+需求和设计文档位于 `doc/`。
