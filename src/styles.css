@@ -16,7 +16,8 @@ button { cursor: pointer; }
 .brand p { margin: 2px 0 0; color: #aebad0; font-size: 12px; }
 .toolbar { display: flex; align-items: center; gap: 8px; }
 .toolbar button, .toolbar select { border: 1px solid #455267; background: #243149; color: white; padding: 8px 12px; border-radius: 8px; }
-.workspace { padding: 20px 28px 32px; display: grid; gap: 16px; }
+.workspace { padding: 20px 28px 32px; display: grid; gap: 16px; min-width: 0; }
+.workspace > *, .lower > *, .panel { min-width: 0; }
 .panel { background: white; border: 1px solid #dce3ec; border-radius: 14px; box-shadow: 0 4px 20px #1f36500b; }
 .machine-panel { padding: 18px 20px 20px; }
 .status-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 18px; }
@@ -37,6 +38,8 @@ button { cursor: pointer; }
 .btn.primary { background: #168963; color: white; border-color: #168963; }
 .btn.danger { color: #a73535; }
 .speed { margin-left: 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #667285; }
+.view-mode { display: flex; align-items: center; gap: 7px; margin-left: 8px; font-size: 13px; white-space: nowrap; }
+.view-mode select { padding: 7px 9px; }
 .lower { display: grid; grid-template-columns: minmax(650px, 1.65fr) minmax(340px, .85fr); gap: 16px; }
 .editor { padding: 18px; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -66,6 +69,47 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .log-row span:first-child { color: #8b96a7; }
 .empty { color: #929dab; text-align: center; padding: 30px 4px; font-size: 13px; }
 .hint { margin-top: 10px; color: #7b8798; font-size: 12px; }
+.puzzle-panel { padding: 20px; overflow: hidden; }
+.puzzle-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
+.puzzle-heading h2 { margin: 0 0 5px; font-size: 18px; }
+.puzzle-heading p { margin: 0; color: #697588; font-size: 13px; }
+.puzzle-actions { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
+.puzzle-actions label { width: 86px; }
+.puzzle-actions input { width: 100%; }
+.cycle-info { margin: 16px 0 10px; padding: 10px 12px; border-radius: 9px; background: #eefaf6; color: #16664d; font-size: 13px; }
+.puzzle-scroll { overflow: auto; padding: 14px; border: 1px solid #dfe5ed; border-radius: 12px; background: #f6f8fb; }
+.puzzle-board { display: grid; gap: 5px; width: max-content; margin: auto; }
+.tile-slot { width: 62px; height: 62px; padding: 0; border: 1px dashed #b8c2d0; border-radius: 7px; background: white; color: #a0a9b5; display: grid; place-items: center; }
+.tile-slot.solution-slot { border-style: solid; box-shadow: 0 0 0 2px #44b78b33; }
+.wang-tile { width: 56px; height: 56px; position: relative; display: grid; place-items: center; border-radius: 5px; background: #fff; box-shadow: inset 0 0 0 1px #d4dce6; overflow: hidden; cursor: grab; }
+.wang-tile span { position: relative; z-index: 2; min-width: 28px; padding: 3px 4px; border-radius: 5px; background: #ffffffdf; color: #243149; font-size: 13px; font-weight: 700; text-align: center; }
+.wang-tile span b { display: block; color: #0b7754; font-size: 9px; line-height: 1; }
+.wang-tile.head-tile { background: #e9fff7; }
+.edge { position: absolute; }
+.edge-top,.edge-bottom { left: 8px; right: 8px; height: 7px; }
+.edge-left,.edge-right { top: 8px; bottom: 8px; width: 7px; }
+.edge-top { top: 0; }.edge-bottom { bottom: 0; }.edge-left { left: 0; }.edge-right { right: 0; }
+.tray-title { margin: 16px 0 8px; font-size: 14px; }
+.tray-title small { color: #7b8798; font-weight: 400; }
+.tile-tray { min-height: 78px; max-height: 235px; overflow: auto; display: flex; flex-wrap: wrap; gap: 7px; padding: 10px; border: 1px solid #e1e7ee; border-radius: 10px; }
+.tray-tile { border: 2px solid transparent; border-radius: 8px; padding: 2px; background: transparent; }
+.tray-tile.selected { border-color: #168963; background: #e9fff7; }
+.puzzle-message { min-height: 20px; margin-top: 9px; color: #536174; font-size: 13px; }
+.route-panel { padding: 20px; }
+.route-heading { display: flex; justify-content: space-between; align-items: end; gap: 18px; }
+.route-heading h2 { margin: 0 0 5px; font-size: 18px; }
+.route-heading p { margin: 0; color: #697588; font-size: 13px; }
+.route-actions { display: flex; align-items: end; gap: 8px; flex-wrap: wrap; }
+.route-actions label { width: 112px; }
+.route-progress { margin: 15px 0 8px; display: flex; align-items: center; gap: 10px; color: #596678; font-size: 13px; }
+.route-progress progress { flex: 1; height: 12px; accent-color: #168963; }
+.route-legend { margin-bottom: 8px; color: #758194; font-size: 12px; }
+.route-legend span { display: inline-block; width: 11px; height: 11px; margin: 0 4px 0 10px; border-radius: 2px; vertical-align: -1px; }
+.legend-head { background: #ef476f; }.legend-written { background: #168963; }.legend-empty { background: #f4f7fa; border: 1px solid #cbd5e1; }
+.route-canvas-shell { position: relative; overflow: auto; min-height: 180px; max-height: 620px; border: 1px solid #dfe5ed; border-radius: 10px; background: #f4f7fa; }
+#routeCanvas { display: block; width: 100%; min-height: 180px; image-rendering: pixelated; }
+#routeEmpty { position: absolute; inset: 0; display: grid; place-items: center; color: #8b96a7; font-size: 13px; }
+#routeEmpty[hidden] { display: none; }
 @media (max-width: 1200px) { .workspace { padding-inline: 18px; } .cell { flex-basis: 52px; height: 52px; } }
 @media (max-width: 980px) {
   .topbar { padding-inline: 16px; }
@@ -75,6 +119,8 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
   .form-grid { grid-template-columns: repeat(2,1fr); }
 }
 @media (max-width: 680px) {
+  .topbar { height: auto; min-height: 64px; padding-block: 10px; gap: 8px; flex-wrap: wrap; }
+  .toolbar { flex-wrap: wrap; }
   .brand p { display: none; }
   .toolbar button { padding-inline: 8px; font-size: 12px; }
   .workspace { padding: 12px; }
@@ -82,4 +128,9 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
   .side { grid-template-columns: 1fr; }
   .controls { flex-wrap: wrap; }
   .form-grid { grid-template-columns: 1fr; }
+  .puzzle-heading { align-items: stretch; flex-direction: column; }
+  .route-heading { align-items: stretch; flex-direction: column; }
+  .route-progress { align-items: stretch; flex-direction: column; }
+  .puzzle-actions .btn { flex: 1 1 135px; }
+  .route-actions .btn { flex: 1 1 110px; }
 }
