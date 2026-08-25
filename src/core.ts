@@ -51,6 +51,11 @@ export class Tape {
     return [...this.cells.entries()].sort((a, b) => a[0] - b[0]);
   }
 
+  reset(initial: Array<[number, string]> = []): void {
+    this.cells.clear();
+    for (const [position, symbol] of initial) this.write(position, symbol);
+  }
+
   clone(): Tape {
     return new Tape(this.blankSymbol, this.entries());
   }
@@ -62,13 +67,17 @@ export class TuringMachine {
   headPosition: number;
   stepCount = 0;
   private readonly index = new Map<string, Map<string, Transition>>();
+  private readonly initialTape: Array<[number, string]>;
+  private readonly initialHeadPosition: number;
 
   constructor(
     readonly definition: MachineDefinition,
     initialTape: Array<[number, string]>,
     headPosition = 0,
   ) {
-    this.tape = new Tape(definition.blankSymbol, initialTape);
+    this.initialTape = initialTape.map(([position, symbol]) => [position, symbol]);
+    this.initialHeadPosition = headPosition;
+    this.tape = new Tape(definition.blankSymbol, this.initialTape);
     this.currentState = definition.initialState;
     this.headPosition = headPosition;
     for (const transition of definition.transitions) {
@@ -82,6 +91,13 @@ export class TuringMachine {
       }
       row.set(transition.readSymbol, transition);
     }
+  }
+
+  reset(): void {
+    this.tape.reset(this.initialTape);
+    this.currentState = this.definition.initialState;
+    this.headPosition = this.initialHeadPosition;
+    this.stepCount = 0;
   }
 
   private terminalReason(): StopReason | undefined {
@@ -155,4 +171,10 @@ export function inputToTape(input: string, blankSymbol: string): Array<[number, 
   return Array.from(input).flatMap((symbol, position) =>
     symbol === blankSymbol ? [] : ([[position, symbol]] as Array<[number, string]>),
   );
+}
+
+export type TapeViewMode = "follow-head" | "fixed-zero";
+
+export function tapeWindowCenter(mode: TapeViewMode, headPosition: number): number {
+  return mode === "fixed-zero" ? 0 : headPosition;
 }
