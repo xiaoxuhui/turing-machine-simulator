@@ -4,7 +4,8 @@ import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
 import { normalizeRouteSteps, routeCanvasSize, routeSampleIndex } from "./route-view";
-import { measuredSpeed, normalizeSpeed } from "./speed";
+import { normalizeSpeed } from "./speed";
+import { ExecutionScheduler } from "./execution-scheduler";
 
 interface ProjectData extends ExampleProject {
   format: "turing-machine-simulator";
@@ -16,7 +17,6 @@ interface ProjectData extends ExampleProject {
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
 let records: StepRecord[] = [];
-let timer: number | null = null;
 let status = "就绪";
 let stopMessage = "";
 let appliedMachineKey: string | null = null;
@@ -26,10 +26,6 @@ let selectedTileId: string | null = null;
 let solutionVisible = false;
 let tileOrder: string[] = [];
 let routeWorker: Worker | null = null;
-let runStartedAt = 0;
-let runStartedStep = 0;
-let lastTickAt = 0;
-let stepCredit = 0;
 
 interface RouteFrame { step: number; state: string; head: number; cells: Array<[number, string]> }
 
@@ -417,39 +413,36 @@ function singleStep(applyDraft = true, renderAfter = true): boolean {
     status = reasonText[result.reason!];
     stopMessage = result.reason === "missing-transition" ? `状态 ${machine!.currentState} 读取 ${machine!.tape.read(machine!.headPosition)} 时无规则` : reasonText[result.reason!];
     pause(false);
-  } else status = timer ? "运行中" : "已暂停";
+  } else status = scheduler.running ? "运行中" : "已暂停";
   if (renderAfter || result.stopped) render();
   return !result.stopped;
 }
 
+const scheduler = new ExecutionScheduler({
+  getTargetSpeed: () => Number(value("speed")),
+  executeBatch: (maxSteps) => {
+    const before = machine?.stepCount ?? 0;
+    let remaining = maxSteps;
+    let keepRunning = true;
+    while (remaining-- > 0 && keepRunning) keepRunning = singleStep(false, false);
+    return { executed: (machine?.stepCount ?? before) - before, keepRunning };
+  },
+  onTick: (actual) => {
+    byId("actualSpeed").textContent = `实际 ${actual.toFixed(actual < 10 ? 1 : 0)} 步/秒`;
+    render();
+  },
+});
+
 function run(): void {
-  if (timer) return;
+  if (scheduler.running) return;
   if (!ensureCurrentDraftApplied()) return;
   status = "运行中";
-  runStartedAt = performance.now();
-  lastTickAt = runStartedAt;
-  runStartedStep = machine?.stepCount ?? 0;
-  stepCredit = 0;
-  byId("actualSpeed").textContent = "实际 0 步/秒";
-  timer = window.setInterval(() => {
-    if (!machine) return;
-    const now = performance.now();
-    const target = normalizeSpeed(Number(value("speed")));
-    stepCredit += (now - lastTickAt) * target / 1000;
-    lastTickAt = now;
-    let due = Math.min(250, Math.floor(stepCredit));
-    stepCredit -= due;
-    while (due-- > 0 && singleStep(false, false)) { /* batch without repainting */ }
-    const actual = measuredSpeed(machine.stepCount - runStartedStep, now - runStartedAt);
-    byId("actualSpeed").textContent = `实际 ${actual.toFixed(actual < 10 ? 1 : 0)} 步/秒`;
-    if (timer) render();
-  }, 16);
+  scheduler.start();
   render();
 }
 
 function pause(changeStatus = true): void {
-  if (timer !== null) window.clearInterval(timer);
-  timer = null;
+  scheduler.stop();
   if (changeStatus && machine && status === "运行中") status = "已暂停";
   render();
 }
@@ -574,7 +567,7 @@ byId("puzzleBoard").addEventListener("drop", (event) => {
 document.addEventListener("keydown", (event) => {
   const editing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement;
   if (editing) return;
-  if (event.code === "Space") { event.preventDefault(); timer ? pause() : run(); }
+  if (event.code === "Space") { event.preventDefault(); scheduler.running ? pause() : run(); }
   if (event.altKey && event.code === "ArrowRight") { event.preventDefault(); pause(false); singleStep(); }
   if (event.ctrlKey && event.code === "KeyR") { event.preventDefault(); resetMachine(); }
 });
