@@ -9,6 +9,7 @@ import { ExecutionScheduler } from "./execution-scheduler";
 import { RouteController, type RouteFrame } from "./route-controller";
 import { renderExecutionLog } from "./execution-log";
 import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./project-codec";
+import { shuffled } from "./shuffle";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -230,7 +231,7 @@ function generatePuzzle(): void {
   placedTiles = Array(tilePuzzle.solution.length).fill(null);
   selectedTileId = null;
   solutionVisible = false;
-  tileOrder = tilePuzzle.solution.slice().sort(() => Math.random() - 0.5);
+  tileOrder = shuffled(tilePuzzle.solution);
   const loopText = tilePuzzle.loop ? `发现循环：从第 ${tilePuzzle.loop.start} 步开始，周期 ${tilePuzzle.loop.length} 步。` : `未发现循环；计算结果：${reasonText[tilePuzzle.stopReason as keyof typeof reasonText] ?? `到达 ${steps} 步上限`}。`;
   byId("cycleInfo").textContent = `${loopText} 棋盘 ${tilePuzzle.rows} × ${tilePuzzle.columns}，共 ${tilePuzzle.tiles.length} 块。`;
   byId("showSolution").textContent = "查看正确拼法";
@@ -551,7 +552,7 @@ byId("puzzleBoard").addEventListener("drop", (event) => {
   if (slot && tileId) placeTile(Number(slot.dataset.slot), tileId);
 });
 document.addEventListener("keydown", (event) => {
-  const editing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement;
+  const editing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLButtonElement;
   if (editing) return;
   if (event.code === "Space") { event.preventDefault(); scheduler.running ? pause() : run(); }
   if (event.altKey && event.code === "ArrowRight") { event.preventDefault(); pause(false); singleStep(); }
