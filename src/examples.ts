@@ -42,7 +42,7 @@ export const examples: Record<string, ExampleProject> = {
     acceptStates: "ACCEPT",
     rejectStates: "REJECT",
     haltStates: "",
-    rules: `start,X -> start,X,R\nstart,Y -> start,Y,R\nstart,0 -> seek0,X,R\nstart,1 -> seek1,Y,R\nstart,□ -> ACCEPT,□,N\nseek0,0 -> seek0,0,R\nseek0,1 -> seek0,1,R\nseek0,X -> seek0,X,R\nseek0,Y -> seek0,Y,R\nseek0,□ -> check0,□,L\ncheck0,0 -> back,X,L\ncheck0,X -> ACCEPT,X,N\ncheck0,Y -> ACCEPT,Y,N\ncheck0,1 -> REJECT,1,N\nseek1,0 -> seek1,0,R\nseek1,1 -> seek1,1,R\nseek1,X -> seek1,X,R\nseek1,Y -> seek1,Y,R\nseek1,□ -> check1,□,L\ncheck1,1 -> back,Y,L\ncheck1,X -> ACCEPT,X,N\ncheck1,Y -> ACCEPT,Y,N\ncheck1,0 -> REJECT,0,N\nback,0 -> back,0,L\nback,1 -> back,1,L\nback,X -> back,X,L\nback,Y -> back,Y,L\nback,□ -> start,□,R`,
+    rules: `start,X -> start,X,R\nstart,Y -> start,Y,R\nstart,0 -> seek0,X,R\nstart,1 -> seek1,Y,R\nstart,□ -> ACCEPT,□,N\nseek0,0 -> seek0,0,R\nseek0,1 -> seek0,1,R\nseek0,X -> seek0,X,R\nseek0,Y -> seek0,Y,R\nseek0,□ -> check0,□,L\ncheck0,0 -> back,X,L\ncheck0,X -> check0,X,L\ncheck0,Y -> check0,Y,L\ncheck0,1 -> REJECT,1,N\ncheck0,□ -> ACCEPT,□,N\nseek1,0 -> seek1,0,R\nseek1,1 -> seek1,1,R\nseek1,X -> seek1,X,R\nseek1,Y -> seek1,Y,R\nseek1,□ -> check1,□,L\ncheck1,1 -> back,Y,L\ncheck1,X -> check1,X,L\ncheck1,Y -> check1,Y,L\ncheck1,0 -> REJECT,0,N\ncheck1,□ -> ACCEPT,□,N\nback,0 -> back,0,L\nback,1 -> back,1,L\nback,X -> back,X,L\nback,Y -> back,Y,L\nback,□ -> start,□,R`,
   },
   beaver: {
     name: "2 状态忙碌海狸",
