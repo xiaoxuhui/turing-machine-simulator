@@ -6,6 +6,7 @@ import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puz
 import { normalizeRouteSteps, routeCanvasSize, routeSampleIndex } from "./route-view";
 import { normalizeSpeed } from "./speed";
 import { ExecutionScheduler } from "./execution-scheduler";
+import { RouteController, type RouteFrame } from "./route-controller";
 
 interface ProjectData extends ExampleProject {
   format: "turing-machine-simulator";
@@ -25,9 +26,6 @@ let placedTiles: Array<string | null> = [];
 let selectedTileId: string | null = null;
 let solutionVisible = false;
 let tileOrder: string[] = [];
-let routeWorker: Worker | null = null;
-
-interface RouteFrame { step: number; state: string; head: number; cells: Array<[number, string]> }
 
 const defaultProject: ProjectData = {
   format: "turing-machine-simulator",
@@ -265,44 +263,44 @@ function drawRoute(frames: RouteFrame[], min: number, max: number): void {
   byId("routeEmpty").hidden = true;
 }
 
-function generateRoute(): void {
-  if (!machine) return;
-  routeWorker?.terminate();
-  const maxSteps = normalizeRouteSteps(Number(value("routeSteps")));
-  byId<HTMLInputElement>("routeSteps").value = String(maxSteps);
-  routeWorker = new Worker(new URL("./route-worker.ts", import.meta.url), { type: "module" });
-  byId<HTMLButtonElement>("generateRoute").disabled = true;
-  byId<HTMLButtonElement>("cancelRoute").disabled = false;
-  byId<HTMLProgressElement>("routeProgress").value = 0;
-  byId("routeStatus").textContent = `后台计算中：0 / ${maxSteps} 步`;
-  routeWorker.onmessage = (event) => {
-    if (event.data.type === "progress") {
-      byId<HTMLProgressElement>("routeProgress").value = event.data.step / maxSteps * 100;
-      byId("routeStatus").textContent = `后台计算中：${event.data.step} / ${maxSteps} 步（你可以继续玩）`;
-      return;
-    }
-    if (event.data.type === "error") {
-      byId("routeStatus").textContent = `后台生成失败：${event.data.message}`;
+const routeController = new RouteController(
+  () => new Worker(new URL("./route-worker.ts", import.meta.url), { type: "module" }),
+  {
+    onStart: (maxSteps) => {
+      byId<HTMLButtonElement>("generateRoute").disabled = true;
+      byId<HTMLButtonElement>("cancelRoute").disabled = false;
+      byId<HTMLProgressElement>("routeProgress").value = 0;
+      byId("routeStatus").textContent = `后台计算中：0 / ${maxSteps} 步`;
+    },
+    onProgress: (step, maxSteps) => {
+      byId<HTMLProgressElement>("routeProgress").value = step / maxSteps * 100;
+      byId("routeStatus").textContent = `后台计算中：${step} / ${maxSteps} 步（你可以继续玩）`;
+    },
+    onComplete: ({ frames, min, max, reason }) => {
+      drawRoute(frames, min, max);
+      byId<HTMLProgressElement>("routeProgress").value = 100;
+      byId("routeStatus").textContent = `已显示 ${frames.length} 个时刻，纸带位置 ${min}…${max}，结束原因：${reasonText[reason as keyof typeof reasonText] ?? "达到步数上限"}`;
       byId<HTMLButtonElement>("generateRoute").disabled = false;
       byId<HTMLButtonElement>("cancelRoute").disabled = true;
-      routeWorker?.terminate(); routeWorker = null;
-      return;
-    }
-    const { frames, min, max, reason } = event.data as { frames: RouteFrame[]; min: number; max: number; reason: string };
-    drawRoute(frames, min, max);
-    byId<HTMLProgressElement>("routeProgress").value = 100;
-    byId("routeStatus").textContent = `已显示 ${frames.length} 个时刻，纸带位置 ${min}…${max}，结束原因：${reasonText[reason as keyof typeof reasonText] ?? "达到步数上限"}`;
-    byId<HTMLButtonElement>("generateRoute").disabled = false;
-    byId<HTMLButtonElement>("cancelRoute").disabled = true;
-    routeWorker?.terminate(); routeWorker = null;
-  };
-  routeWorker.onerror = () => {
-    byId("routeStatus").textContent = "后台生成失败：Worker 意外停止，可重新生成。";
-    byId<HTMLButtonElement>("generateRoute").disabled = false;
-    byId<HTMLButtonElement>("cancelRoute").disabled = true;
-    routeWorker?.terminate(); routeWorker = null;
-  };
-  routeWorker.postMessage({ definition: machine.definition, initialTape: inputToTape(value("input"), machine.definition.blankSymbol), maxSteps });
+    },
+    onError: (message) => {
+      byId("routeStatus").textContent = `后台生成失败：${message}`;
+      byId<HTMLButtonElement>("generateRoute").disabled = false;
+      byId<HTMLButtonElement>("cancelRoute").disabled = true;
+    },
+    onCancel: () => {
+      byId<HTMLButtonElement>("generateRoute").disabled = false;
+      byId<HTMLButtonElement>("cancelRoute").disabled = true;
+      byId("routeStatus").textContent = "后台生成已取消；当前模拟器状态不受影响。";
+    },
+  },
+);
+
+function generateRoute(): void {
+  if (!machine) return;
+  const maxSteps = normalizeRouteSteps(Number(value("routeSteps")));
+  byId<HTMLInputElement>("routeSteps").value = String(maxSteps);
+  routeController.start({ definition: machine.definition, initialTape: inputToTape(value("input"), machine.definition.blankSymbol), maxSteps });
 }
 
 function renderTape(): void {
@@ -518,10 +516,7 @@ byId("exportLog").addEventListener("click", () => {
 byId("generatePuzzle").addEventListener("click", generatePuzzle);
 byId("generateRoute").addEventListener("click", generateRoute);
 byId("cancelRoute").addEventListener("click", () => {
-  routeWorker?.terminate(); routeWorker = null;
-  byId<HTMLButtonElement>("generateRoute").disabled = false;
-  byId<HTMLButtonElement>("cancelRoute").disabled = true;
-  byId("routeStatus").textContent = "后台生成已取消；当前模拟器状态不受影响。";
+  routeController.cancel();
 });
 byId("checkPuzzle").addEventListener("click", () => {
   if (!tilePuzzle) return;
