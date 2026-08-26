@@ -26,40 +26,45 @@ export class RouteController {
   get running(): boolean { return this.worker !== null; }
 
   start(request: RouteRequest): void {
-    this.cleanup();
+    this.cleanup(this.worker);
     const worker = this.createWorker();
     this.worker = worker;
     this.callbacks.onStart(request.maxSteps);
     worker.onmessage = (event) => {
+      if (worker !== this.worker) return;
       if (event.data.type === "progress") {
         this.callbacks.onProgress(event.data.step, event.data.maxSteps);
         return;
       }
       if (event.data.type === "error") {
         this.callbacks.onError(event.data.message || "未知后台错误");
-        this.cleanup();
+        this.cleanup(worker);
         return;
       }
       if (event.data.type === "complete") {
         this.callbacks.onComplete(event.data as RouteComplete);
-        this.cleanup();
+        this.cleanup(worker);
       }
     };
     worker.onerror = () => {
+      if (worker !== this.worker) return;
       this.callbacks.onError("Worker 意外停止，可重新生成。");
-      this.cleanup();
+      this.cleanup(worker);
     };
     worker.postMessage(request);
   }
 
   cancel(): void {
     if (!this.worker) return;
-    this.cleanup();
+    this.cleanup(this.worker);
     this.callbacks.onCancel();
   }
 
-  private cleanup(): void {
-    this.worker?.terminate();
+  private cleanup(worker: WorkerLike | null): void {
+    if (!worker || worker !== this.worker) return;
+    worker.onmessage = null;
+    worker.onerror = null;
+    worker.terminate();
     this.worker = null;
   }
 }

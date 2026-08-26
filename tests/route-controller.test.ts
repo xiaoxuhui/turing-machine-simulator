@@ -40,4 +40,25 @@ describe("route controller", () => {
     expect(cb.onError).toHaveBeenLastCalledWith("Worker 意外停止，可重新生成。");
     expect(controller.running).toBe(false);
   });
+
+  it("ignores callbacks from a worker replaced by a newer task", () => {
+    const first = new FakeWorker(), second = new FakeWorker(), cb = callbacks();
+    const workers = [first, second];
+    const controller = new RouteController(() => workers.shift()!, cb);
+    controller.start({ definition, initialTape: [], maxSteps: 20 });
+    const staleMessage = first.onmessage!;
+    const staleError = first.onerror!;
+
+    controller.start({ definition, initialTape: [], maxSteps: 40 });
+    staleMessage({ data: { type: "complete", frames: [], min: 0, max: 0, reason: "step-limit" } } as MessageEvent);
+    staleError({} as ErrorEvent);
+
+    expect(cb.onComplete).not.toHaveBeenCalled();
+    expect(cb.onError).not.toHaveBeenCalled();
+    expect(second.terminate).not.toHaveBeenCalled();
+    expect(controller.running).toBe(true);
+    second.emit({ type: "complete", frames: [], min: 0, max: 0, reason: "step-limit" });
+    expect(cb.onComplete).toHaveBeenCalledOnce();
+    expect(controller.running).toBe(false);
+  });
 });
