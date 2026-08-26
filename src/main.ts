@@ -8,13 +8,7 @@ import { normalizeSpeed } from "./speed";
 import { ExecutionScheduler } from "./execution-scheduler";
 import { RouteController, type RouteFrame } from "./route-controller";
 import { renderExecutionLog } from "./execution-log";
-
-interface ProjectData extends ExampleProject {
-  format: "turing-machine-simulator";
-  version: 1;
-  maxSteps: number;
-  speed: number;
-}
+import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./project-codec";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -181,7 +175,8 @@ function createMachine(): boolean {
   appliedMachineKey = machineProjectKey(project);
   status = "就绪";
   stopMessage = "";
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(project));
+  const storageError = saveProject(localStorage, STORAGE_KEY, project);
+  if (storageError) byId("errors").textContent = storageError;
   render();
   renderRuleTable();
   generatePuzzle();
@@ -497,11 +492,12 @@ byId("fileInput").addEventListener("change", async () => {
   const file = byId<HTMLInputElement>("fileInput").files?.[0];
   if (!file || file.size > 5_000_000) return;
   try {
-    const project = JSON.parse(await file.text()) as ProjectData;
-    if (project.format !== "turing-machine-simulator" || project.version !== 1) throw new Error();
+    const project = parseProjectJson(await file.text());
     fillProject(project);
     createMachine();
-  } catch { byId("errors").textContent = "项目文件无效或版本不兼容"; }
+  } catch (error) {
+    byId("errors").textContent = error instanceof Error ? `项目文件无效：${error.message}` : "项目文件无效或版本不兼容";
+  }
 });
 byId("exportLog").addEventListener("click", () => {
   const header = "step,from,read,to,write,direction,headBefore,headAfter";
@@ -562,10 +558,7 @@ document.addEventListener("keydown", (event) => {
   if (event.ctrlKey && event.code === "KeyR") { event.preventDefault(); resetMachine(); }
 });
 
-try {
-  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "null") as ProjectData | null;
-  fillProject(saved?.format === "turing-machine-simulator" ? saved : defaultProject);
-} catch { fillProject(defaultProject); }
+fillProject(loadProject(localStorage, STORAGE_KEY) ?? defaultProject);
 byId("exampleNote").textContent = examples.unary.description;
 createMachine();
 renderRuleTable();
