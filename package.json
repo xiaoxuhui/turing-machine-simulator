@@ -1,12 +1,24 @@
 {
   "name": "turing-machine-simulator",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.3.0",
+  "description": "可视化、可编程的单纸带确定性图灵机模拟器与 Wang 瓷砖拼图",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiaoxuhui/turing-machine-simulator.git"
+  },
+  "bugs": "https://github.com/xiaoxuhui/turing-machine-simulator/issues",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "test": "vitest run",
+    "typecheck": "tsc -b",
+    "check": "pnpm test && pnpm run build",
     "preview": "vite preview --host 127.0.0.1"
   },
   "devDependencies": {
