@@ -1,0 +1,55 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Red Green Puzzle Solver</title>
+  <style>
+    :root{--bg:#f5f7fb;--panel:#fff;--ink:#172033;--muted:#657085;--line:#d9e0ea;--accent:#1d5fd0;--accent-dark:#15469a;--red:#e83434;--green:#18c94b;--chip:#eef3fb;--shadow:0 12px 30px rgba(23,32,51,.08)}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;color:var(--ink);background:var(--bg);font-family:"Microsoft YaHei","PingFang SC",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif} main{width:min(1180px,calc(100vw - 32px));margin:0 auto;padding:28px 0 36px}.app-head{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end;margin-bottom:18px}h1{margin:0 0 8px;font-size:clamp(28px,4vw,44px);line-height:1.08;letter-spacing:0}.sub{margin:0;color:var(--muted);font-size:15px;line-height:1.6}.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end}label{display:inline-flex;gap:8px;align-items:center;color:var(--muted);font-size:14px;white-space:nowrap}input[type=number]{width:92px;height:40px;border:1px solid var(--line);border-radius:8px;padding:0 10px;color:var(--ink);background:var(--panel);font-size:16px;outline:none}input[type=number]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(29,95,208,.14)}button{height:40px;border:0;border-radius:8px;padding:0 14px;color:#fff;background:var(--accent);font-weight:700;cursor:pointer}button:hover{background:var(--accent-dark)}button.secondary{color:var(--accent);background:#e9f0fc}button.secondary:hover{background:#dce8fb}.layout{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}.panel{border:1px solid var(--line);border-radius:8px;background:var(--panel);box-shadow:var(--shadow)}.rules{padding:18px}.rules h2,.flow h2{margin:0 0 12px;font-size:18px;letter-spacing:0}.rules p{margin:0 0 12px;color:var(--muted);font-size:14px;line-height:1.65}.formula{display:grid;gap:8px;margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:8px;background:#fbfcff;font-family:Consolas,"Courier New",monospace;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.legend span,.stat{display:inline-flex;min-height:30px;align-items:center;gap:8px;border-radius:8px;padding:4px 10px;background:var(--chip);color:var(--muted);font-size:13px}.dot{width:16px;height:16px;border-radius:4px;display:inline-block}.dot.red{background:var(--red)}.dot.green{background:var(--green)}.flow{overflow:hidden}.flow-top{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;padding:16px 18px;border-bottom:1px solid var(--line)}.stats{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}.notice{padding:10px 18px;border-bottom:1px solid var(--line);color:#785500;background:#fff7dc;font-size:13px;display:none}.board-wrap{max-height:calc(100vh - 220px);overflow:auto;background:#fff}.board{width:max-content;min-width:100%;padding:14px 18px 18px}.row{display:grid;grid-template-columns:64px max-content 88px;gap:12px;align-items:center;min-height:28px;font-family:Consolas,"Courier New",monospace;font-size:12px;color:var(--muted)}.cells{display:grid;grid-auto-flow:column;grid-auto-columns:20px;gap:3px;align-items:center;min-height:24px}.cell{width:20px;height:20px;border-radius:4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}.cell.zero{background:var(--red)}.cell.one{background:var(--green)}.changed{color:var(--ink);font-weight:700}.state-text{color:var(--muted);user-select:all}@media(max-width:840px){main{width:min(100vw - 20px,1180px);padding-top:18px}.app-head,.layout{grid-template-columns:1fr}.toolbar{justify-content:flex-start}.board-wrap{max-height:62vh}}
+  </style>
+</head>
+<body>
+  <main>
+    <section class="app-head">
+      <div>
+        <h1>&#32418;&#32511;&#21464;&#25442;&#36890;&#20851;&#29983;&#25104;&#22120;</h1>
+        <p class="sub">&#36755;&#20837;&#25968;&#23383;&#25968;&#37327;&#65292;&#33258;&#21160;&#29983;&#25104;&#20174;&#20840;&#32418; 0 &#21040;&#20840;&#32511; 1 &#30340;&#21512;&#27861;&#21464;&#21270;&#27969;&#31243;&#12290;</p>
+      </div>
+      <div class="toolbar">
+        <label>&#25968;&#37327;<input id="sizeInput" type="number" min="1" max="20" value="6"></label>
+        <button id="generateBtn" type="button">&#29983;&#25104;&#27969;&#31243;</button>
+        <button id="copyBtn" class="secondary" type="button">&#22797;&#21046;&#25991;&#26412;</button>
+      </div>
+    </section>
+    <section class="layout">
+      <aside class="panel rules">
+        <h2>&#35268;&#21017;&#22797;&#36848;</h2>
+        <p>&#27599;&#19968;&#34892;&#34920;&#31034;&#19968;&#20010;&#26102;&#38388;&#28857;&#65292;&#27178;&#21521;&#30340;&#19968;&#20018;&#26684;&#23376;&#34920;&#31034;&#24403;&#21069;&#29366;&#24577;&#12290;&#32418;&#33394;&#26159; 0&#65292;&#32511;&#33394;&#26159; 1&#65292;&#30446;&#26631;&#26159;&#20174;&#31532;&#19968;&#34892;&#20840; 0 &#21464;&#21040;&#26368;&#21518;&#19968;&#34892;&#20840; 1&#12290;</p>
+        <p>&#19968;&#27425;&#21482;&#25913;&#21464;&#19968;&#20010;&#25968;&#23383;&#12290;&#26368;&#21518;&#19968;&#21015;&#21487;&#20197;&#38543;&#26102;&#22312; 0 &#21644; 1 &#20043;&#38388;&#20999;&#25442;&#65307;&#20854;&#20182;&#31532; n &#21015;&#35201;&#21464;&#21270;&#26102;&#65292;&#23427;&#21491;&#36793;&#30456;&#37051;&#19968;&#21015;&#24517;&#39035;&#26159; 1&#65292;&#24182;&#19988;&#26356;&#21491;&#36793;&#30340;&#25152;&#26377;&#21015;&#37117;&#24517;&#39035;&#26159; 0&#12290;</p>
+        <div class="formula"><div>last bit: k[len(k)] = 0 or 1</div><div>middle bit n can flip when:</div><div>k[n + 1] = 1</div><div>k[n + 2 ... len(k)] = 0</div></div>
+        <div class="legend"><span><i class="dot red"></i>0</span><span><i class="dot green"></i>1</span></div>
+      </aside>
+      <section class="panel flow">
+        <div class="flow-top"><div><h2>&#36890;&#20851;&#27969;&#31243;</h2><p class="sub" id="summary">&#31561;&#24453;&#29983;&#25104;&#12290;</p></div><div class="stats"><span class="stat" id="stepStat">&#27493;&#25968; 0</span><span class="stat" id="rowStat">&#34892;&#25968; 0</span></div></div>
+        <div class="notice" id="notice"></div><div class="board-wrap"><div class="board" id="board"></div></div>
+      </section>
+    </section>
+  </main>
+  <script>
+    const ui = { sizeInput: document.querySelector("#sizeInput"), generateBtn: document.querySelector("#generateBtn"), copyBtn: document.querySelector("#copyBtn"), board: document.querySelector("#board"), summary: document.querySelector("#summary"), stepStat: document.querySelector("#stepStat"), rowStat: document.querySelector("#rowStat"), notice: document.querySelector("#notice") };
+    let latestStates = [];
+    function gray(rank){ return rank ^ (rank >> 1); }
+    function inverseGray(value){ let result = 0; while(value > 0){ result ^= value; value >>= 1; } return result; }
+    function toBits(value,width){ return value.toString(2).padStart(width,"0"); }
+    function canFlip(previous,next){ if(previous.length !== next.length) return false; const changed=[]; for(let i=0;i<previous.length;i++){ if(previous[i] !== next[i]) changed.push(i); } if(changed.length !== 1) return false; const index=changed[0]; if(index === previous.length - 1) return true; if(previous[index + 1] !== "1") return false; for(let i=index + 2;i<previous.length;i++){ if(previous[i] !== "0") return false; } return true; }
+    function buildSolution(size){ const target = 2 ** size - 1; const targetRank = inverseGray(target); const states=[]; for(let rank=0; rank<=targetRank; rank++){ states.push(toBits(gray(rank), size)); } return states; }
+    function changedIndex(states,rowIndex){ if(rowIndex === 0) return -1; const previous=states[rowIndex - 1]; const current=states[rowIndex]; for(let i=0;i<current.length;i++){ if(previous[i] !== current[i]) return i; } return -1; }
+    function render(states){ const maxRendered=3000; const fragment=document.createDocumentFragment(); ui.board.innerHTML=""; const renderCount=Math.min(states.length,maxRendered); for(let rowIndex=0; rowIndex<renderCount; rowIndex++){ const state=states[rowIndex]; const row=document.createElement("div"); row.className="row"; const label=document.createElement("span"); label.textContent=`t=${rowIndex}`; const cells=document.createElement("div"); cells.className="cells"; const changed=changedIndex(states,rowIndex); for(let i=0;i<state.length;i++){ const cell=document.createElement("span"); cell.className=`cell ${state[i] === "1" ? "one" : "zero"}`; if(i === changed) cell.style.outline="2px solid #172033"; cell.title=`bit ${i + 1} = ${state[i]}`; cells.appendChild(cell); } const text=document.createElement("span"); text.className=rowIndex === states.length - 1 ? "state-text changed" : "state-text"; text.textContent=state; row.append(label,cells,text); fragment.appendChild(row); } ui.board.appendChild(fragment); if(states.length > maxRendered){ ui.notice.style.display="block"; ui.notice.textContent=`流程共有 ${states.length} 行，页面先显示前 ${maxRendered} 行；复制文本会包含完整流程。`; } else { ui.notice.style.display="none"; ui.notice.textContent=""; } }
+    function generate(){ const size=Number(ui.sizeInput.value); if(!Number.isInteger(size) || size < 1 || size > 20){ alert("请输入 1 到 20 之间的整数。"); return; } latestStates=buildSolution(size); const legal=latestStates.every((state,index)=>index === 0 || canFlip(latestStates[index - 1], state)); ui.summary.textContent=`已生成 ${size} 个数字的流程，${legal ? "每一步都满足规则" : "流程存在非法步骤"}。`; ui.stepStat.textContent=`步数 ${latestStates.length - 1}`; ui.rowStat.textContent=`行数 ${latestStates.length}`; render(latestStates); }
+    async function copySolution(){ if(latestStates.length === 0) generate(); const text=latestStates.map((state,index)=>`${index}: ${state}`).join("\n"); try{ await navigator.clipboard.writeText(text); ui.copyBtn.textContent="已复制"; setTimeout(()=>{ ui.copyBtn.textContent="复制文本"; },1200); } catch(error){ const area=document.createElement("textarea"); area.value=text; document.body.appendChild(area); area.select(); document.execCommand("copy"); area.remove(); } }
+    window.addEventListener("error", (event)=>{ document.body.innerHTML = `<main><h1>Page error</h1><pre>${event.message}</pre></main>`; });
+    ui.generateBtn.addEventListener("click", generate); ui.copyBtn.addEventListener("click", copySolution); ui.sizeInput.addEventListener("keydown", event=>{ if(event.key === "Enter") generate(); }); generate();
+  </script>
+</body>
+</html>
