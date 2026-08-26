@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.3.0",
   "description": "可视化、可编程的单纸带确定性图灵机模拟器与 Wang 瓷砖拼图",
+  "license": "MIT",
   "type": "module",
   "repository": {
     "type": "git",

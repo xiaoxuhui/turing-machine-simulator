@@ -52,6 +52,6 @@ pnpm run check
 
 提交代码前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题请按 [SECURITY.md](SECURITY.md) 私密报告，社区互动遵循 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。版本变化记录在 [CHANGELOG.md](CHANGELOG.md)。
 
-## 许可证状态
+## 许可证
 
-仓库所有者尚未选择开源许可证。在 `LICENSE` 加入前，源码可供查看和评审，但不代表已授予复制、修改或再分发许可。
+本项目采用 [MIT License](LICENSE)。
