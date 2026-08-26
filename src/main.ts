@@ -285,10 +285,23 @@ function generateRoute(): void {
       byId("routeStatus").textContent = `后台计算中：${event.data.step} / ${maxSteps} 步（你可以继续玩）`;
       return;
     }
+    if (event.data.type === "error") {
+      byId("routeStatus").textContent = `后台生成失败：${event.data.message}`;
+      byId<HTMLButtonElement>("generateRoute").disabled = false;
+      byId<HTMLButtonElement>("cancelRoute").disabled = true;
+      routeWorker?.terminate(); routeWorker = null;
+      return;
+    }
     const { frames, min, max, reason } = event.data as { frames: RouteFrame[]; min: number; max: number; reason: string };
     drawRoute(frames, min, max);
     byId<HTMLProgressElement>("routeProgress").value = 100;
     byId("routeStatus").textContent = `已显示 ${frames.length} 个时刻，纸带位置 ${min}…${max}，结束原因：${reasonText[reason as keyof typeof reasonText] ?? "达到步数上限"}`;
+    byId<HTMLButtonElement>("generateRoute").disabled = false;
+    byId<HTMLButtonElement>("cancelRoute").disabled = true;
+    routeWorker?.terminate(); routeWorker = null;
+  };
+  routeWorker.onerror = () => {
+    byId("routeStatus").textContent = "后台生成失败：Worker 意外停止，可重新生成。";
     byId<HTMLButtonElement>("generateRoute").disabled = false;
     byId<HTMLButtonElement>("cancelRoute").disabled = true;
     routeWorker?.terminate(); routeWorker = null;
