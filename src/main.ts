@@ -7,6 +7,7 @@ import { normalizeRouteSteps, routeCanvasSize, routeSampleIndex } from "./route-
 import { normalizeSpeed } from "./speed";
 import { ExecutionScheduler } from "./execution-scheduler";
 import { RouteController, type RouteFrame } from "./route-controller";
+import { renderExecutionLog } from "./execution-log";
 
 interface ProjectData extends ExampleProject {
   format: "turing-machine-simulator";
@@ -321,13 +322,7 @@ function renderTape(): void {
 }
 
 function renderLog(): void {
-  const log = byId("log");
-  if (!records.length) {
-    log.innerHTML = `<div class="empty">单步或运行后，这里会显示执行过程</div>`;
-    return;
-  }
-  log.innerHTML = records.slice(-120).reverse().map((record) => `
-    <div class="log-row"><span>#${record.step}</span><span>${record.fromState},${record.readSymbol} → ${record.toState},${record.writeSymbol},${record.direction}　[${record.headBefore}→${record.headAfter}]</span></div>`).join("");
+  renderExecutionLog(byId("log"), records);
 }
 
 function serializeRuleRows(): void {
