@@ -2,7 +2,7 @@
 
 一个可视化、可编程的单纸带确定性图灵机模拟器。
 
-## 首版能力
+## 功能
 
 - 可向左右扩展的稀疏纸带和读写头跟随
 - 单步、连续运行、暂停、重置、最高 1000 步/秒调速、实际速度显示和步数限制
@@ -22,16 +22,36 @@
 
 ## 本地运行
 
+需要 Node.js 20.19 或更高版本，以及 pnpm 11。
+
 ```bash
-npm install
-npm run dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 构建与测试：
 
 ```bash
-npm test
-npm run build
+pnpm test
+pnpm run build
+pnpm run check
 ```
 
-需求和设计文档位于 `doc/`。
+浏览器打开终端显示的本地地址即可使用。项目完全在浏览器本地运行，不会上传机器定义或纸带内容。
+
+## 项目结构
+
+- `src/core.ts`：图灵机和稀疏纸带领域逻辑。
+- `src/execution-scheduler.ts`：连续运行时间片与实际速度统计。
+- `src/route-controller.ts`、`src/route-worker.ts`：可取消的后台全路线计算。
+- `src/project-codec.ts`：项目 JSON v1 校验和本地存储边界。
+- `src/tile-puzzle.ts`：有限计算历史的 Wang 瓷砖拼图。
+- `doc/`：需求、设计、实施计划、测试报告和阶段总结。
+
+## 参与贡献与安全
+
+提交代码前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)，安全问题请按 [SECURITY.md](SECURITY.md) 私密报告，社区互动遵循 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)。版本变化记录在 [CHANGELOG.md](CHANGELOG.md)。
+
+## 许可证状态
+
+仓库所有者尚未选择开源许可证。在 `LICENSE` 加入前，源码可供查看和评审，但不代表已授予复制、修改或再分发许可。

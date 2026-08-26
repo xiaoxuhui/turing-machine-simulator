@@ -1,0 +1,25 @@
+name: 功能建议
+description: 提议一个可验证的模拟器或拼图改进
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+      description: 请先描述用户场景，而不只是实现方式。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议方案
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 可验收结果
+      description: 如何判断这个功能已经正确完成？
+    validations:
+      required: true

@@ -1,0 +1,37 @@
+name: 缺陷报告
+description: 报告可复现的错误或行为回归
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: 安全漏洞请不要公开提交，请按 SECURITY.md 私密报告。
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述
+      description: 实际发生了什么？预期是什么？
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 加载……
+        2. 输入……
+        3. 点击……
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 环境
+      description: 操作系统、浏览器及版本
+    validations:
+      required: true
+  - type: textarea
+    id: project
+    attributes:
+      label: 最小项目或截图
+      description: 可粘贴不含敏感信息的规则、项目 JSON、日志或截图。
