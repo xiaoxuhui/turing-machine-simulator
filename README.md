@@ -1,6 +1,23 @@
+<p align="center">
+  <a href="README.en.md">English</a> · 简体中文
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/actions/workflow/status/xiaoxuhui/turing-machine-simulator/CI.yml?branch=main" alt="CI">
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+  <img src="https://img.shields.io/badge/version-0.3.0-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/node-%3E%3D20.19-brightgreen.svg" alt="Node">
+</p>
+
 # 图灵机模拟器
 
 一个可视化、可编程的单纸带确定性图灵机模拟器。
+
+## 在线演示
+
+部署在 GitHub Pages 上：[https://xiaoxuhui.github.io/turing-machine-simulator/](https://xiaoxuhui.github.io/turing-machine-simulator/)
+
+（演示站点在你于仓库 **Settings → Pages** 中启用 GitHub Pages、并选择 `main` 分支的 `/（root）` 或配置部署工作流后生效。）
 
 ## 功能
 
@@ -19,6 +36,10 @@
 应用机器定义后，页面底部会自动生成一组打乱的瓷砖。棋盘从上到下表示时间，从左到右表示纸带位置；带状态名的瓷砖表示读写头。当前版本生成的是所选步数和纸带视窗内的有限计算历史（tableau），最大 30 步，并用完整机器配置检测循环。
 
 “全路线总览”会在独立后台任务中执行当前机器，红色表示读写头路线，绿色表示非空纸带。超长运行会压缩为最多约 2400 条可视采样行；生成期间仍可继续运行模拟器或拼瓷砖，并可随时取消。
+
+## 截图
+
+> 截图待补充。在本地运行应用后，欢迎把界面截图放入 `doc/screenshots/` 并在此引用。
 
 ## 本地运行
 

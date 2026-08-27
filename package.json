@@ -1,6 +1,6 @@
 {
   "name": "turing-machine-simulator",
-  "private": true,
+  "private": false,
   "version": "0.3.0",
   "description": "可视化、可编程的单纸带确定性图灵机模拟器与 Wang 瓷砖拼图",
   "license": "MIT",
@@ -10,6 +10,16 @@
     "url": "git+https://github.com/xiaoxuhui/turing-machine-simulator.git"
   },
   "bugs": "https://github.com/xiaoxuhui/turing-machine-simulator/issues",
+  "homepage": "https://xiaoxuhui.github.io/turing-machine-simulator/",
+  "keywords": [
+    "turing-machine",
+    "simulator",
+    "deterministic",
+    "wang-tiles",
+    "tile-puzzle",
+    "automata",
+    "education"
+  ],
   "engines": {
     "node": ">=20.19.0"
   },
