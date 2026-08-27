@@ -178,3 +178,13 @@ export type TapeViewMode = "follow-head" | "fixed-zero";
 export function tapeWindowCenter(mode: TapeViewMode, headPosition: number): number {
   return mode === "fixed-zero" ? 0 : headPosition;
 }
+
+/**
+ * 把鼠标横向拖动距离换算成纸带平移格数（tapeScroll）。
+ * 向右拖动 deltaX > 0 → 纸带内容右移 → 显示更小（更负）的位置 → tapeScroll 减小。
+ * pitch 为相邻单元格的像素间距，<= 0 时回退为原值以避免除零。
+ */
+export function panFromDragDelta(startScroll: number, deltaX: number, pitch: number): number {
+  if (pitch <= 0) return startScroll;
+  return startScroll - Math.round(deltaX / pitch);
+}

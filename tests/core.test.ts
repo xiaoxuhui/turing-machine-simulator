@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inputToTape, parseTransitions, Tape, tapeWindowCenter, TuringMachine, type MachineDefinition } from "../src/core";
+import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, TuringMachine, type MachineDefinition } from "../src/core";
 
 describe("Tape", () => {
   it("reads blank cells and supports negative positions", () => {
@@ -24,6 +24,28 @@ describe("tape viewport", () => {
     expect(tapeWindowCenter("follow-head", 14)).toBe(14);
     expect(tapeWindowCenter("fixed-zero", 14)).toBe(0);
     expect(tapeWindowCenter("fixed-zero", -9)).toBe(0);
+  });
+});
+
+describe("panFromDragDelta", () => {
+  it("converts a leftward drag into a positive scroll (shows larger positions)", () => {
+    expect(panFromDragDelta(0, -57, 57)).toBe(1);
+  });
+  it("converts a rightward drag into a negative scroll (shows smaller positions)", () => {
+    expect(panFromDragDelta(0, 57, 57)).toBe(-1);
+    expect(panFromDragDelta(0, 120, 57)).toBe(-2);
+  });
+  it("accumulates on top of the current scroll", () => {
+    expect(panFromDragDelta(2, 28, 57)).toBe(2); // round(0.49)=0 → 2-0
+    expect(panFromDragDelta(-3, -57, 57)).toBe(-2); // round(-1)=-1 → -3-(-1)
+  });
+  it("falls back to the start value when pitch is non-positive", () => {
+    expect(panFromDragDelta(5, 100, 0)).toBe(5);
+  });
+  it("rounds to the nearest cell", () => {
+    expect(panFromDragDelta(0, 30, 57)).toBe(-1); // round(0.53)=1 → 0-1
+    expect(panFromDragDelta(0, -30, 57)).toBe(1); // round(-0.53)=-1 → 0-(-1)
+    expect(panFromDragDelta(0, 0, 57)).toBe(0);
   });
 });
 
