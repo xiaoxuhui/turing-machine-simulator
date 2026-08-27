@@ -1,5 +1,5 @@
 import "./styles.css";
-import { effectiveTapeScroll, inputToTape, isHeadInWindow, parseTransitions, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
+import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
@@ -24,6 +24,8 @@ let selectedTileId: string | null = null;
 let solutionVisible = false;
 let tileOrder: string[] = [];
 let tapeScroll = 0;
+// 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
+let tapeRenderCenter: number | null = null;
 
 const defaultProject: ProjectData = {
   format: "turing-machine-simulator",
@@ -176,6 +178,7 @@ function createMachine(): boolean {
   }
   records = [];
   tapeScroll = 0;
+  tapeRenderCenter = null;
   appliedMachineKey = machineProjectKey(project);
   status = "就绪";
   stopMessage = "";
@@ -329,6 +332,23 @@ function renderTape(): void {
     hint.textContent = onLeft ? `← 读写头在 ${head}` : `读写头在 ${head} →`;
     tape.append(hint);
   }
+  // 平滑跟随：仅「跟随读写头」模式、且中心相对上次渲染发生变化时，
+  // 先把新渲染的纸带瞬时移回旧中心位置，再用过渡滑回新中心，得到连续滑动而非逐格跳变。
+  if (mode === "follow-head") {
+    if (tapeRenderCenter !== null && center !== tapeRenderCenter) {
+      const shift = headFollowShift(tapeRenderCenter, center, tapeCellPitch());
+      tape.style.transition = "none";
+      tape.style.transform = `translateX(${shift}px)`;
+      void tape.offsetWidth; // 强制重排，确保上面的瞬时位移先生效，再开始过渡
+      tape.style.transition = "transform 150ms ease-out";
+      tape.style.transform = "translateX(0)";
+    }
+    tapeRenderCenter = center;
+  } else {
+    // 非跟随模式（固定 0 / 随意拖动）不累积跟随偏移；并清除过渡，保证随意拖动时即时跟手。
+    tapeRenderCenter = center;
+    tape.style.transition = "none";
+  }
 }
 
 function tapeCellPitch(): number {
@@ -468,6 +488,7 @@ function resetMachine(): void {
   machine.reset();
   records = [];
   tapeScroll = 0;
+  tapeRenderCenter = null;
   status = "就绪";
   stopMessage = "";
   byId("errors").textContent = "";
@@ -500,7 +521,10 @@ byId("reset").addEventListener("click", resetMachine);
 attachSpeedSync(speedEls);
 byId("tapeViewMode").addEventListener("change", () => {
   tapeScroll = 0; // 切换视角归零，避免跨模式串扰
-  byId("tape").style.transform = ""; // 清除可能的亚格 transform 残留
+  tapeRenderCenter = null; // 下次渲染直接定位，不从上一个视角滑入
+  const tape = byId("tape");
+  tape.style.transform = ""; // 清除可能的亚格 transform 残留
+  tape.style.transition = "none";
   render();
 });
 attachTapeDrag(byId("tape"), {
