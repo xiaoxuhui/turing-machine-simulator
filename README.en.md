@@ -39,7 +39,11 @@ The "full-route overview" executes the current machine in a cancellable backgrou
 
 ## Screenshots
 
-> Screenshots to be added. After running the app locally, feel free to drop UI screenshots into `doc/screenshots/` and reference them here.
+![Main simulator UI](doc/screenshots/simulator-main.png)
+*Main UI: run status, tape, machine definition, structured rule table*
+
+![Full-route overview and tile puzzle](doc/screenshots/route-and-puzzle.png)
+*Full-route overview (red = head, green = non-blank tape) and the computation tile puzzle*
 
 ## Run Locally
 

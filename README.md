@@ -39,7 +39,11 @@
 
 ## 截图
 
-> 截图待补充。在本地运行应用后，欢迎把界面截图放入 `doc/screenshots/` 并在此引用。
+![模拟器主界面](doc/screenshots/simulator-main.png)
+*主界面：运行状态、纸带、机器定义、结构化规则表*
+
+![全路线总览与瓷砖拼图](doc/screenshots/route-and-puzzle.png)
+*全路线总览（红色 = 读写头，绿色 = 非空纸带）与计算瓷砖拼图*
 
 ## 本地运行
 
