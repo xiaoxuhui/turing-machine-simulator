@@ -188,3 +188,8 @@ export function panFromDragDelta(startScroll: number, deltaX: number, pitch: num
   if (pitch <= 0) return startScroll;
   return startScroll - Math.round(deltaX / pitch);
 }
+
+/** 纸带可视窗口固定为 center±8 共 17 格，判断读写头是否落在窗口内。 */
+export function isHeadInWindow(center: number, head: number): boolean {
+  return head >= center - 8 && head <= center + 8;
+}

@@ -23,6 +23,7 @@ export function attachTapeDrag(tapeEl: HTMLElement, options: TapeDragOptions): v
     startX = event.clientX;
     startScroll = options.getScroll();
     tapeEl.classList.add("dragging");
+    document.body.classList.add("tape-dragging");
     if (typeof tapeEl.setPointerCapture === "function") {
       try { tapeEl.setPointerCapture(event.pointerId); } catch { /* 某些环境未实现，忽略 */ }
     }
@@ -39,6 +40,7 @@ export function attachTapeDrag(tapeEl: HTMLElement, options: TapeDragOptions): v
     if (!dragging) return;
     dragging = false;
     tapeEl.classList.remove("dragging");
+    document.body.classList.remove("tape-dragging");
   };
 
   tapeEl.addEventListener("pointerup", end);

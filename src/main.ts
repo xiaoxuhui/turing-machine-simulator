@@ -1,5 +1,5 @@
 import "./styles.css";
-import { inputToTape, parseTransitions, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
+import { inputToTape, isHeadInWindow, parseTransitions, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
@@ -317,6 +317,14 @@ function renderTape(): void {
     symbol.textContent = machine?.tape.read(position) ?? value("blankSymbol") ?? "□";
     cell.append(symbol);
     tape.append(cell);
+  }
+  // 读写头移出可视窗口时，在边缘显示指示箭头，避免“拖远了就找不到光标”。
+  if (!isHeadInWindow(center, head)) {
+    const hint = document.createElement("div");
+    const onLeft = head < center;
+    hint.className = `head-offscreen ${onLeft ? "left" : "right"}`;
+    hint.textContent = onLeft ? `← 读写头在 ${head}` : `读写头在 ${head} →`;
+    tape.append(hint);
   }
 }
 

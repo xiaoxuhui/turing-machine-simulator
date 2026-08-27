@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, TuringMachine, type MachineDefinition } from "../src/core";
+import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, TuringMachine, type MachineDefinition } from "../src/core";
 
 describe("Tape", () => {
   it("reads blank cells and supports negative positions", () => {
@@ -46,6 +46,20 @@ describe("panFromDragDelta", () => {
     expect(panFromDragDelta(0, 30, 57)).toBe(-1); // round(0.53)=1 → 0-1
     expect(panFromDragDelta(0, -30, 57)).toBe(1); // round(-0.53)=-1 → 0-(-1)
     expect(panFromDragDelta(0, 0, 57)).toBe(0);
+  });
+});
+
+describe("isHeadInWindow", () => {
+  it("treats the window as center±8 (17 cells)", () => {
+    expect(isHeadInWindow(0, -8)).toBe(true);
+    expect(isHeadInWindow(0, 8)).toBe(true);
+    expect(isHeadInWindow(0, 9)).toBe(false);
+    expect(isHeadInWindow(0, -9)).toBe(false);
+  });
+  it("shifts the window with the tape scroll/center", () => {
+    expect(isHeadInWindow(10, 2)).toBe(true); // window [2,18], head at lower bound
+    expect(isHeadInWindow(10, 18)).toBe(true);
+    expect(isHeadInWindow(10, 1)).toBe(false);
   });
 });
 
