@@ -13,6 +13,8 @@
 
 A visual, programmable single-tape deterministic Turing machine simulator.
 
+> This is a for-fun hobby project; issue responses are not guaranteed on any timeline. Feel free to fork and adapt it.
+
 ## Live Demo
 
 Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](https://xiaoxuhui.github.io/turing-machine-simulator/)

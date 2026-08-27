@@ -13,6 +13,8 @@
 
 一个可视化、可编程的单纸带确定性图灵机模拟器。
 
+> 这是一个小朋友娱乐项目，issue 响应不保证时效，欢迎 fork 自行改造。
+
 ## 在线演示
 
 部署在 GitHub Pages 上：[https://xiaoxuhui.github.io/turing-machine-simulator/](https://xiaoxuhui.github.io/turing-machine-simulator/)
