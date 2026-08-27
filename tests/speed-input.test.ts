@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { applySpeed, attachSpeedSync } from "../src/speed-input";
 
 /** 用不依赖 jsdom 的桩元素承接真实监听与设值，验证双向同步逻辑。 */

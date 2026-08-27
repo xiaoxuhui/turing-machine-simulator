@@ -48,6 +48,8 @@ body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }
 .btn.primary { background: #168963; color: white; border-color: #168963; }
 .btn.danger { color: #a73535; }
 .speed { margin-left: 10px; display: flex; align-items: center; gap: 8px; font-size: 13px; color: #667285; }
+.speed input[type="number"] { width: 76px; padding: 6px 8px; border: 1px solid #dfe5ed; border-radius: 8px; font-size: 13px; color: #2b3340; }
+.speed input[type="number"]:focus { outline: 2px solid #9ec5ff; border-color: #9ec5ff; }
 .view-mode { display: flex; align-items: center; gap: 7px; margin-left: 8px; font-size: 13px; white-space: nowrap; }
 .view-mode select { padding: 7px 9px; }
 .lower { display: grid; grid-template-columns: minmax(650px, 1.65fr) minmax(340px, .85fr); gap: 16px; }

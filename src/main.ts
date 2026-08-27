@@ -5,7 +5,7 @@ import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
 import { attachTapeDrag } from "./tape-drag";
 import { normalizeRouteSteps, routeCanvasSize, routeSampleIndex } from "./route-view";
-import { normalizeSpeed } from "./speed";
+import { applySpeed, attachSpeedSync, type SpeedSyncElements } from "./speed-input";
 import { ExecutionScheduler } from "./execution-scheduler";
 import { RouteController, type RouteFrame } from "./route-controller";
 import { renderExecutionLog } from "./execution-log";
@@ -60,7 +60,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <button id="pause" class="btn">暂停</button>
           <button id="reset" class="btn">重置</button>
           <label class="view-mode">纸带视角<select id="tapeViewMode"><option value="follow-head">跟随读写头</option><option value="fixed-zero">固定在 0</option><option value="free-drag">随意拖动</option></select></label>
-          <div class="speed"><span>目标速度</span><input id="speed" type="range" min="1" max="1000" value="5" /><span id="speedText">5 步/秒</span><strong id="actualSpeed">实际 0 步/秒</strong></div>
+          <div class="speed"><span>目标速度</span><input id="speed" type="range" min="1" max="1000" value="5" /><input id="speedNumber" type="number" min="1" max="1000" step="1" value="5" title="手动输入目标速度（步/秒）" /><span id="speedText">5 步/秒</span><strong id="actualSpeed">实际 0 步/秒</strong></div>
         </div>
       </section>
       <div class="lower">
@@ -474,10 +474,14 @@ function resetMachine(): void {
   render();
 }
 
+const speedEls: SpeedSyncElements = {
+  slider: byId<HTMLInputElement>("speed"),
+  number: byId<HTMLInputElement>("speedNumber"),
+  text: byId("speedText"),
+};
+
 function updateSpeedText(): void {
-  const speed = normalizeSpeed(Number(value("speed")));
-  byId<HTMLInputElement>("speed").value = String(speed);
-  byId("speedText").textContent = `${speed} 步/秒`;
+  applySpeed(speedEls, Number(speedEls.slider.value));
 }
 
 function download(name: string, content: string, type: string): void {
@@ -493,7 +497,7 @@ byId("step").addEventListener("click", () => { pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
 byId("reset").addEventListener("click", resetMachine);
-byId("speed").addEventListener("input", updateSpeedText);
+attachSpeedSync(speedEls);
 byId("tapeViewMode").addEventListener("change", () => {
   tapeScroll = 0; // 切换视角归零，避免跨模式串扰
   byId("tape").style.transform = ""; // 清除可能的亚格 transform 残留
