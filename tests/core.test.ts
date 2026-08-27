@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, effectiveTapeScroll, headFollowShift, TuringMachine, type MachineDefinition } from "../src/core";
+import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, effectiveTapeScroll, headFollowShift, slideDurationMs, TuringMachine, type MachineDefinition } from "../src/core";
 
 describe("Tape", () => {
   it("reads blank cells and supports negative positions", () => {
@@ -92,6 +92,30 @@ describe("headFollowShift", () => {
     expect(headFollowShift(0, 10, 0)).toBe(0);
   });
 });
+
+describe("slideDurationMs", () => {
+  it("spreads the slide across most of the step interval at slow speed", () => {
+    expect(slideDurationMs(1)).toBe(900); // interval 1000 -> 900, capped
+  });
+  it("uses ~90% of the interval at default speed", () => {
+    expect(slideDurationMs(5)).toBe(180); // interval 200 -> 180
+  });
+  it("shrinks with the interval at medium speed", () => {
+    expect(slideDurationMs(10)).toBe(90); // interval 100 -> 90
+  });
+  it("keeps up at high speed without exceeding the interval", () => {
+    expect(slideDurationMs(100)).toBe(9); // interval 10 -> 9
+  });
+  it("floors to the 8ms minimum at extreme speed", () => {
+    expect(slideDurationMs(1000)).toBe(8); // interval 1 -> 0.9 -> clamped to 8
+  });
+  it("treats invalid speeds as 1 step/sec (900ms)", () => {
+    expect(slideDurationMs(0)).toBe(900);
+    expect(slideDurationMs(-3)).toBe(900);
+    expect(slideDurationMs(NaN)).toBe(900);
+  });
+});
+
 
 describe("TuringMachine", () => {
   const unary: MachineDefinition = {

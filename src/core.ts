@@ -214,3 +214,20 @@ export function headFollowShift(fromCenter: number, toCenter: number, pitch: num
 export function effectiveTapeScroll(mode: TapeViewMode, scroll: number): number {
   return mode === "free-drag" ? scroll : 0;
 }
+
+/**
+ * 跟随读写头模式下，纸带滑动的过渡时长（毫秒），跟随目标速度自适应。
+ *
+ * 步进节奏由速度决定：单步间隔 ≈ 1000 / 速度(步/秒) 毫秒。固定过渡时长会脱节——
+ * 慢速时滑完就干等（像“跳一步”），快速时过渡比间隔还长（积压、刷新不过来）。
+ * 这里让时长取单步间隔的约 90%，并夹紧在 [8, 900]：
+ * - 慢速(如 1) → 接近整段间隔，连续缓行、无明显停顿；
+ * - 快速(如 1000) → 远小于间隔、近乎瞬时，能跟上演进、不积压。
+ * speed 非法(0/负/NaN/超范围)时夹紧到 [1,1000]，默认当 1 处理。
+ */
+export function slideDurationMs(stepsPerSecond: number): number {
+  const speed = Math.min(1000, Math.max(1, Number.isFinite(stepsPerSecond) ? stepsPerSecond : 1));
+  const interval = 1000 / speed;
+  return Math.min(900, Math.max(8, interval * 0.9));
+}
+
