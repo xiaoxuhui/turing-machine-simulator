@@ -173,10 +173,11 @@ export function inputToTape(input: string, blankSymbol: string): Array<[number, 
   );
 }
 
-export type TapeViewMode = "follow-head" | "fixed-zero";
+export type TapeViewMode = "follow-head" | "fixed-zero" | "free-drag";
 
 export function tapeWindowCenter(mode: TapeViewMode, headPosition: number): number {
-  return mode === "fixed-zero" ? 0 : headPosition;
+  // free-drag 与 fixed-zero 都以 0 为基准（满足“初始位置在零”），follow-head 跟随读写头。
+  return mode === "follow-head" ? headPosition : 0;
 }
 
 /**
@@ -192,4 +193,13 @@ export function panFromDragDelta(startScroll: number, deltaX: number, pitch: num
 /** 纸带可视窗口固定为 center±8 共 17 格，判断读写头是否落在窗口内。 */
 export function isHeadInWindow(center: number, head: number): boolean {
   return head >= center - 8 && head <= center + 8;
+}
+
+/**
+ * 纸带平移量是否对当前视角生效。
+ * 仅「随意拖动」(free-drag) 模式允许拖动平移；其它视角下返回 0，
+ * 从而删除原先“所有视角都能拖动”的行为。
+ */
+export function effectiveTapeScroll(mode: TapeViewMode, scroll: number): number {
+  return mode === "free-drag" ? scroll : 0;
 }

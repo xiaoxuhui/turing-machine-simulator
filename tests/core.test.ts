@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, TuringMachine, type MachineDefinition } from "../src/core";
+import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, effectiveTapeScroll, TuringMachine, type MachineDefinition } from "../src/core";
 
 describe("Tape", () => {
   it("reads blank cells and supports negative positions", () => {
@@ -24,6 +24,21 @@ describe("tape viewport", () => {
     expect(tapeWindowCenter("follow-head", 14)).toBe(14);
     expect(tapeWindowCenter("fixed-zero", 14)).toBe(0);
     expect(tapeWindowCenter("fixed-zero", -9)).toBe(0);
+  });
+  it("treats free-drag as centered on zero (initial position at zero)", () => {
+    expect(tapeWindowCenter("free-drag", 14)).toBe(0);
+    expect(tapeWindowCenter("free-drag", -9)).toBe(0);
+  });
+});
+
+describe("effectiveTapeScroll", () => {
+  it("only applies the panning scroll in free-drag mode", () => {
+    expect(effectiveTapeScroll("free-drag", 5)).toBe(5);
+    expect(effectiveTapeScroll("free-drag", -3)).toBe(-3);
+  });
+  it("drops the scroll in every other view mode (deletes cross-mode dragging)", () => {
+    expect(effectiveTapeScroll("follow-head", 5)).toBe(0);
+    expect(effectiveTapeScroll("fixed-zero", 5)).toBe(0);
   });
 });
 
