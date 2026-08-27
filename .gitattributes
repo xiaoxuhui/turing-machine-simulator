@@ -1,0 +1,26 @@
+# 统一换行符为 LF（跨平台协作更干净）
+* text=auto eol=lf
+
+# 明确按文本处理的源文件
+*.ts text
+*.js text
+*.json text
+*.md text
+*.css text
+*.html text
+*.yml text
+*.yaml text
+
+# 二进制文件，不转换换行符
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.exe binary
+
+# Windows 脚本保留 CRLF，避免 cmd/ps1 在 *nix 上出问题
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
