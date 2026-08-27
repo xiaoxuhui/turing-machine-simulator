@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, effectiveTapeScroll, TuringMachine, type MachineDefinition } from "../src/core";
+import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, effectiveTapeScroll, headFollowShift, TuringMachine, type MachineDefinition } from "../src/core";
 
 describe("Tape", () => {
   it("reads blank cells and supports negative positions", () => {
@@ -75,6 +75,21 @@ describe("isHeadInWindow", () => {
     expect(isHeadInWindow(10, 2)).toBe(true); // window [2,18], head at lower bound
     expect(isHeadInWindow(10, 18)).toBe(true);
     expect(isHeadInWindow(10, 1)).toBe(false);
+  });
+});
+
+describe("headFollowShift", () => {
+  it("produces a +pitch shift when the head moves one cell right", () => {
+    expect(headFollowShift(0, 1, 58)).toBe(58);
+  });
+  it("produces a negative shift when the head moves left", () => {
+    expect(headFollowShift(5, 3, 60)).toBe(-120);
+  });
+  it("is zero when the center does not change", () => {
+    expect(headFollowShift(4, 4, 58)).toBe(0);
+  });
+  it("falls back to zero for a non-positive pitch", () => {
+    expect(headFollowShift(0, 10, 0)).toBe(0);
   });
 });
 

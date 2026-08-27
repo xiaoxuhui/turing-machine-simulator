@@ -196,6 +196,17 @@ export function isHeadInWindow(center: number, head: number): boolean {
 }
 
 /**
+ * 平滑跟随所需的初始瞬时位移（像素）。
+ * 纸带中心从 fromCenter 变为 toCenter、相邻格间距为 pitch 时，
+ * 把新渲染的纸带先瞬时移回旧中心所需的位移 = (toCenter - fromCenter) * pitch。
+ * pitch <= 0 时回退为 0，避免除零/异常。
+ */
+export function headFollowShift(fromCenter: number, toCenter: number, pitch: number): number {
+  if (pitch <= 0) return 0;
+  return (toCenter - fromCenter) * pitch;
+}
+
+/**
  * 纸带平移量是否对当前视角生效。
  * 仅「随意拖动」(free-drag) 模式允许拖动平移；其它视角下返回 0，
  * 从而删除原先“所有视角都能拖动”的行为。
