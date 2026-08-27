@@ -27,8 +27,9 @@ button { cursor: pointer; }
 .status-pill { color: #126b4b; }
 .tape-shell { position: relative; overflow: hidden; padding: 44px 0 52px; background: linear-gradient(180deg,#f9fbfd,#f3f6fa); border: 1px solid #dfe5ed; border-radius: 12px; }
 .tape { position: relative; display: flex; justify-content: center; touch-action: none; }
-/* 抓手光标仅在「随意拖动」视角下出现（can-drag 由 renderTape 按模式切换），其它模式纸带光标正常 */
-.tape.can-drag { cursor: grab; }
+/* 平滑拖动：提示浏览器对 transform 做合成层优化，跟手更顺 */
+.tape.can-drag { cursor: grab; will-change: transform; }
+.tape.dragging { will-change: transform; }
 .tape.can-drag.dragging { cursor: grabbing; user-select: none; }
 /* 拖动期间全局锁定 grabbing 光标（含超出纸带元素的范围），避免拖远时光标变回默认箭头 */
 body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }

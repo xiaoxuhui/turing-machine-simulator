@@ -496,6 +496,7 @@ byId("reset").addEventListener("click", resetMachine);
 byId("speed").addEventListener("input", updateSpeedText);
 byId("tapeViewMode").addEventListener("change", () => {
   tapeScroll = 0; // 切换视角归零，避免跨模式串扰
+  byId("tape").style.transform = ""; // 清除可能的亚格 transform 残留
   render();
 });
 attachTapeDrag(byId("tape"), {
@@ -503,10 +504,16 @@ attachTapeDrag(byId("tape"), {
   setScroll: (newValue) => {
     // 仅「随意拖动」模式下允许拖动；其它视角忽略（删除原跨模式拖动）。
     if (value("tapeViewMode") !== "free-drag") return;
+    if (newValue === tapeScroll) return; // 同值不重渲染，减少亚格拖动时的闪烁
     tapeScroll = newValue;
     renderTape();
   },
   getPitch: tapeCellPitch,
+  // 平滑跟手：把亚格余数作为 transform 施加到纸带，松手时传 0 吸附回整格。
+  applyShift: (pixelOffset) => {
+    byId("tape").style.transform = pixelOffset === 0 ? "" : `translateX(${pixelOffset}px)`;
+  },
+  isEnabled: () => value("tapeViewMode") === "free-drag",
 });
 byId("clear").addEventListener("click", () => { pause(); byId<HTMLTextAreaElement>("rules").value = ""; });
 byId("addRule").addEventListener("click", () => {
