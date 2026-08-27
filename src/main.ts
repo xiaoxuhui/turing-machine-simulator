@@ -1,5 +1,5 @@
 import "./styles.css";
-import { inputToTape, isHeadInWindow, parseTransitions, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
+import { effectiveTapeScroll, inputToTape, isHeadInWindow, parseTransitions, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
@@ -59,7 +59,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <button id="run" class="btn primary">运行</button>
           <button id="pause" class="btn">暂停</button>
           <button id="reset" class="btn">重置</button>
-          <label class="view-mode">纸带视角<select id="tapeViewMode"><option value="follow-head">跟随读写头</option><option value="fixed-zero">固定在 0</option></select></label>
+          <label class="view-mode">纸带视角<select id="tapeViewMode"><option value="follow-head">跟随读写头</option><option value="fixed-zero">固定在 0</option><option value="free-drag">随意拖动</option></select></label>
           <div class="speed"><span>目标速度</span><input id="speed" type="range" min="1" max="1000" value="5" /><span id="speedText">5 步/秒</span><strong id="actualSpeed">实际 0 步/秒</strong></div>
         </div>
       </section>
@@ -308,7 +308,10 @@ function renderTape(): void {
   tape.replaceChildren();
   const head = machine?.headPosition ?? 0;
   const mode = value("tapeViewMode") as TapeViewMode;
-  const center = tapeWindowCenter(mode, head) + tapeScroll;
+  // 仅「随意拖动」模式下拖动平移才生效；其它模式 tapeScroll 视为 0（删除原跨模式拖动）。
+  const center = tapeWindowCenter(mode, head) + effectiveTapeScroll(mode, tapeScroll);
+  // 抓手光标只在「随意拖动」模式下出现。
+  tape.classList.toggle("can-drag", mode === "free-drag");
   for (let position = center - 8; position <= center + 8; position += 1) {
     const cell = document.createElement("div");
     cell.className = `cell${position === head ? " head" : ""}`;
@@ -491,10 +494,18 @@ byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
 byId("reset").addEventListener("click", resetMachine);
 byId("speed").addEventListener("input", updateSpeedText);
-byId("tapeViewMode").addEventListener("change", render);
+byId("tapeViewMode").addEventListener("change", () => {
+  tapeScroll = 0; // 切换视角归零，避免跨模式串扰
+  render();
+});
 attachTapeDrag(byId("tape"), {
   getScroll: () => tapeScroll,
-  setScroll: (value) => { tapeScroll = value; renderTape(); },
+  setScroll: (newValue) => {
+    // 仅「随意拖动」模式下允许拖动；其它视角忽略（删除原跨模式拖动）。
+    if (value("tapeViewMode") !== "free-drag") return;
+    tapeScroll = newValue;
+    renderTape();
+  },
   getPitch: tapeCellPitch,
 });
 byId("clear").addEventListener("click", () => { pause(); byId<HTMLTextAreaElement>("rules").value = ""; });
