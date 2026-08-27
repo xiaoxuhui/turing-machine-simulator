@@ -1,5 +1,5 @@
 import "./styles.css";
-import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
+import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
@@ -337,10 +337,11 @@ function renderTape(): void {
   if (mode === "follow-head") {
     if (tapeRenderCenter !== null && center !== tapeRenderCenter) {
       const shift = headFollowShift(tapeRenderCenter, center, tapeCellPitch());
+      const slideMs = slideDurationMs(Number(value("speed")));
       tape.style.transition = "none";
       tape.style.transform = `translateX(${shift}px)`;
       void tape.offsetWidth; // 强制重排，确保上面的瞬时位移先生效，再开始过渡
-      tape.style.transition = "transform 150ms ease-out";
+      tape.style.transition = `transform ${slideMs}ms ease-out`;
       tape.style.transform = "translateX(0)";
     }
     tapeRenderCenter = center;
