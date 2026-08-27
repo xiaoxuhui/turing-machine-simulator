@@ -3,6 +3,7 @@ import { inputToTape, parseTransitions, tapeWindowCenter, TuringMachine, type Ma
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
+import { attachTapeDrag } from "./tape-drag";
 import { normalizeRouteSteps, routeCanvasSize, routeSampleIndex } from "./route-view";
 import { normalizeSpeed } from "./speed";
 import { ExecutionScheduler } from "./execution-scheduler";
@@ -22,6 +23,7 @@ let placedTiles: Array<string | null> = [];
 let selectedTileId: string | null = null;
 let solutionVisible = false;
 let tileOrder: string[] = [];
+let tapeScroll = 0;
 
 const defaultProject: ProjectData = {
   format: "turing-machine-simulator",
@@ -173,6 +175,7 @@ function createMachine(): boolean {
     return false;
   }
   records = [];
+  tapeScroll = 0;
   appliedMachineKey = machineProjectKey(project);
   status = "就绪";
   stopMessage = "";
@@ -305,7 +308,7 @@ function renderTape(): void {
   tape.replaceChildren();
   const head = machine?.headPosition ?? 0;
   const mode = value("tapeViewMode") as TapeViewMode;
-  const center = tapeWindowCenter(mode, head);
+  const center = tapeWindowCenter(mode, head) + tapeScroll;
   for (let position = center - 8; position <= center + 8; position += 1) {
     const cell = document.createElement("div");
     cell.className = `cell${position === head ? " head" : ""}`;
@@ -315,6 +318,15 @@ function renderTape(): void {
     cell.append(symbol);
     tape.append(cell);
   }
+}
+
+function tapeCellPitch(): number {
+  const cells = byId("tape").querySelectorAll<HTMLElement>(".cell");
+  if (cells.length >= 2) {
+    const pitch = Math.abs(cells[1].getBoundingClientRect().left - cells[0].getBoundingClientRect().left);
+    if (pitch > 0) return pitch;
+  }
+  return 58;
 }
 
 function renderLog(): void {
@@ -444,6 +456,7 @@ function resetMachine(): void {
   }
   machine.reset();
   records = [];
+  tapeScroll = 0;
   status = "就绪";
   stopMessage = "";
   byId("errors").textContent = "";
@@ -471,6 +484,11 @@ byId("pause").addEventListener("click", () => pause());
 byId("reset").addEventListener("click", resetMachine);
 byId("speed").addEventListener("input", updateSpeedText);
 byId("tapeViewMode").addEventListener("change", render);
+attachTapeDrag(byId("tape"), {
+  getScroll: () => tapeScroll,
+  setScroll: (value) => { tapeScroll = value; renderTape(); },
+  getPitch: tapeCellPitch,
+});
 byId("clear").addEventListener("click", () => { pause(); byId<HTMLTextAreaElement>("rules").value = ""; });
 byId("addRule").addEventListener("click", () => {
   const source = value("rules").trim();

@@ -26,7 +26,8 @@ button { cursor: pointer; }
 .metric strong { font-size: 16px; }
 .status-pill { color: #126b4b; }
 .tape-shell { position: relative; overflow: hidden; padding: 44px 0 52px; background: linear-gradient(180deg,#f9fbfd,#f3f6fa); border: 1px solid #dfe5ed; border-radius: 12px; }
-.tape { display: flex; justify-content: center; }
+.tape { display: flex; justify-content: center; cursor: grab; touch-action: pan-y; }
+.tape.dragging { cursor: grabbing; user-select: none; }
 .cell { flex: 0 0 58px; height: 58px; border: 1px solid #aeb9c7; margin-left: -1px; display: grid; place-items: center; background: white; font-size: 21px; font-weight: 700; position: relative; }
 .cell-index { position: absolute; top: -24px; color: #8490a0; font-size: 11px; font-weight: 400; }
 .cell.head { border: 2px solid #1d8d67; z-index: 2; background: #e9fff7; }
