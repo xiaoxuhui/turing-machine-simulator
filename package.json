@@ -1,7 +1,7 @@
 {
   "name": "turing-machine-simulator",
   "private": false,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "可视化、可编程的单纸带确定性图灵机模拟器与 Wang 瓷砖拼图",
   "license": "MIT",
   "type": "module",
@@ -27,6 +27,10 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
+    "build:android": "vite build --base=./",
+    "sync:android": "node scripts/sync-android-assets.mjs",
+    "check:android": "node scripts/sync-android-assets.mjs --check",
+    "test:android": "node --test tests/android-shell.test.js",
     "test": "vitest run",
     "typecheck": "tsc -b",
     "check": "pnpm test && pnpm run build",

@@ -1,6 +1,9 @@
 # 统一换行符为 LF（跨平台协作更干净）
 * text=auto eol=lf
 
+# Gradle wrapper 脚本必须 LF，否则 Linux/macOS CI 报 bad interpreter
+android/gradlew text eol=lf
+
 # 明确按文本处理的源文件
 *.ts text
 *.js text
@@ -19,6 +22,8 @@
 *.ico binary
 *.zip binary
 *.exe binary
+*.jar binary
+*.apk binary
 
 # Windows 脚本保留 CRLF，避免 cmd/ps1 在 *nix 上出问题
 *.bat text eol=crlf
