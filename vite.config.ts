@@ -4,6 +4,14 @@ export default defineConfig({
   // Subpath so the built SPA works when published to GitHub Pages
   // at https://xiaoxuhui.github.io/turing-machine-simulator/
   base: "/turing-machine-simulator/",
+  build: {
+    rollupOptions: {
+      input: {
+        main: "index.html",
+        campaign: "campaign.html",
+      },
+    },
+  },
   test: {
     environment: "node",
     // 安卓外壳结构性测试（tests/android-shell.test.js）基于 node:test，

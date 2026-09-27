@@ -80,8 +80,17 @@ describe("campaign progress", () => {
     expect(normalizeCampaignProgress({ version: 1, completedLevelIds: ["write-one", "write-one", "unknown", 42] })).toEqual({
       version: 1,
       completedLevelIds: ["write-one"],
+      drafts: {},
     });
     expect(normalizeCampaignProgress({ version: 2, completedLevelIds: ["write-one"] })).toEqual(emptyCampaignProgress());
     expect(isLevelUnlocked(emptyCampaignProgress(), "unknown")).toBe(false);
+  });
+
+  it("keeps only known string drafts", () => {
+    expect(normalizeCampaignProgress({
+      version: 1,
+      completedLevelIds: [],
+      drafts: { "write-one": "q0,□ -> HALT,1,N", unknown: "answer", "erase-one": 42 },
+    }).drafts).toEqual({ "write-one": "q0,□ -> HALT,1,N" });
   });
 });

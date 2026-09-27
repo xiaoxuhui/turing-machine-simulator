@@ -38,6 +38,7 @@ export interface CampaignVerification {
 export interface CampaignProgress {
   version: 1;
   completedLevelIds: string[];
+  drafts: Record<string, string>;
 }
 
 const base = {
@@ -222,16 +223,19 @@ export function verifyLevel(level: CampaignLevel, definition: MachineDefinition)
 }
 
 export function emptyCampaignProgress(): CampaignProgress {
-  return { version: 1, completedLevelIds: [] };
+  return { version: 1, completedLevelIds: [], drafts: {} };
 }
 
 export function normalizeCampaignProgress(value: unknown): CampaignProgress {
   if (typeof value !== "object" || value === null) return emptyCampaignProgress();
-  const candidate = value as { version?: unknown; completedLevelIds?: unknown };
+  const candidate = value as { version?: unknown; completedLevelIds?: unknown; drafts?: unknown };
   if (candidate.version !== 1 || !Array.isArray(candidate.completedLevelIds)) return emptyCampaignProgress();
   const known = new Set(campaignLevels.map((level) => level.id));
   const completedLevelIds = [...new Set(candidate.completedLevelIds.filter((id): id is string => typeof id === "string" && known.has(id)))];
-  return { version: 1, completedLevelIds };
+  const drafts = typeof candidate.drafts === "object" && candidate.drafts !== null
+    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= 100_000))
+    : {};
+  return { version: 1, completedLevelIds, drafts };
 }
 
 export function isLevelUnlocked(progress: CampaignProgress, levelId: string): boolean {
@@ -242,5 +246,5 @@ export function isLevelUnlocked(progress: CampaignProgress, levelId: string): bo
 
 export function completeLevel(progress: CampaignProgress, levelId: string): CampaignProgress {
   if (!isLevelUnlocked(progress, levelId) || progress.completedLevelIds.includes(levelId)) return progress;
-  return { version: 1, completedLevelIds: [...progress.completedLevelIds, levelId] };
+  return { ...progress, completedLevelIds: [...progress.completedLevelIds, levelId] };
 }
