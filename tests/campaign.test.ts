@@ -2,15 +2,27 @@ import { describe, expect, it } from "vitest";
 import { campaignLevels, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, tapeOutput, verifyLevel } from "../src/campaign";
 import { parseTransitions, Tape, type MachineDefinition } from "../src/core";
 
+const solutionRules: Record<string, string> = {
+  "write-one": "q0,□ -> HALT,1,N",
+  "unary-increment": "q0,1 -> q0,1,R\nq0,□ -> HALT,1,N",
+  "erase-one": "q0,1 -> HALT,□,N",
+  "erase-unary": "q0,1 -> q0,□,R\nq0,□ -> HALT,□,N",
+  "zeros-to-ones": "q0,0 -> q0,1,R\nq0,1 -> q0,1,R\nq0,□ -> HALT,□,N",
+  "binary-complement": "q0,0 -> q0,1,R\nq0,1 -> q0,0,R\nq0,□ -> HALT,□,N",
+  "turn-back": "scan,0 -> scan,0,R\nscan,1 -> scan,1,R\nscan,□ -> last,□,L\nlast,0 -> HALT,1,N\nlast,1 -> HALT,1,N",
+  "binary-increment": "scan,0 -> scan,0,R\nscan,1 -> scan,1,R\nscan,□ -> carry,□,L\ncarry,0 -> HALT,1,N\ncarry,1 -> carry,0,L\ncarry,□ -> HALT,1,N",
+};
+
 function definitionFor(levelIndex: number): MachineDefinition {
-  const project = campaignLevels[levelIndex].template;
+  const level = campaignLevels[levelIndex];
+  const project = level.starter;
   return {
     blankSymbol: project.blankSymbol,
     initialState: project.initialState,
     acceptStates: [],
     rejectStates: [],
     haltStates: project.haltStates.split(",").filter(Boolean),
-    transitions: parseTransitions(project.rules).transitions,
+    transitions: parseTransitions(solutionRules[level.id]).transitions,
   };
 }
 
@@ -19,6 +31,18 @@ describe("campaign verification", () => {
     const result = verifyLevel(campaignLevels[index], definitionFor(index));
     expect(result.passed).toBe(true);
     expect(result.passedCount).toBe(result.totalCount);
+  });
+
+  it("does not ship complete solutions in starter drafts", () => {
+    for (const level of campaignLevels) {
+      expect(level.starter.rules.trim()).not.toBe(solutionRules[level.id]);
+      expect(verifyLevel(level, {
+        blankSymbol: level.starter.blankSymbol,
+        initialState: level.starter.initialState,
+        acceptStates: [], rejectStates: [], haltStates: ["HALT"],
+        transitions: parseTransitions(level.starter.rules).transitions,
+      }).passed).toBe(false);
+    }
   });
 
   it("reports the first observable wrong output", () => {

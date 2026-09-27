@@ -230,7 +230,7 @@ function renderCampaign(): void {
   byId("campaignTitle").textContent = level.title.replace(/^第 \d+ 关 · /, "");
   byId("campaignObjective").textContent = level.objective;
   byId("campaignConcept").textContent = level.concept;
-  byId("campaignHint").textContent = level.hint;
+  byId("campaignHint").textContent = level.lesson.explanation;
   const cases = byId("campaignCases");
   cases.replaceChildren();
   for (const testCase of level.cases) {
@@ -246,7 +246,7 @@ function renderCampaign(): void {
 
 function loadCampaignTemplate(): void {
   const level = activeCampaignLevel();
-  fillProject(level.template);
+  fillProject(level.starter);
   byId<HTMLInputElement>("maxSteps").value = String(level.maxSteps);
   createMachine();
   byId("campaignResult").textContent = "起始模板已载入。你可以先单步调试，再验证闯关。";
