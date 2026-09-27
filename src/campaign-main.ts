@@ -1,5 +1,5 @@
 import "./campaign-styles.css";
-import { campaignLevels, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
+import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
 import { parseTransitions, type MachineDefinition } from "./core";
 import { insertAtSelection } from "./text-insertion";
 
@@ -21,7 +21,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
       </nav>
       <section class="lesson-workspace">
         <article class="lesson-card">
-          <div class="lesson-heading"><div><span id="levelBadge"></span><h2 id="levelTitle"></h2></div><span id="levelState" class="level-state"></span></div>
+          <div class="lesson-heading"><div><div class="lesson-badges"><span id="sectionBadge"></span><span id="levelBadge"></span></div><h2 id="levelTitle"></h2></div><span id="levelState" class="level-state"></span></div>
           <p id="levelObjective" class="objective"></p>
           <div class="concept-box"><strong id="levelConcept"></strong><p id="levelExplanation"></p></div>
           <div class="lesson-grid">
@@ -132,25 +132,47 @@ function render(): void {
   const index = campaignLevels.indexOf(level);
   const list = byId("levelList");
   list.replaceChildren();
-  campaignLevels.forEach((item, itemIndex) => {
-    const unlocked = isLevelUnlocked(progress, item.id);
-    const completed = progress.completedLevelIds.includes(item.id);
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.levelId = item.id;
-    button.className = `level-button${item.id === level.id ? " active" : ""}${completed ? " completed" : ""}${unlocked ? "" : " locked"}`;
-    button.setAttribute("aria-disabled", String(!unlocked));
-    const number = document.createElement("span");
-    const text = document.createElement("div");
-    number.textContent = completed ? "✓" : unlocked ? String(itemIndex + 1) : "锁";
+  campaignSections.forEach((section) => {
+    const sectionLevels = campaignLevels.filter((item) => item.section === section.id);
+    const completedCount = sectionLevels.filter((item) => progress.completedLevelIds.includes(item.id)).length;
+    const group = document.createElement("section");
+    group.className = `level-group section-${section.id}`;
+    const heading = document.createElement("div");
+    heading.className = "level-group-heading";
+    const headingText = document.createElement("div");
     const title = document.createElement("strong");
-    const concept = document.createElement("small");
-    title.textContent = item.title.replace(/^第 \d+ 关 · /, "");
-    concept.textContent = item.concept;
-    text.append(title, concept);
-    button.append(number, text);
-    list.append(button);
+    const description = document.createElement("small");
+    const count = document.createElement("span");
+    title.textContent = section.title;
+    description.textContent = section.description;
+    count.textContent = `${completedCount}/${sectionLevels.length}`;
+    headingText.append(title, description);
+    heading.append(headingText, count);
+    group.append(heading);
+    sectionLevels.forEach((item) => {
+      const itemIndex = campaignLevels.indexOf(item);
+      const unlocked = isLevelUnlocked(progress, item.id);
+      const completed = progress.completedLevelIds.includes(item.id);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.levelId = item.id;
+      button.className = `level-button${item.id === level.id ? " active" : ""}${completed ? " completed" : ""}${unlocked ? "" : " locked"}`;
+      button.setAttribute("aria-disabled", String(!unlocked));
+      const number = document.createElement("span");
+      const text = document.createElement("div");
+      number.textContent = completed ? "✓" : unlocked ? String(itemIndex + 1) : "锁";
+      const itemTitle = document.createElement("strong");
+      const concept = document.createElement("small");
+      itemTitle.textContent = item.title.replace(/^第 \d+ 关 · /, "");
+      concept.textContent = `${"◆".repeat(item.difficulty)} ${item.concept}`;
+      text.append(itemTitle, concept);
+      button.append(number, text);
+      group.append(button);
+    });
+    list.append(group);
   });
+  const section = campaignSections.find((item) => item.id === level.section)!;
+  byId("sectionBadge").textContent = section.title;
   byId("levelBadge").textContent = `第 ${index + 1} / ${campaignLevels.length} 关`;
   byId("levelTitle").textContent = level.title.replace(/^第 \d+ 关 · /, "");
   byId("levelState").textContent = progress.completedLevelIds.includes(level.id) ? "已完成" : "学习中";
@@ -274,9 +296,9 @@ byId("verifyLevel").addEventListener("click", () => {
     progress = completeLevel(progress, level.id);
     const warning = saveProgress();
     const next = campaignLevels[campaignLevels.indexOf(level) + 1];
-    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : "八关全部完成！"}${warning ? ` ${warning}` : ""}`;
+    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : "全部 16 关完成！"}${warning ? ` ${warning}` : ""}`;
     render();
-    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : "八关全部完成！"}${warning ? ` ${warning}` : ""}`;
+    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : "全部 16 关完成！"}${warning ? ` ${warning}` : ""}`;
   } catch (error) {
     byId("editorError").textContent = error instanceof Error ? error.message : "无法验证当前规则";
   }

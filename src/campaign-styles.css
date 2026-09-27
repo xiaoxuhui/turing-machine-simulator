@@ -16,6 +16,14 @@ button { cursor: pointer; }
 .level-sidebar { padding: 15px; align-self: start; position: sticky; top: 18px; }
 .sidebar-heading { display: grid; gap: 2px; padding: 3px 5px 12px; }
 .sidebar-heading small { color: #8290a2; }
+.level-group + .level-group { margin-top: 15px; padding-top: 13px; border-top: 1px solid #e5ebf0; }
+.level-group-heading { display: flex; justify-content: space-between; gap: 8px; padding: 0 5px 5px; }
+.level-group-heading > div { min-width: 0; display: grid; gap: 2px; }
+.level-group-heading strong { color: #29364a; font-size: 13px; }
+.level-group-heading small { overflow: hidden; color: #8994a3; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.level-group-heading > span { align-self: start; padding: 2px 6px; border-radius: 999px; background: #edf1f5; color: #657184; font-size: 10px; font-weight: 800; }
+.section-challenge .level-group-heading strong { color: #9a5b08; }
+.section-hard .level-group-heading strong { color: #a12e4b; }
 .level-button { width: 100%; display: grid; grid-template-columns: 34px 1fr; align-items: center; gap: 9px; margin-top: 6px; padding: 10px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: #39465a; text-align: left; }
 .level-button > span { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #eef2f6; font-size: 12px; font-weight: 800; }
 .level-button div { min-width: 0; display: grid; gap: 2px; }
@@ -27,7 +35,9 @@ button { cursor: pointer; }
 .lesson-workspace { min-width: 0; display: grid; gap: 16px; }
 .lesson-card, .editor-card, .test-card { padding: 20px; }
 .lesson-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
-.lesson-heading span:first-child { color: #168963; font-size: 11px; font-weight: 900; }
+.lesson-badges { display: flex; align-items: center; gap: 7px; }
+.lesson-badges span { color: #168963; font-size: 11px; font-weight: 900; }
+.lesson-badges span:first-child { padding: 3px 7px; border-radius: 999px; background: #dff6ed; }
 .lesson-heading h2 { margin: 4px 0 0; font-size: 25px; }
 .level-state { padding: 5px 9px; border-radius: 999px; background: #eef2f5; color: #657184; font-size: 11px; font-weight: 800; }
 .level-state.done { background: #168963; color: white; }
@@ -77,7 +87,10 @@ textarea:focus { outline: 2px solid #58c89f; outline-offset: 1px; }
 @media (max-width: 980px) {
   .course-layout { grid-template-columns: 1fr; padding-inline: 16px; }
   .level-sidebar { position: static; }
-  #levelList { display: flex; gap: 7px; overflow-x: auto; }
+  #levelList { display: flex; gap: 12px; overflow-x: auto; }
+  .level-group { flex: 0 0 auto; display: flex; gap: 7px; }
+  .level-group + .level-group { margin-top: 0; padding-top: 0; padding-left: 12px; border-top: 0; border-left: 1px solid #e5ebf0; }
+  .level-group-heading { width: 150px; align-self: center; }
   .level-button { flex: 0 0 190px; }
   .practice-grid { grid-template-columns: 1fr; }
 }
