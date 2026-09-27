@@ -32,6 +32,11 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Generate a Wang tile puzzle from the machine's finite computation history
 - Click/drag tiling, edge-match validation, cycle detection, and one-click correct solution
 - Full-route overview (default 10,000 steps, larger values allowed) compressed into a space-time diagram
+- Campaign mode with five progressive programming goals, multi-input verification, sequential unlocking, and local progress
+
+## Campaign Mode
+
+Select **Campaign Mode** in the top bar, choose an unlocked level, and load its starter template. You keep using the same rule editor, stepping, and run controls for debugging. **Verify Level** runs every public case in isolated temporary machines, so it does not modify the visible tape. Passing every case saves completion locally and unlocks the next level.
 
 ## The Tile Puzzle
 
@@ -72,6 +77,7 @@ Open the local URL printed in the terminal. Everything runs entirely in your bro
 - `src/execution-scheduler.ts`: continuous-run ticking and real speed statistics.
 - `src/route-controller.ts`, `src/route-worker.ts`: cancellable background full-route computation.
 - `src/project-codec.ts`: project JSON v1 validation and local-storage boundary.
+- `src/campaign.ts`: level definitions, multi-input verification, and sequential progress.
 - `src/tile-puzzle.ts`: Wang tile puzzle from finite computation history.
 - `doc/`: requirements, design, implementation plans, test reports, and phase summaries.
 
