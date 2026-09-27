@@ -32,11 +32,11 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Generate a Wang tile puzzle from the machine's finite computation history
 - Click/drag tiling, edge-match validation, cycle detection, and one-click correct solution
 - Full-route overview (default 10,000 steps, larger values allowed) compressed into a space-time diagram
-- Campaign mode with five progressive programming goals, multi-input verification, sequential unlocking, and local progress
+- A standalone tutorial page with eight gradual programming goals, multi-input verification, sequential unlocking, and per-level drafts
 
 ## Campaign Mode
 
-Select **Campaign Mode** in the top bar, choose an unlocked level, and load its starter template. You keep using the same rule editor, stepping, and run controls for debugging. **Verify Level** runs every public case in isolated temporary machines, so it does not modify the visible tape. Passing every case saves completion locally and unlocks the next level.
+Select **Enter Campaign** from the workbench to open a separate tutorial page. Each level introduces one main concept with an explanation, guided steps, syntax notes, a dedicated editor, and an example run. There is no answer-loading action. Verification runs every public case in isolated temporary machines; passing them saves completion and unlocks the next level.
 
 ## The Tile Puzzle
 
