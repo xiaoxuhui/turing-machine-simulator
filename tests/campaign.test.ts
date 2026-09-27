@@ -60,6 +60,19 @@ describe("campaign verification", () => {
     expect(result.cases[0]).toMatchObject({ reason: "step-limit", steps: campaignLevels[0].maxSteps, passed: false });
   });
 
+  it("reports the exact state and symbol for a missing transition", () => {
+    const definition: MachineDefinition = {
+      blankSymbol: "□", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: ["HALT"],
+      transitions: parseTransitions("q0,□ -> q1,1,N").transitions,
+    };
+    expect(verifyLevel(campaignLevels[0], definition).cases[0]).toMatchObject({
+      reason: "missing-transition",
+      stoppedState: "q1",
+      readSymbol: "1",
+      steps: 1,
+    });
+  });
+
   it("serializes the occupied tape range including internal blanks", () => {
     expect(tapeOutput(new Tape("□", [[-1, "1"], [1, "1"]]))).toBe("1□1");
     expect(tapeOutput(new Tape("□"))).toBe("");

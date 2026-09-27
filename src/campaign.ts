@@ -25,6 +25,8 @@ export interface CampaignCaseResult extends CampaignCase {
   actualOutput: string;
   steps: number;
   reason: StopReason | "step-limit";
+  stoppedState: string;
+  readSymbol: string;
   passed: boolean;
 }
 
@@ -215,6 +217,8 @@ export function verifyLevel(level: CampaignLevel, definition: MachineDefinition)
       actualOutput,
       steps: machine.stepCount,
       reason,
+      stoppedState: machine.currentState,
+      readSymbol: machine.tape.read(machine.headPosition),
       passed: reason !== "step-limit" && actualOutput === testCase.expectedOutput,
     };
   });

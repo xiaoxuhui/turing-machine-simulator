@@ -47,6 +47,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
               ${[["->", "箭头"], [",", "逗号"], ["L", "左"], ["R", "右"], ["N", "不动"]].map(([symbol, label]) => `<button type="button" data-insert-symbol="${symbol}" aria-label="插入${label}">${symbol}</button>`).join("")}
             </div>
             <p id="editorHelp" class="editor-help">格式：当前状态,读取符号 -&gt; 下一状态,写入符号,方向</p>
+            <p id="ruleRecognition" class="rule-recognition" aria-live="polite"></p>
             <div id="editorError" class="editor-error" aria-live="polite"></div>
           </section>
 
@@ -112,6 +113,20 @@ function definitionFromEditor(): MachineDefinition | null {
   };
 }
 
+function updateRuleRecognition(): void {
+  const level = activeLevel();
+  const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value);
+  const blankRules = parsed.transitions.filter((rule) => rule.readSymbol === level.starter.blankSymbol);
+  const status = byId("ruleRecognition");
+  if (parsed.errors.length) {
+    status.textContent = `暂时识别到 ${parsed.transitions.length} 条规则；${parsed.errors[0]}。`;
+    status.classList.add("warning");
+    return;
+  }
+  status.textContent = `已识别 ${parsed.transitions.length} 条规则；${blankRules.length ? `空白符 □ 规则：${blankRules.map((rule) => rule.fromState).join("、")} 状态已覆盖` : "尚未写入读取空白符 □ 的规则"}。`;
+  status.classList.toggle("warning", blankRules.length === 0);
+}
+
 function render(): void {
   const level = activeLevel();
   const index = campaignLevels.indexOf(level);
@@ -149,6 +164,7 @@ function render(): void {
   byId("starterState").textContent = level.starter.initialState;
   byId("starterBlank").textContent = level.starter.blankSymbol;
   byId<HTMLTextAreaElement>("rulesEditor").value = progress.drafts[level.id] ?? level.starter.rules;
+  updateRuleRecognition();
   const cases = byId("publicCases");
   cases.replaceChildren();
   level.cases.forEach((testCase) => {
@@ -206,6 +222,7 @@ byId("rulesEditor").addEventListener("input", () => {
   progress = { ...progress, drafts: { ...progress.drafts, [activeLevelId]: byId<HTMLTextAreaElement>("rulesEditor").value } };
   const warning = saveProgress();
   byId("editorError").textContent = warning ?? "";
+  updateRuleRecognition();
 });
 
 document.querySelector<HTMLElement>(".symbol-keyboard")!.addEventListener("pointerdown", (event) => {
@@ -230,7 +247,10 @@ byId("tryExample").addEventListener("click", () => {
   const level = activeLevel();
   try {
     const result = verifyLevel({ ...level, cases: [{ input: level.starter.input, expectedOutput: "" }] }, definition).cases[0];
-    byId("tryResult").textContent = `运行 ${result.steps} 步，${result.reason === "step-limit" ? "达到步数上限" : "机器已停止"}；纸带输出：${result.actualOutput || "空纸带"}`;
+    const stopText = result.reason === "missing-transition"
+      ? `缺少规则：状态 ${result.stoppedState} 读取 ${result.readSymbol}`
+      : result.reason === "step-limit" ? "达到步数上限" : "机器已停止";
+    byId("tryResult").textContent = `运行 ${result.steps} 步，${stopText}；纸带输出：${result.actualOutput || "空纸带"}`;
     renderTape(result.actualOutput);
   } catch (error) {
     byId("editorError").textContent = error instanceof Error ? error.message : "无法试跑当前规则";
@@ -245,7 +265,10 @@ byId("verifyLevel").addEventListener("click", () => {
     const result = verifyLevel(level, definition);
     const failed = result.cases.find((testCase) => !testCase.passed);
     if (failed) {
-      byId("verifyResult").textContent = `还差一点：输入 ${failed.input || "空纸带"} 时，期望 ${failed.expectedOutput || "空纸带"}，实际 ${failed.actualOutput || "空纸带"}${failed.reason === "step-limit" ? `，且超过 ${level.maxSteps} 步` : ""}。`;
+      const reason = failed.reason === "missing-transition"
+        ? `；缺少“状态 ${failed.stoppedState} 读取 ${failed.readSymbol}”的规则`
+        : failed.reason === "step-limit" ? `，且超过 ${level.maxSteps} 步` : "";
+      byId("verifyResult").textContent = `还差一点：输入 ${failed.input || "空纸带"} 时，期望 ${failed.expectedOutput || "空纸带"}，实际 ${failed.actualOutput || "空纸带"}${reason}。`;
       return;
     }
     progress = completeLevel(progress, level.id);

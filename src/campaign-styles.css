@@ -60,6 +60,8 @@ textarea:focus { outline: 2px solid #58c89f; outline-offset: 1px; }
 .symbol-keyboard button:hover, .symbol-keyboard button:focus-visible { border-color: #58c89f; background: #edf9f4; outline: none; }
 .symbol-keyboard button:active { transform: translateY(1px); }
 .editor-help { margin: 7px 0 0; color: #7f8b9b; font-size: 11px; }
+.rule-recognition { margin: 7px 0 0; padding: 7px 9px; border-radius: 7px; background: #eef9f5; color: #24634e; font-size: 11px; }
+.rule-recognition.warning { background: #fff7e6; color: #8a5a12; }
 .editor-error { min-height: 20px; margin-top: 7px; color: #b42318; font-size: 12px; }
 .public-tests { padding: 11px; border-radius: 9px; background: #f4f7fa; }
 .public-tests strong { display: block; margin-bottom: 7px; font-size: 12px; }
