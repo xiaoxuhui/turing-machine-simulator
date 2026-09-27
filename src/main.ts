@@ -11,8 +11,10 @@ import { RouteController, type RouteFrame } from "./route-controller";
 import { renderExecutionLog } from "./execution-log";
 import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./project-codec";
 import { shuffled } from "./shuffle";
+import { campaignLevels, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
+const CAMPAIGN_STORAGE_KEY = "turing-machine-simulator.campaign.v1";
 let machine: TuringMachine | null = null;
 let records: StepRecord[] = [];
 let status = "就绪";
@@ -26,6 +28,9 @@ let tileOrder: string[] = [];
 let tapeScroll = 0;
 // 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
 let tapeRenderCenter: number | null = null;
+let appMode: "lab" | "campaign" = "lab";
+let activeLevelId = campaignLevels[0].id;
+let campaignProgress: CampaignProgress = loadCampaignProgress();
 
 const defaultProject: ProjectData = {
   format: "turing-machine-simulator",
@@ -40,6 +45,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
     <header class="topbar">
       <div class="brand"><div class="brand-mark">TM</div><div><h1>图灵机实验台</h1><p>单纸带 · 确定性 · 可编程</p></div></div>
       <div class="toolbar">
+        <div class="mode-switch" role="group" aria-label="应用模式">
+          <button id="labMode" class="mode-button active" aria-pressed="true">自由实验</button>
+          <button id="campaignMode" class="mode-button" aria-pressed="false">关卡模式</button>
+        </div>
         <button id="exportProject">导出项目</button>
         <button id="importProject">导入项目</button>
         <input id="fileInput" type="file" accept="application/json,.json" hidden />
@@ -47,6 +56,31 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       </div>
     </header>
     <main class="workspace">
+      <section id="campaignPanel" class="panel campaign-panel" hidden>
+        <div class="campaign-header">
+          <div><span class="campaign-kicker">PROGRAMMING CAMPAIGN</span><h2>图灵机闯关</h2><p>编写同一台机器，通过本关的全部输入测试。</p></div>
+          <div class="campaign-progress"><strong id="campaignProgressText">0 / ${campaignLevels.length}</strong><span>关已完成</span><progress id="campaignProgress" max="${campaignLevels.length}" value="0"></progress></div>
+        </div>
+        <div id="campaignLevels" class="campaign-levels" aria-label="关卡列表"></div>
+        <div class="campaign-body">
+          <div class="campaign-brief">
+            <div class="campaign-title-row"><span id="campaignBadge" class="campaign-badge">第 1 关</span><span id="campaignState" class="campaign-state">未完成</span></div>
+            <h3 id="campaignTitle"></h3>
+            <p id="campaignObjective" class="campaign-objective"></p>
+            <div class="campaign-note"><strong>本关知识</strong><span id="campaignConcept"></span></div>
+            <details><summary>需要提示？</summary><p id="campaignHint"></p></details>
+          </div>
+          <div class="campaign-tests">
+            <div class="campaign-tests-title"><strong>公开测试</strong><small>必须全部通过</small></div>
+            <div id="campaignCases"></div>
+          </div>
+        </div>
+        <div class="campaign-actions">
+          <button id="loadCampaignTemplate" class="btn">载入起始模板</button>
+          <button id="verifyCampaign" class="btn primary">验证闯关</button>
+          <span id="campaignResult" class="campaign-result" aria-live="polite">选择关卡后开始编程。</span>
+        </div>
+      </section>
       <section class="panel machine-panel">
         <div class="status-row">
           <div class="metric"><span>运行状态</span><strong id="status" class="status-pill">就绪</strong></div>
@@ -124,6 +158,122 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const value = (id: string) => byId<HTMLInputElement | HTMLTextAreaElement>(id).value;
 const splitStates = (raw: string) => raw.split(",").map((item) => item.trim()).filter(Boolean);
+
+function loadCampaignProgress(): CampaignProgress {
+  try {
+    const source = localStorage.getItem(CAMPAIGN_STORAGE_KEY);
+    return source ? normalizeCampaignProgress(JSON.parse(source)) : emptyCampaignProgress();
+  } catch {
+    return emptyCampaignProgress();
+  }
+}
+
+function saveCampaignProgress(): string | null {
+  try {
+    localStorage.setItem(CAMPAIGN_STORAGE_KEY, JSON.stringify(campaignProgress));
+    return null;
+  } catch {
+    return "进度暂时无法保存，但本次通关仍然有效。";
+  }
+}
+
+function activeCampaignLevel(): CampaignLevel {
+  return campaignLevels.find((level) => level.id === activeLevelId) ?? campaignLevels[0];
+}
+
+function setAppMode(mode: "lab" | "campaign"): void {
+  appMode = mode;
+  byId("campaignPanel").hidden = mode !== "campaign";
+  const labButton = byId<HTMLButtonElement>("labMode");
+  const campaignButton = byId<HTMLButtonElement>("campaignMode");
+  labButton.classList.toggle("active", mode === "lab");
+  campaignButton.classList.toggle("active", mode === "campaign");
+  labButton.setAttribute("aria-pressed", String(mode === "lab"));
+  campaignButton.setAttribute("aria-pressed", String(mode === "campaign"));
+  if (mode === "campaign") renderCampaign();
+}
+
+function selectCampaignLevel(levelId: string): void {
+  if (!isLevelUnlocked(campaignProgress, levelId)) {
+    byId("campaignResult").textContent = "这关还锁着：请先完成前面的关卡。";
+    return;
+  }
+  activeLevelId = levelId;
+  byId("campaignResult").textContent = "关卡已选择。载入模板，或直接用当前机器挑战。";
+  renderCampaign();
+}
+
+function renderCampaign(): void {
+  const level = activeCampaignLevel();
+  const completed = campaignProgress.completedLevelIds.includes(level.id);
+  const levelIndex = campaignLevels.findIndex((item) => item.id === level.id);
+  const levelHost = byId("campaignLevels");
+  levelHost.replaceChildren();
+  for (const [index, item] of campaignLevels.entries()) {
+    const unlocked = isLevelUnlocked(campaignProgress, item.id);
+    const isCompleted = campaignProgress.completedLevelIds.includes(item.id);
+    const button = document.createElement("button");
+    button.className = `campaign-level${item.id === level.id ? " selected" : ""}${isCompleted ? " completed" : ""}${unlocked ? "" : " locked"}`;
+    button.type = "button";
+    button.dataset.levelId = item.id;
+    button.setAttribute("aria-disabled", String(!unlocked));
+    const marker = document.createElement("span");
+    const label = document.createElement("b");
+    marker.textContent = isCompleted ? "✓" : unlocked ? String(index + 1) : "🔒";
+    label.textContent = item.title.replace(/^第 \d+ 关 · /, "");
+    button.append(marker, label);
+    levelHost.append(button);
+  }
+  byId("campaignBadge").textContent = `第 ${levelIndex + 1} 关`;
+  byId("campaignState").textContent = completed ? "已完成" : "未完成";
+  byId("campaignState").classList.toggle("done", completed);
+  byId("campaignTitle").textContent = level.title.replace(/^第 \d+ 关 · /, "");
+  byId("campaignObjective").textContent = level.objective;
+  byId("campaignConcept").textContent = level.concept;
+  byId("campaignHint").textContent = level.hint;
+  const cases = byId("campaignCases");
+  cases.replaceChildren();
+  for (const testCase of level.cases) {
+    const row = document.createElement("div");
+    row.className = "campaign-case";
+    row.textContent = `${testCase.input || "（空纸带）"}  →  ${testCase.expectedOutput || "（空纸带）"}`;
+    cases.append(row);
+  }
+  const completedCount = campaignProgress.completedLevelIds.length;
+  byId("campaignProgressText").textContent = `${completedCount} / ${campaignLevels.length}`;
+  byId<HTMLProgressElement>("campaignProgress").value = completedCount;
+}
+
+function loadCampaignTemplate(): void {
+  const level = activeCampaignLevel();
+  fillProject(level.template);
+  byId<HTMLInputElement>("maxSteps").value = String(level.maxSteps);
+  createMachine();
+  byId("campaignResult").textContent = "起始模板已载入。你可以先单步调试，再验证闯关。";
+}
+
+function verifyCampaign(): void {
+  if (!ensureCurrentDraftApplied() || !machine) {
+    byId("campaignResult").textContent = "机器定义无效，请先修正规则。";
+    return;
+  }
+  const level = activeCampaignLevel();
+  const verification = verifyLevel(level, machine.definition);
+  const failed = verification.cases.find((testCase) => !testCase.passed);
+  if (!verification.passed && failed) {
+    const actual = failed.actualOutput || "（空纸带）";
+    const expected = failed.expectedOutput || "（空纸带）";
+    const reason = failed.reason === "step-limit" ? `超过 ${level.maxSteps} 步` : `运行 ${failed.steps} 步后停止`;
+    byId("campaignResult").textContent = `未通过：输入 ${failed.input || "（空纸带）"}，期望 ${expected}，实际 ${actual}（${reason}）。`;
+    return;
+  }
+  campaignProgress = completeLevel(campaignProgress, level.id);
+  const storageWarning = saveCampaignProgress();
+  const index = campaignLevels.findIndex((item) => item.id === level.id);
+  const next = campaignLevels[index + 1];
+  byId("campaignResult").textContent = `闯关成功：${verification.passedCount}/${verification.totalCount} 项通过。${next ? `已解锁“${next.title}”。` : "你已完成全部关卡！"}${storageWarning ? ` ${storageWarning}` : ""}`;
+  renderCampaign();
+}
 
 function collectProject(): ProjectData {
   return {
@@ -515,6 +665,14 @@ function download(name: string, content: string, type: string): void {
 }
 
 byId("apply").addEventListener("click", createMachine);
+byId("labMode").addEventListener("click", () => setAppMode("lab"));
+byId("campaignMode").addEventListener("click", () => setAppMode("campaign"));
+byId("campaignLevels").addEventListener("click", (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLElement>("[data-level-id]");
+  if (button?.dataset.levelId) selectCampaignLevel(button.dataset.levelId);
+});
+byId("loadCampaignTemplate").addEventListener("click", loadCampaignTemplate);
+byId("verifyCampaign").addEventListener("click", verifyCampaign);
 byId("step").addEventListener("click", () => { pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
@@ -636,3 +794,4 @@ fillProject(loadProject(localStorage, STORAGE_KEY) ?? defaultProject);
 byId("exampleNote").textContent = examples.unary.description;
 createMachine();
 renderRuleTable();
+setAppMode(appMode);

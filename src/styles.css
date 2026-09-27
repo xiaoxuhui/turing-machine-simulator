@@ -16,9 +16,43 @@ button { cursor: pointer; }
 .brand p { margin: 2px 0 0; color: #aebad0; font-size: 12px; }
 .toolbar { display: flex; align-items: center; gap: 8px; }
 .toolbar button, .toolbar select { border: 1px solid #455267; background: #243149; color: white; padding: 8px 12px; border-radius: 8px; }
+.mode-switch { display: flex; padding: 3px; gap: 2px; border: 1px solid #455267; border-radius: 10px; background: #0d1727; }
+.toolbar .mode-switch .mode-button { border: 0; padding: 6px 10px; background: transparent; color: #b9c4d6; }
+.toolbar .mode-switch .mode-button.active { background: #4bd1a0; color: #10291f; font-weight: 800; }
 .workspace { padding: 20px 28px 32px; display: grid; gap: 16px; min-width: 0; }
 .workspace > *, .lower > *, .panel { min-width: 0; }
 .panel { background: white; border: 1px solid #dce3ec; border-radius: 14px; box-shadow: 0 4px 20px #1f36500b; }
+.campaign-panel { padding: 22px; overflow: hidden; background: linear-gradient(145deg, #ffffff 55%, #effbf6); border-color: #bfe8d8; }
+.campaign-panel[hidden] { display: none; }
+.campaign-header { display: flex; justify-content: space-between; align-items: start; gap: 24px; }
+.campaign-kicker { color: #168963; font-size: 10px; font-weight: 900; letter-spacing: .14em; }
+.campaign-header h2 { margin: 3px 0 5px; font-size: 24px; }
+.campaign-header p { margin: 0; color: #667285; font-size: 13px; }
+.campaign-progress { min-width: 170px; display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 0 6px; color: #667285; font-size: 12px; }
+.campaign-progress strong { color: #126b4b; font-size: 20px; }
+.campaign-progress progress { grid-column: 1 / -1; width: 100%; height: 9px; margin-top: 6px; accent-color: #168963; }
+.campaign-levels { display: flex; gap: 8px; margin: 18px 0; overflow-x: auto; padding-bottom: 4px; }
+.campaign-level { flex: 1 0 130px; min-width: 0; display: flex; align-items: center; gap: 8px; padding: 9px 10px; border: 1px solid #d8e2e8; border-radius: 10px; background: #fff; color: #445064; text-align: left; }
+.campaign-level span { flex: 0 0 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; background: #edf1f5; font-size: 12px; }
+.campaign-level b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.campaign-level.selected { border-color: #168963; box-shadow: 0 0 0 2px #16896322; }
+.campaign-level.completed span { background: #168963; color: white; }
+.campaign-level.locked { color: #9aa4b2; background: #f5f7f9; cursor: not-allowed; }
+.campaign-body { display: grid; grid-template-columns: 1.35fr 1fr; gap: 22px; padding: 18px; border: 1px solid #dfe8e4; border-radius: 12px; background: #ffffffcc; }
+.campaign-title-row { display: flex; align-items: center; gap: 8px; }
+.campaign-badge, .campaign-state { padding: 4px 8px; border-radius: 999px; background: #e8f7f1; color: #126b4b; font-size: 11px; font-weight: 800; }
+.campaign-state { background: #f0f2f5; color: #707b8b; }
+.campaign-state.done { background: #168963; color: white; }
+.campaign-brief h3 { margin: 10px 0 5px; font-size: 20px; }
+.campaign-objective { margin: 0 0 12px; color: #344054; font-size: 14px; }
+.campaign-note { display: flex; gap: 8px; padding: 9px 11px; border-radius: 8px; background: #f0faf6; color: #315f50; font-size: 12px; }
+.campaign-brief details { margin-top: 10px; color: #687487; font-size: 12px; }
+.campaign-brief details p { margin: 7px 0 0; }
+.campaign-tests-title { display: flex; justify-content: space-between; margin-bottom: 7px; color: #465264; font-size: 13px; }
+.campaign-tests-title small { color: #8993a1; }
+.campaign-case { padding: 7px 9px; margin-top: 5px; border: 1px solid #e5e9ee; border-radius: 7px; background: #f8fafb; font: 12px "Cascadia Code", Consolas, monospace; }
+.campaign-actions { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.campaign-result { flex: 1; min-height: 20px; color: #475467; font-size: 13px; }
 .machine-panel { padding: 18px 20px 20px; }
 .status-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 18px; }
 .metric { background: #f6f8fb; border: 1px solid #e5eaf1; border-radius: 10px; padding: 10px 12px; }
@@ -133,6 +167,8 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 @media (max-width: 680px) {
   .topbar { height: auto; min-height: 64px; padding-block: 10px; gap: 8px; flex-wrap: wrap; }
   .toolbar { flex-wrap: wrap; }
+  .mode-switch { order: -1; width: 100%; }
+  .toolbar .mode-switch .mode-button { flex: 1; }
   .brand p { display: none; }
   .toolbar button { padding-inline: 8px; font-size: 12px; }
   .workspace { padding: 12px; }
@@ -145,4 +181,9 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
   .route-progress { align-items: stretch; flex-direction: column; }
   .puzzle-actions .btn { flex: 1 1 135px; }
   .route-actions .btn { flex: 1 1 110px; }
+  .campaign-panel { padding: 16px; }
+  .campaign-header, .campaign-actions { align-items: stretch; flex-direction: column; }
+  .campaign-progress { width: 100%; }
+  .campaign-body { grid-template-columns: 1fr; gap: 15px; padding: 14px; }
+  .campaign-actions .btn { width: 100%; }
 }
