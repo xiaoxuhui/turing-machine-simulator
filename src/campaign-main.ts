@@ -1,6 +1,7 @@
 import "./campaign-styles.css";
 import { campaignLevels, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
 import { parseTransitions, type MachineDefinition } from "./core";
+import { insertAtSelection } from "./text-insertion";
 
 const STORAGE_KEY = "turing-machine-simulator.campaign.v1";
 let progress = loadProgress();
@@ -40,6 +41,11 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
             </div>
             <label for="rulesEditor">转移规则</label>
             <textarea id="rulesEditor" spellcheck="false" aria-describedby="editorHelp"></textarea>
+            <div class="symbol-keyboard" aria-label="规则符号键盘">
+              <span>不会输入空白符？点这里</span>
+              <button type="button" class="blank-key" data-insert-symbol="□" aria-label="插入空白符方框">□ <small>空白符</small></button>
+              ${[["->", "箭头"], [",", "逗号"], ["L", "左"], ["R", "右"], ["N", "不动"]].map(([symbol, label]) => `<button type="button" data-insert-symbol="${symbol}" aria-label="插入${label}">${symbol}</button>`).join("")}
+            </div>
             <p id="editorHelp" class="editor-help">格式：当前状态,读取符号 -&gt; 下一状态,写入符号,方向</p>
             <div id="editorError" class="editor-error" aria-live="polite"></div>
           </section>
@@ -200,6 +206,22 @@ byId("rulesEditor").addEventListener("input", () => {
   progress = { ...progress, drafts: { ...progress.drafts, [activeLevelId]: byId<HTMLTextAreaElement>("rulesEditor").value } };
   const warning = saveProgress();
   byId("editorError").textContent = warning ?? "";
+});
+
+document.querySelector<HTMLElement>(".symbol-keyboard")!.addEventListener("pointerdown", (event) => {
+  if ((event.target as HTMLElement).closest("button")) event.preventDefault();
+});
+
+document.querySelector<HTMLElement>(".symbol-keyboard")!.addEventListener("click", (event) => {
+  const button = (event.target as HTMLElement).closest<HTMLButtonElement>("[data-insert-symbol]");
+  const symbol = button?.dataset.insertSymbol;
+  if (!symbol) return;
+  const editor = byId<HTMLTextAreaElement>("rulesEditor");
+  const result = insertAtSelection(editor, symbol);
+  editor.value = result.value;
+  editor.focus();
+  editor.setSelectionRange(result.caret, result.caret);
+  editor.dispatchEvent(new Event("input", { bubbles: true }));
 });
 
 byId("tryExample").addEventListener("click", () => {

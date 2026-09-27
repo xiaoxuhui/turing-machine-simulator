@@ -52,6 +52,13 @@ button { cursor: pointer; }
 .editor-card label { display: block; margin-bottom: 6px; color: #526075; font-size: 12px; font-weight: 700; }
 textarea { width: 100%; min-height: 270px; padding: 13px; border: 1px solid #cbd6e2; border-radius: 10px; resize: vertical; font: 13px/1.7 "Cascadia Code", Consolas, monospace; color: #1e293b; }
 textarea:focus { outline: 2px solid #58c89f; outline-offset: 1px; }
+.symbol-keyboard { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 9px; }
+.symbol-keyboard span { margin-right: 2px; color: #7b8796; font-size: 11px; font-weight: 700; }
+.symbol-keyboard button { min-width: 38px; min-height: 38px; padding: 6px 10px; border: 1px solid #cbd6e2; border-radius: 8px; background: #f7fafc; color: #26364b; font-family: "Cascadia Code", Consolas, monospace; font-weight: 800; }
+.symbol-keyboard .blank-key { display: inline-flex; align-items: center; gap: 6px; border-color: #58c89f; background: #edf9f4; color: #126b4b; }
+.symbol-keyboard .blank-key small { font: 700 11px Inter, "Segoe UI", sans-serif; }
+.symbol-keyboard button:hover, .symbol-keyboard button:focus-visible { border-color: #58c89f; background: #edf9f4; outline: none; }
+.symbol-keyboard button:active { transform: translateY(1px); }
 .editor-help { margin: 7px 0 0; color: #7f8b9b; font-size: 11px; }
 .editor-error { min-height: 20px; margin-top: 7px; color: #b42318; font-size: 12px; }
 .public-tests { padding: 11px; border-radius: 9px; background: #f4f7fa; }
