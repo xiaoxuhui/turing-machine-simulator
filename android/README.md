@@ -58,6 +58,44 @@ gradlew.bat assembleDebug      # Windows
 也可在 Actions 页面手动运行 `Android APK` workflow。
 产物在 workflow 的 Artifacts 中下载（含 apk-sha256.txt）；打 `v*` tag 时自动挂到 Release。
 
+## 发版：版本号与固定签名
+
+### 版本号清单
+
+发布新版本时，这几处必须一起改：
+
+| 位置 | 内容 |
+|---|---|
+| `package.json` | `"version"` —— **唯一真源**，其余各处向它对齐 |
+| `android/app/build.gradle.kts` | `versionCode`（**只增不减**）、`versionName` |
+| `CHANGELOG.md` | 新增对应版本节 |
+| `android/README.md` | 下方的「版本与 versionCode 对照」 |
+
+`versionName` 有测试守着自动对齐（`tests/android-shell.test.js` 比对 `package.json`），
+**不会静默漂移**。唯独 `versionCode` 没有可推导的真源，只能在发版时人工确认递增 ——
+这是本清单里唯一需要靠人的一项。当前 `versionCode = 1`，
+**下一个发布版本必须 ≥ 2**，否则系统不会认作升级。
+
+### 版本与 versionCode 对照
+
+| 版本 | versionCode | 签名 |
+|---|---|---|
+| `0.3.1`（2026-09-11） | 1 | **随机** —— CI 现场生成，私钥未保存 |
+| 下一个版本 | **≥ 2** | 固定 —— 用仓库内 `android/app/debug.keystore` |
+
+### 固定 debug 签名
+
+`android/app/debug.keystore` **随仓库提交，且永不替换**。
+
+不配 `signingConfigs` 时，AGP 会给每台构建机随机生成一把 debug key；
+CI 每次都是全新 runner —— 于是每个发布包的签名都不同，用户覆盖安装新包会被系统拒绝
+（`INSTALL_FAILED_UPDATE_INCOMPATIBLE`），现象是「明明有新版本，却一直更新不了」。
+这类问题**首个包完全看不出**，要等发下一个版本才炸。
+
+**注意**：v0.3.1 用的临时私钥已经丢失，无法与其连续，
+所以**从 v0.3.1 升级到下一个版本需要先卸载重装一次**；此后签名固定，不再需要。
+核对方法（无需 JDK / Android SDK）见 [doc/测试报告-安卓签名修复.md](../doc/测试报告-安卓签名修复.md)。
+
 ## 说明
 
 - **为什么用 WebViewAssetLoader**：以固定域名加载内置页面，

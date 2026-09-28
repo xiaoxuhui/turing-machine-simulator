@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    # 覆盖**所有**分支。只写 main 时，活跃开发分支上的提交完全不跑 CI ——
+    # 本仓库曾因此让 android-apk 分支连续 15 个提交（含整块关卡功能）未受任何检查。
+    # 与同目录下其他项目（conway / light_game 的 test.yml）保持一致。
+    branches: ["**"]
   pull_request:
 
 permissions:
@@ -23,4 +26,14 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+
+      # check = 网页单测（vitest）+ 构建（产出 dist/）
       - run: pnpm run check
+
+      # 安卓外壳结构测试（tests/android-shell.test.js）基于 node:test，
+      # 被 vite.config.ts 的 test.exclude 挡在 vitest 之外，必须显式调用 ——
+      # 否则它在 CI 里从来不会执行（本仓库曾长期如此，门禁全是摆设）。
+      # 它含「assets 与 dist 字节一致」的断言，且 assets 不入库，
+      # 因此要先同步一次（依赖上面 check 产出的 dist）。
+      - run: pnpm run sync:android
+      - run: pnpm run test:android

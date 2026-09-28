@@ -2,18 +2,21 @@
  * 安卓外壳的结构性校验（通用版）。
  *
  * 这些用例不需要 Android 工具链即可运行，用于在 CI 里守住：
- * 应用身份（包名/版本/SDK）、离线要求（无网络权限）、
+ * 应用身份（包名/版本/SDK）、固定 debug 签名、离线要求（无网络权限）、
  * 网页资源同步（U03）、图标与关键 WebView 配置不丢失。
+ *
+ * 有两条是「本地没有 Android 工具链也照样能发现」的必踩坑，已内建在这里：
+ *   · 资源 XML 的注释里出现 `--`（写 CSS 变量名时会顺手带出来）→ aapt 直接拒绝
+ *   · assets 是 .gitignore 的本地产物，干净检出下不存在 → U03 会误报成失败
  *
  * 新项目接入时只需修改下面的 EXPECT 常量与 packageDir。
  */
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import { buildPlan, ASSETS_ROOT, ROOT } from "../scripts/sync-android-assets.mjs";
 import { ENTRY_PAGE } from "../scripts/android-assets.config.mjs";
 
@@ -26,8 +29,14 @@ const EXPECT = {
   namespace: "com.xiaoxuhui.turing",
   minSdk: 24,
   targetSdk: 34,
-  versionCode: 1,
-  versionName: "0.3.1",
+  /**
+   * 版本号**刻意不在这里写死**。
+   *
+   * 原先这里硬编码 `versionCode` / `versionName`，于是每次发版都要改三处
+   * （`package.json`、`build.gradle.kts`、本文件）—— 同一事实维护多份，必然漂移。
+   * 现在改为：`versionName` 从 `package.json` 读（唯一真源，不可能不一致），
+   * `versionCode` 只校验形态。见下方「应用身份」用例。
+   */
   appName: "图灵机实验台",
   /** MainActivity.kt 所在包路径（对应 java/ 下的目录层级） */
   packageDir: ["com", "xiaoxuhui", "turing"],
@@ -38,7 +47,19 @@ const EXPECT = {
 const read = (file) => readFile(file, "utf8");
 const escape = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-test("U03 assets 中的网页与源产物字节一致", async () => {
+/**
+ * assets 是本地产物（见 android/.gitignore），干净检出（CI）上并不存在。
+ *
+ * 「目录不存在」不等于「内容不一致」—— 这两条断言要抓的是「改了网页忘了同步」，
+ * 只在同步过之后才有意义。目录不在时跳过，不要误报成失败。
+ * CI 侧应当在测试前先跑一次同步（顺带覆盖同步脚本本身可用）；
+ * APK 侧另有一份更彻底的校验，在 android-apk.yml 里，那里必定先同步。
+ */
+const SKIP_NO_ASSETS = existsSync(ASSETS_ROOT)
+  ? false
+  : "assets 尚未同步（pnpm run sync:android），本次跳过";
+
+test("U03 assets 中的网页与源产物字节一致", { skip: SKIP_NO_ASSETS }, async () => {
   const items = await buildPlan();
   assert.ok(items.length > 0, "同步清单为空，请检查 android-assets.config.mjs");
   for (const item of items) {
@@ -51,7 +72,7 @@ test("U03 assets 中的网页与源产物字节一致", async () => {
   }
 });
 
-test("入口页存在于 assets 中", () => {
+test("入口页存在于 assets 中", { skip: SKIP_NO_ASSETS }, () => {
   assert.ok(
     existsSync(path.join(ASSETS_ROOT, ENTRY_PAGE)),
     `缺少入口页 ${ENTRY_PAGE}（需与 MainActivity 的 ASSET_FILE 一致）`
@@ -64,8 +85,55 @@ test("应用身份与需求一致（包名/SDK/版本）", async () => {
   assert.match(gradle, new RegExp(`namespace\\s*=\\s*"${escape(EXPECT.namespace)}"`));
   assert.match(gradle, new RegExp(`minSdk\\s*=\\s*${EXPECT.minSdk}`));
   assert.match(gradle, new RegExp(`targetSdk\\s*=\\s*${EXPECT.targetSdk}`));
-  assert.match(gradle, new RegExp(`versionCode\\s*=\\s*${EXPECT.versionCode}`));
-  assert.match(gradle, new RegExp(`versionName\\s*=\\s*"${escape(EXPECT.versionName)}"`));
+
+  // versionName 与 package.json 同线 —— 真源只有一个，写死在测试里就是制造第二份。
+  const { version } = JSON.parse(await read(path.join(ROOT, "package.json")));
+  const versionName = gradle.match(/versionName\s*=\s*"([^"]+)"/)?.[1];
+  assert.equal(
+    versionName,
+    version,
+    `build.gradle.kts 的 versionName（${versionName}）必须与 package.json 的 version（${version}）一致`
+  );
+
+  // versionCode 没有可推导的真源，只校验形态。
+  // 「只增不减」无法从当前状态推导出来，仍需发版时人工确认 ——
+  // 已列在 android/README.md 的「发版版本号清单」里，是那里唯一靠人的一项。
+  // 历史事实：v0.3.1（2026-09-11）发布时 versionCode = 1，且该包为**随机签名**，
+  // 因此下一个使用固定 keystore 的版本必须 > 1，系统才会认作升级。
+  const versionCode = gradle.match(/versionCode\s*=\s*(\d+)/)?.[1];
+  assert.ok(
+    versionCode !== undefined && Number.isInteger(Number(versionCode)) && Number(versionCode) >= 1,
+    `versionCode 必须是正整数（当前 ${versionCode}）`
+  );
+});
+
+/**
+ * 「无法更新」的直接原因之二：签名不一致。
+ *
+ * AGP 在没配 signingConfig 时会为每台构建机自动生成随机 debug key。
+ * GitHub Actions 每次都是全新 runner；固定此文件后，从新的升级基线开始，
+ * 每次发布的 APK 才会使用同一签名并允许覆盖安装。
+ *
+ * 实证：v0.3.1 的线上 APK 由 CI 当次生成的临时证书签发（见
+ * doc/测试报告-安卓签名修复.md），其私钥未被保存，无法与此 key 连续；
+ * 这次只能让用户卸载重装一次。之后 keystore 必须入库且被显式引用。
+ */
+test("固定 debug 签名存在且被 gradle 引用（否则新包无法覆盖安装）", async () => {
+  const gradle = await read(path.join(ANDROID, "app", "build.gradle.kts"));
+
+  assert.match(gradle, /signingConfigs\s*\{/, "build.gradle.kts 缺少 signingConfigs 块");
+  assert.match(
+    gradle,
+    /storeFile\s*=\s*file\("debug\.keystore"\)/,
+    "debug 签名没有指向仓库内的 debug.keystore"
+  );
+  assert.match(gradle, /storeType\s*=\s*"PKCS12"/, '缺少 storeType = "PKCS12"');
+  assert.match(gradle, /keyAlias\s*=\s*"androiddebugkey"/);
+
+  assert.ok(
+    existsSync(path.join(ANDROID, "app", "debug.keystore")),
+    "android/app/debug.keystore 缺失 —— 它必须入库，否则 CI 只能用随机签名签发，后续版本无法覆盖更新"
+  );
 });
 
 test("应用显示名正确", async () => {
@@ -141,4 +209,39 @@ test("图标资源齐全（各密度传统图标 + 自适应图标前景）", ()
   assert.ok(existsSync(path.join(APP, "res", "mipmap-anydpi-v26", "ic_launcher.xml")));
   assert.ok(existsSync(path.join(APP, "res", "mipmap-anydpi-v33", "ic_launcher.xml")));
   assert.ok(existsSync(path.join(APP, "res", "drawable", "ic_launcher_background.xml")));
+});
+
+test("资源 XML 的注释里不含连续两个减号（AAPT 会直接拒绝）", async () => {
+  // XML 规范不允许注释里出现 `--`，而写注释时顺手引用网页的 CSS 变量
+  //（--bg、--accent）恰好会带出来。这个错误只有真正跑 aapt 时才暴露，
+  // 本机没有 Android 工具链，所以放在这里当轻量守卫 —— 别等 CI 构建五分钟才发现。
+  const dir = path.join(APP, "res");
+  const entries = await readdir(dir, { recursive: true });
+  const xmlFiles = entries.filter((entry) => entry.endsWith(".xml"));
+  assert.ok(xmlFiles.length > 0, "没有找到任何资源 XML，路径可能不对");
+
+  for (const rel of xmlFiles) {
+    const text = await readFile(path.join(dir, rel), "utf8");
+    for (const comment of text.matchAll(/<!--([\s\S]*?)-->/g)) {
+      assert.ok(
+        !comment[1].includes("--"),
+        `${rel} 的注释里有连续两个减号，aapt 会报 ` +
+          `The string "--" is not permitted within comments`
+      );
+    }
+  }
+});
+
+test("开发工具脚本没有被同步进 assets", async () => {
+  // 若 SYNC_ITEMS 用整目录复制（{ type: "dir", from: "scripts" }），
+  // 本地静态服务与同步脚本会一起进 APK —— 它们没有任何理由进包。
+  const plan = await buildPlan();
+  const rels = plan.map((item) => item.rel.split(path.sep).join("/"));
+  for (const tool of [
+    "scripts/serve-static.js",
+    "scripts/sync-android-assets.mjs",
+    "scripts/android-assets.config.mjs",
+  ]) {
+    assert.ok(!rels.includes(tool), `${tool} 是开发工具，不应进 APK`);
+  }
 });

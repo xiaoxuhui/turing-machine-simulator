@@ -2,7 +2,9 @@ name: Android APK
 
 on:
   push:
-    branches: [main, "feat/**"]
+    # android-apk 是本仓库的长期开发分支（main 只在发布时追上），
+    # 不加它则安卓相关改动在合入 main 之前完全不受构建校验。
+    branches: [main, "feat/**", "android-apk"]
     paths:
       - "android/**"
       - "scripts/**"

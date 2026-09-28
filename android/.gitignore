@@ -15,6 +15,12 @@ captures/
 *.ap_
 *.dex
 
+# 注意：app/debug.keystore **必须入库**，不要在这里加 `*.keystore` 之类的忽略规则。
+# 它是后续版本能被系统覆盖安装的前提 —— keystore 缺席时 AGP 会为每台构建机
+# 随机生成一把 debug key，CI 每次都是新 runner，于是每个发布包的签名都不同，
+# 用户安装新包会被拒绝（INSTALL_FAILED_UPDATE_INCOMPATIBLE），
+# 现象是「明明有新版本却一直更新不了」，且首个包完全看不出问题。
+
 # 网页资源由 scripts/sync-android-assets.mjs 从 dist/ 同步，不入库
 app/src/main/assets/
 

@@ -15,6 +15,7 @@ android/gradlew text eol=lf
 *.yaml text
 
 # 二进制文件，不转换换行符
+*.keystore binary
 *.png binary
 *.jpg binary
 *.jpeg binary
