@@ -11,8 +11,8 @@ android {
         applicationId = "com.xiaoxuhui.turing"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.3.1"
+        versionCode = 2
+        versionName = "0.5.0"
 
         // 应用为单语言中文工具，去掉无用资源以减小体积
         resourceConfigurations += listOf("zh", "en")
@@ -30,7 +30,7 @@ android {
      * 这里的 `debug.keystore` 随仓库提交：debug key 的密码在 Android 文档里是公开的
      * （android / androiddebugkey），本身没有保密价值，唯一重要的是**它必须固定不变**。
      * 注意：v0.3.1 已经使用 CI 临时生成的另一把 debug key 发布，无法再找回，
-     * 因此使用此 keystore 的**首个**版本需要用户卸载重装一次；
+     * 因此使用此 keystore 的**首个**版本（v0.5.0）需要用户卸载重装一次；
      * 从该版本起，这个文件就是固定的升级基线，绝不能替换。
      */
     signingConfigs {

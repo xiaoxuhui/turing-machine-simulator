@@ -5,7 +5,7 @@
 
 - 包名：`com.xiaoxuhui.turing`
 - 应用名：图灵机实验台
-- 版本：0.3.1（versionCode 1）
+- 版本：0.5.0（versionCode 2）
 - minSdk 24（Android 7.0）/ targetSdk 34
 - 权限：**无**（完全离线，不申请网络权限）
 
@@ -54,7 +54,7 @@ gradlew.bat assembleDebug      # Windows
 
 ### 3. 云构建
 
-推送 `main` 或 `feat/**` 且改动涉及 `android/**`、`scripts/**`、网页源或 workflow 时自动触发，
+推送 `main`、`android-apk` 或 `feat/**` 且改动涉及 `android/**`、`scripts/**`、网页源或 workflow 时自动触发，
 也可在 Actions 页面手动运行 `Android APK` workflow。
 产物在 workflow 的 Artifacts 中下载（含 apk-sha256.txt）；打 `v*` tag 时自动挂到 Release。
 
@@ -72,16 +72,16 @@ gradlew.bat assembleDebug      # Windows
 | `android/README.md` | 下方的「版本与 versionCode 对照」 |
 
 `versionName` 有测试守着自动对齐（`tests/android-shell.test.js` 比对 `package.json`），
-**不会静默漂移**。唯独 `versionCode` 没有可推导的真源，只能在发版时人工确认递增 ——
-这是本清单里唯一需要靠人的一项。当前 `versionCode = 1`，
-**下一个发布版本必须 ≥ 2**，否则系统不会认作升级。
+**不会静默漂移**。唯独 `versionCode` 没有「本次该写几」的真源，只能在发版时人工确认递增 ——
+这是本清单里唯一需要靠人的一项。测试守住下限：**必须 ≥ 2**
+（v0.3.1 已占用 1，且是随机签名包），当前 `versionCode = 2`。
 
 ### 版本与 versionCode 对照
 
 | 版本 | versionCode | 签名 |
 |---|---|---|
 | `0.3.1`（2026-09-11） | 1 | **随机** —— CI 现场生成，私钥未保存 |
-| 下一个版本 | **≥ 2** | 固定 —— 用仓库内 `android/app/debug.keystore` |
+| `0.5.0`（2026-09-29） | 2 | 固定 —— 用仓库内 `android/app/debug.keystore` |
 
 ### 固定 debug 签名
 
@@ -93,7 +93,7 @@ CI 每次都是全新 runner —— 于是每个发布包的签名都不同，�
 这类问题**首个包完全看不出**，要等发下一个版本才炸。
 
 **注意**：v0.3.1 用的临时私钥已经丢失，无法与其连续，
-所以**从 v0.3.1 升级到下一个版本需要先卸载重装一次**；此后签名固定，不再需要。
+所以**从 v0.3.1 升级到 v0.5.0 需要先卸载重装一次**；此后签名固定，不再需要。
 核对方法（无需 JDK / Android SDK）见 [doc/测试报告-安卓签名修复.md](../doc/测试报告-安卓签名修复.md)。
 
 ## 说明

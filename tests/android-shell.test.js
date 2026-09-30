@@ -95,15 +95,15 @@ test("应用身份与需求一致（包名/SDK/版本）", async () => {
     `build.gradle.kts 的 versionName（${versionName}）必须与 package.json 的 version（${version}）一致`
   );
 
-  // versionCode 没有可推导的真源，只校验形态。
-  // 「只增不减」无法从当前状态推导出来，仍需发版时人工确认 ——
+  // versionCode 没有「本次该写几」的真源，但有一个**不可回退的下限**：
+  // v0.3.1（2026-09-11）发布时 versionCode = 1，且那个包是随机签名（私钥已丢失），
+  // 所以此后任何使用固定 keystore 的版本都必须 ≥ 2，系统才会认作升级。
+  // 「本次应当递增到几」无法从当前状态推导，仍需发版时人工确认 ——
   // 已列在 android/README.md 的「发版版本号清单」里，是那里唯一靠人的一项。
-  // 历史事实：v0.3.1（2026-09-11）发布时 versionCode = 1，且该包为**随机签名**，
-  // 因此下一个使用固定 keystore 的版本必须 > 1，系统才会认作升级。
   const versionCode = gradle.match(/versionCode\s*=\s*(\d+)/)?.[1];
   assert.ok(
-    versionCode !== undefined && Number.isInteger(Number(versionCode)) && Number(versionCode) >= 1,
-    `versionCode 必须是正整数（当前 ${versionCode}）`
+    versionCode !== undefined && Number.isInteger(Number(versionCode)) && Number(versionCode) >= 2,
+    `versionCode 必须是 ≥ 2 的整数（当前 ${versionCode}）—— v0.3.1 已占用 1，且是随机签名包`
   );
 });
 
