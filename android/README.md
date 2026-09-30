@@ -81,7 +81,7 @@ gradlew.bat assembleDebug      # Windows
 | 版本 | versionCode | 签名 |
 |---|---|---|
 | `0.3.1`（2026-09-11） | 1 | **随机** —— CI 现场生成，私钥未保存 |
-| `0.5.0`（2026-09-29） | 2 | 固定 —— 用仓库内 `android/app/debug.keystore` |
+| `0.5.0`（2026-09-30） | 2 | 固定 —— 用仓库内 `android/app/debug.keystore` |
 
 ### 固定 debug 签名
 
