@@ -4,7 +4,7 @@ body { margin: 0; min-width: 340px; }
 button, textarea { font: inherit; }
 button { cursor: pointer; }
 .course-app { min-height: 100vh; }
-.course-topbar { min-height: 76px; display: grid; grid-template-columns: 180px 1fr 190px; align-items: center; gap: 20px; padding: 10px 28px; background: #142033; color: white; }
+.course-topbar { min-height: 76px; display: grid; grid-template-columns: 180px minmax(0, 1fr) 190px; align-items: center; gap: 20px; padding: 10px 28px; background: #142033; color: white; }
 .back-link { color: #99e7c8; text-decoration: none; font-weight: 700; }
 .course-topbar div:nth-child(2) { text-align: center; }
 .course-topbar div:nth-child(2) span { color: #70dab2; font-size: 9px; font-weight: 900; letter-spacing: .18em; }
@@ -13,7 +13,7 @@ button { cursor: pointer; }
 .course-progress progress { width: 100%; height: 8px; accent-color: #4bd1a0; }
 .course-layout { max-width: 1500px; margin: auto; padding: 22px 28px 36px; display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 18px; }
 .level-sidebar, .lesson-card, .editor-card, .test-card { border: 1px solid #dbe4ec; border-radius: 15px; background: white; box-shadow: 0 6px 24px #20364d0c; }
-.level-sidebar { padding: 15px; align-self: start; position: sticky; top: 18px; }
+.level-sidebar { min-width: 0; padding: 15px; align-self: start; position: sticky; top: 18px; }
 .sidebar-heading { display: grid; gap: 2px; padding: 3px 5px 12px; }
 .sidebar-heading small { color: #8290a2; }
 .level-group + .level-group { margin-top: 15px; padding-top: 13px; border-top: 1px solid #e5ebf0; }
@@ -85,24 +85,44 @@ textarea:focus { outline: 2px solid #58c89f; outline-offset: 1px; }
 .tape-preview > span:not(.empty-tape) { flex: 0 0 38px; height: 38px; display: grid; place-items: center; margin-left: -1px; border: 1px solid #aebac8; background: white; font-weight: 800; }
 .empty-tape { margin: auto; color: #8a95a3; font-size: 12px; }
 @media (max-width: 980px) {
-  .course-layout { grid-template-columns: 1fr; padding-inline: 16px; }
+  /* 必须用 minmax(0, 1fr)：裸 1fr 的自动最小尺寸取 min-content，
+     会被 #levelList 内三组横排关卡（约 3650px）顶穿，导致整页横向溢出。 */
+  .course-layout { grid-template-columns: minmax(0, 1fr); padding-inline: 16px; }
   .level-sidebar { position: static; }
   #levelList { display: flex; gap: 12px; overflow-x: auto; }
   .level-group { flex: 0 0 auto; display: flex; gap: 7px; }
   .level-group + .level-group { margin-top: 0; padding-top: 0; padding-left: 12px; border-top: 0; border-left: 1px solid #e5ebf0; }
   .level-group-heading { width: 150px; align-self: center; }
   .level-button { flex: 0 0 190px; }
-  .practice-grid { grid-template-columns: 1fr; }
+  .practice-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 640px) {
-  .course-topbar { grid-template-columns: 1fr auto; padding: 10px 14px; }
+  .course-topbar { grid-template-columns: minmax(0, 1fr) auto; padding: 10px 14px; }
   .course-topbar div:nth-child(2) { grid-column: 1 / -1; grid-row: 1; text-align: left; }
   .back-link { grid-row: 2; }
   .course-progress { grid-row: 2; width: 135px; }
   .course-layout { padding: 12px; }
   .lesson-card, .editor-card, .test-card { padding: 15px; }
-  .lesson-grid { grid-template-columns: 1fr; }
-  .fixed-config { grid-template-columns: repeat(2, 1fr); }
+  .lesson-grid { grid-template-columns: minmax(0, 1fr); }
+  .fixed-config { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .lesson-heading h2 { font-size: 21px; }
   textarea { min-height: 220px; }
+}
+
+/* 关卡重置与撤销 */
+.lesson-heading { flex-wrap: wrap; }
+.lesson-heading-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.section-heading-actions { display: flex; align-items: center; gap: 9px; }
+.button.ghost { width: auto; margin-top: 0; padding: 6px 11px; border-color: #cbd5df; background: white; color: #46556b; font-size: 12px; }
+.button.ghost:hover, .button.ghost:focus-visible { border-color: #58c89f; background: #edf9f4; color: #126b4b; outline: none; }
+.button.ghost:active { transform: translateY(1px); }
+.confirm-dialog { width: min(360px, calc(100vw - 32px)); padding: 18px; border: 1px solid #dbe4ec; border-radius: 14px; background: white; color: #172033; box-shadow: 0 18px 48px #14203333; }
+.confirm-dialog::backdrop { background: #14203366; }
+.confirm-dialog p { margin: 0 0 14px; color: #3a4759; font-size: 13px; line-height: 1.6; }
+.confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.confirm-actions .button { width: auto; margin-top: 0; }
+
+@media (max-width: 640px) {
+  .lesson-heading-actions { width: 100%; justify-content: space-between; }
+  .section-heading-actions { flex-wrap: wrap; justify-content: flex-end; }
 }

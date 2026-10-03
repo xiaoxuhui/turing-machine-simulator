@@ -1,5 +1,5 @@
 import "./campaign-styles.css";
-import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
+import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, resetDraft, uncompleteLevel, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
 import { parseTransitions, type MachineDefinition } from "./core";
 import { insertAtSelection } from "./text-insertion";
 
@@ -21,7 +21,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
       </nav>
       <section class="lesson-workspace">
         <article class="lesson-card">
-          <div class="lesson-heading"><div><div class="lesson-badges"><span id="sectionBadge"></span><span id="levelBadge"></span></div><h2 id="levelTitle"></h2></div><span id="levelState" class="level-state"></span></div>
+          <div class="lesson-heading"><div><div class="lesson-badges"><span id="sectionBadge"></span><span id="levelBadge"></span></div><h2 id="levelTitle"></h2></div><div class="lesson-heading-actions"><span id="levelState" class="level-state"></span><button type="button" id="undoComplete" class="button ghost" hidden>撤销通关</button></div></div>
           <p id="levelObjective" class="objective"></p>
           <div class="concept-box"><strong id="levelConcept"></strong><p id="levelExplanation"></p></div>
           <div class="lesson-grid">
@@ -32,7 +32,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
 
         <div class="practice-grid">
           <section class="editor-card">
-            <div class="section-heading"><div><span>STEP 1</span><h3>编写规则</h3></div><small>草稿会自动保存</small></div>
+            <div class="section-heading"><div><span>STEP 1</span><h3>编写规则</h3></div><div class="section-heading-actions"><small>草稿会自动保存</small><button type="button" id="resetDraft" class="button ghost">重置本关</button></div></div>
             <div class="fixed-config">
               <div><span>示例输入</span><code id="starterInput"></code></div>
               <div><span>初始状态</span><code id="starterState"></code></div>
@@ -63,6 +63,15 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
         </div>
       </section>
     </main>
+    <dialog id="confirmDialog" class="confirm-dialog">
+      <form method="dialog">
+        <p id="confirmMessage"></p>
+        <div class="confirm-actions">
+          <button type="submit" value="cancel" class="button ghost">取消</button>
+          <button type="submit" value="confirm" id="confirmOk" class="button primary">确认</button>
+        </div>
+      </form>
+    </dialog>
   </div>`;
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -177,6 +186,7 @@ function render(): void {
   byId("levelTitle").textContent = level.title.replace(/^第 \d+ 关 · /, "");
   byId("levelState").textContent = progress.completedLevelIds.includes(level.id) ? "已完成" : "学习中";
   byId("levelState").classList.toggle("done", progress.completedLevelIds.includes(level.id));
+  byId<HTMLButtonElement>("undoComplete").hidden = !progress.completedLevelIds.includes(level.id);
   byId("levelObjective").textContent = level.objective;
   byId("levelConcept").textContent = level.concept;
   byId("levelExplanation").textContent = level.lesson.explanation;
@@ -302,6 +312,57 @@ byId("verifyLevel").addEventListener("click", () => {
   } catch (error) {
     byId("editorError").textContent = error instanceof Error ? error.message : "无法验证当前规则";
   }
+});
+
+/** 关卡页内的确认框。不依赖 window.confirm：安卓外壳未实现 WebChromeClient.onJsConfirm。 */
+const confirmDialog = byId<HTMLDialogElement>("confirmDialog");
+let pendingConfirm: (() => void) | null = null;
+
+function askConfirm(message: string, confirmLabel: string, action: () => void): void {
+  byId("confirmMessage").textContent = message;
+  byId("confirmOk").textContent = confirmLabel;
+  pendingConfirm = action;
+  if (typeof confirmDialog.showModal === "function") {
+    confirmDialog.showModal();
+    return;
+  }
+  // 极旧内核没有 <dialog>，降级为原生确认（不可用则直接取消）。
+  pendingConfirm = null;
+  if (typeof window.confirm === "function" && window.confirm(message)) action();
+}
+
+confirmDialog.addEventListener("click", (event) => {
+  if (event.target === confirmDialog) confirmDialog.close("cancel");
+});
+
+confirmDialog.addEventListener("close", () => {
+  const action = pendingConfirm;
+  pendingConfirm = null;
+  if (confirmDialog.returnValue === "confirm" && action) action();
+});
+
+function shortTitle(level: CampaignLevel): string {
+  return level.title.replace(/^第 \d+ 关 · /, "");
+}
+
+byId("resetDraft").addEventListener("click", () => {
+  const level = activeLevel();
+  askConfirm(`重置本关会清空「${shortTitle(level)}」的草稿，恢复为初始提示。`, "确认重置", () => {
+    progress = resetDraft(progress, level.id);
+    const warning = saveProgress();
+    render();
+    byId("editorError").textContent = warning ?? "";
+  });
+});
+
+byId("undoComplete").addEventListener("click", () => {
+  const level = activeLevel();
+  askConfirm(`撤销「${shortTitle(level)}」的通关状态？该关会回到「学习中」，可以重新练习。`, "确认撤销", () => {
+    progress = uncompleteLevel(progress, level.id);
+    const warning = saveProgress();
+    render();
+    byId("verifyResult").textContent = `已撤销「${shortTitle(level)}」的通关状态，可以重新挑战。${warning ?? ""}`;
+  });
 });
 
 render();
