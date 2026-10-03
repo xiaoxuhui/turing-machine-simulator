@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, tapeOutput, verifyLevel } from "../src/campaign";
+import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, resetDraft, tapeOutput, uncompleteLevel, verifyLevel, type CampaignProgress } from "../src/campaign";
 import { parseTransitions, Tape, type MachineDefinition } from "../src/core";
 
 const solutionRules: Record<string, string> = {
@@ -120,5 +120,88 @@ describe("campaign progress", () => {
       completedLevelIds: [],
       drafts: { "write-one": "q0,□ -> HALT,1,N", unknown: "answer", "erase-one": 42 },
     }).drafts).toEqual({ "write-one": "q0,□ -> HALT,1,N" });
+  });
+});
+
+describe("campaign reset and undo", () => {
+  it("resets one draft back to its starter hint without touching progress", () => {
+    const progress: CampaignProgress = {
+      version: 1,
+      completedLevelIds: ["write-one"],
+      drafts: { "write-one": "q0,□ -> HALT,1,N" },
+    };
+    const after = resetDraft(progress, "write-one");
+    expect(after.drafts).toEqual({});
+    expect(after.drafts["write-one"] ?? campaignLevels[0].starter.rules).toBe(campaignLevels[0].starter.rules);
+    expect(after.completedLevelIds).toEqual(["write-one"]);
+  });
+
+  it("keeps other levels untouched when resetting one draft", () => {
+    const progress: CampaignProgress = {
+      version: 1,
+      completedLevelIds: [],
+      drafts: { "write-one": "a", "erase-one": "b" },
+    };
+    expect(resetDraft(progress, "write-one").drafts).toEqual({ "erase-one": "b" });
+  });
+
+  it("is a no-op when resetting a level without a draft", () => {
+    const progress = emptyCampaignProgress();
+    expect(resetDraft(progress, "write-one")).toBe(progress);
+    expect(resetDraft(progress, "unknown")).toBe(progress);
+  });
+
+  it("removes a completed level when undoing it", () => {
+    const progress: CampaignProgress = {
+      version: 1,
+      completedLevelIds: ["write-one", "move-right-write"],
+      drafts: {},
+    };
+    expect(uncompleteLevel(progress, "write-one").completedLevelIds).toEqual(["move-right-write"]);
+  });
+
+  it("is a no-op when undoing a level that is not completed", () => {
+    const progress = emptyCampaignProgress();
+    expect(uncompleteLevel(progress, "write-one")).toBe(progress);
+    expect(uncompleteLevel(progress, "unknown")).toBe(progress);
+  });
+
+  it("keeps already reached levels unlocked after undoing a middle level", () => {
+    const progress: CampaignProgress = {
+      version: 1,
+      completedLevelIds: campaignLevels.slice(0, 5).map((level) => level.id),
+      drafts: {},
+    };
+    const after = uncompleteLevel(progress, campaignLevels[2].id);
+    expect(after.completedLevelIds).not.toContain(campaignLevels[2].id);
+    for (const index of [2, 3, 4, 5]) {
+      expect(isLevelUnlocked(after, campaignLevels[index].id)).toBe(true);
+    }
+  });
+
+  it("still unlocks one level at a time", () => {
+    const initial = emptyCampaignProgress();
+    expect(isLevelUnlocked(initial, campaignLevels[0].id)).toBe(true);
+    expect(isLevelUnlocked(initial, campaignLevels[1].id)).toBe(false);
+    const afterFirst = completeLevel(initial, campaignLevels[0].id);
+    expect(isLevelUnlocked(afterFirst, campaignLevels[1].id)).toBe(true);
+    expect(isLevelUnlocked(afterFirst, campaignLevels[2].id)).toBe(false);
+  });
+
+  it("can complete a level again after undoing it", () => {
+    const progress: CampaignProgress = { version: 1, completedLevelIds: ["write-one"], drafts: {} };
+    const again = completeLevel(uncompleteLevel(progress, "write-one"), "write-one");
+    expect(again.completedLevelIds).toContain("write-one");
+  });
+
+  it("tolerates saved progress with gaps", () => {
+    const progress = normalizeCampaignProgress({
+      version: 1,
+      completedLevelIds: ["write-one", "erase-one"],
+      drafts: {},
+    });
+    expect(progress.completedLevelIds).toEqual(["write-one", "erase-one"]);
+    expect(isLevelUnlocked(progress, campaignLevels[4].id)).toBe(true);
+    expect(isLevelUnlocked(progress, "unknown")).toBe(false);
   });
 });

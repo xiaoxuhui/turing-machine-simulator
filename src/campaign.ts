@@ -425,13 +425,42 @@ export function normalizeCampaignProgress(value: unknown): CampaignProgress {
   return { version: 1, completedLevelIds, drafts };
 }
 
+/**
+ * 第 N 关可进入 ⟺ N 的序号 ≤ 最远已完成关的序号 + 1（前沿式）。
+ *
+ * 原实现要求"前面每一关都已完成"。加入「撤销通关」后，完成集合可能出现空洞，
+ * 按原规则会把玩家已经走到的后续关卡重新锁死（例如完成 1–5 关后撤销第 3 关，
+ * 第 4、5 关会一并变锁）。前沿式对空洞天然容错，同时仍只允许"一次推进一关"。
+ */
 export function isLevelUnlocked(progress: CampaignProgress, levelId: string): boolean {
   const index = campaignLevels.findIndex((level) => level.id === levelId);
   if (index < 0) return false;
-  return campaignLevels.slice(0, index).every((level) => progress.completedLevelIds.includes(level.id));
+  const frontier = campaignLevels.reduce(
+    (max, level, position) =>
+      progress.completedLevelIds.includes(level.id) ? Math.max(max, position) : max,
+    -1,
+  );
+  return index <= frontier + 1;
 }
 
 export function completeLevel(progress: CampaignProgress, levelId: string): CampaignProgress {
   if (!isLevelUnlocked(progress, levelId) || progress.completedLevelIds.includes(levelId)) return progress;
   return { ...progress, completedLevelIds: [...progress.completedLevelIds, levelId] };
+}
+
+/** 撤销某关的通关状态（回到「学习中」）。该关未完成时原样返回。 */
+export function uncompleteLevel(progress: CampaignProgress, levelId: string): CampaignProgress {
+  if (!progress.completedLevelIds.includes(levelId)) return progress;
+  return {
+    ...progress,
+    completedLevelIds: progress.completedLevelIds.filter((id) => id !== levelId),
+  };
+}
+
+/** 删除某关草稿；渲染时会回落到该关的初始提示。该关没有草稿时原样返回。 */
+export function resetDraft(progress: CampaignProgress, levelId: string): CampaignProgress {
+  if (!Object.prototype.hasOwnProperty.call(progress.drafts, levelId)) return progress;
+  const drafts = { ...progress.drafts };
+  delete drafts[levelId];
+  return { ...progress, drafts };
 }
