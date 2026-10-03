@@ -58,6 +58,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
             <div id="tryResult" class="try-result">试跑结果会显示在这里。</div>
             <div id="tapePreview" class="tape-preview" aria-label="试跑纸带"></div>
             <button id="verifyLevel" class="button primary">提交本关答案</button>
+            <button type="button" id="undoCompleteNearSubmit" class="button secondary" hidden>撤销本关通关</button>
             <div id="verifyResult" class="verify-result" aria-live="polite">完成规则后再提交。</div>
           </aside>
         </div>
@@ -186,7 +187,9 @@ function render(): void {
   byId("levelTitle").textContent = level.title.replace(/^第 \d+ 关 · /, "");
   byId("levelState").textContent = progress.completedLevelIds.includes(level.id) ? "已完成" : "学习中";
   byId("levelState").classList.toggle("done", progress.completedLevelIds.includes(level.id));
-  byId<HTMLButtonElement>("undoComplete").hidden = !progress.completedLevelIds.includes(level.id);
+  const isComplete = progress.completedLevelIds.includes(level.id);
+  byId<HTMLButtonElement>("undoComplete").hidden = !isComplete;
+  byId<HTMLButtonElement>("undoCompleteNearSubmit").hidden = !isComplete;
   byId("levelObjective").textContent = level.objective;
   byId("levelConcept").textContent = level.concept;
   byId("levelExplanation").textContent = level.lesson.explanation;
@@ -355,7 +358,7 @@ byId("resetDraft").addEventListener("click", () => {
   });
 });
 
-byId("undoComplete").addEventListener("click", () => {
+function requestUndoCompletion(): void {
   const level = activeLevel();
   askConfirm(`撤销「${shortTitle(level)}」的通关状态？该关会回到「学习中」，可以重新练习。`, "确认撤销", () => {
     progress = uncompleteLevel(progress, level.id);
@@ -363,6 +366,9 @@ byId("undoComplete").addEventListener("click", () => {
     render();
     byId("verifyResult").textContent = `已撤销「${shortTitle(level)}」的通关状态，可以重新挑战。${warning ?? ""}`;
   });
-});
+}
+
+byId("undoComplete").addEventListener("click", requestUndoCompletion);
+byId("undoCompleteNearSubmit").addEventListener("click", requestUndoCompletion);
 
 render();
