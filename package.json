@@ -1,7 +1,7 @@
 {
   "name": "turing-machine-simulator",
   "private": false,
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "可视化、可编程的单纸带确定性图灵机模拟器与 Wang 瓷砖拼图",
   "license": "MIT",
   "type": "module",

@@ -5,7 +5,7 @@
 
 - 包名：`com.xiaoxuhui.turing`
 - 应用名：图灵机实验台
-- 版本：0.5.0（versionCode 2）
+- 版本：0.5.1（versionCode 3）
 - minSdk 24（Android 7.0）/ targetSdk 34
 - 权限：**无**（完全离线，不申请网络权限）
 
@@ -82,6 +82,7 @@ gradlew.bat assembleDebug      # Windows
 |---|---|---|
 | `0.3.1`（2026-09-11） | 1 | **随机** —— CI 现场生成，私钥未保存 |
 | `0.5.0`（2026-09-30） | 2 | 固定 —— 用仓库内 `android/app/debug.keystore` |
+| `0.5.1`（2026-10-03） | 3 | 固定 —— 与 `0.5.0` 证书相同，**首个具备覆盖升级条件的版本** |
 
 ### 固定 debug 签名
 
