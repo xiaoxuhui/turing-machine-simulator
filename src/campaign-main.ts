@@ -2,6 +2,7 @@ import "./campaign-styles.css";
 import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, resetDraft, uncompleteLevel, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
 import { parseTransitions, type MachineDefinition } from "./core";
 import { insertAtSelection } from "./text-insertion";
+import { encodeCampaignBackup, MAX_CAMPAIGN_BACKUP_BYTES, parseCampaignBackup } from "./campaign-backup";
 
 const STORAGE_KEY = "turing-machine-simulator.campaign.v1";
 let progress = loadProgress();
@@ -20,6 +21,16 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
         <div id="levelList"></div>
       </nav>
       <section class="lesson-workspace">
+        <section class="save-card" aria-label="关卡存档管理">
+          <div><strong>关卡存档</strong><p>自动保存在此设备；可下载进度与已保存的规则草稿。旧存档中没有记录的规则无法补回。</p></div>
+          <div class="save-actions">
+            <button type="button" id="exportCampaign" class="button secondary">保存备份</button>
+            <button type="button" id="importCampaign" class="button secondary">导入备份</button>
+            <button type="button" id="clearCampaign" class="button danger">一键清空</button>
+            <input id="importCampaignFile" type="file" accept=".json,application/json" hidden aria-label="选择关卡备份文件" />
+          </div>
+          <p id="backupStatus" class="backup-status" role="status" aria-live="polite"></p>
+        </section>
         <article class="lesson-card">
           <div class="lesson-heading"><div><div class="lesson-badges"><span id="sectionBadge"></span><span id="levelBadge"></span></div><h2 id="levelTitle"></h2></div><div class="lesson-heading-actions"><span id="levelState" class="level-state"></span><button type="button" id="undoComplete" class="button ghost" hidden>撤销通关</button></div></div>
           <p id="levelObjective" class="objective"></p>
@@ -370,5 +381,60 @@ function requestUndoCompletion(): void {
 
 byId("undoComplete").addEventListener("click", requestUndoCompletion);
 byId("undoCompleteNearSubmit").addEventListener("click", requestUndoCompletion);
+
+byId("exportCampaign").addEventListener("click", () => {
+  try {
+    const blob = new Blob([encodeCampaignBackup(progress)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `turing-campaign-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    byId("backupStatus").textContent = "已下载关卡备份文件。请妥善保存，恢复时可导入此文件。";
+  } catch (error) {
+    byId("backupStatus").textContent = error instanceof Error ? error.message : "备份下载失败。";
+  }
+});
+
+byId("importCampaign").addEventListener("click", () => byId<HTMLInputElement>("importCampaignFile").click());
+
+byId<HTMLInputElement>("importCampaignFile").addEventListener("change", async () => {
+  const input = byId<HTMLInputElement>("importCampaignFile");
+  const file = input.files?.[0];
+  input.value = "";
+  if (!file) return;
+  try {
+    if (file.size > MAX_CAMPAIGN_BACKUP_BYTES) throw new Error("存档文件超过 1 MiB。");
+    const imported = parseCampaignBackup(await file.text());
+    askConfirm(`导入会替换此设备当前的关卡进度和规则草稿。备份包含 ${imported.completedLevelIds.length} 关已通关记录，确认导入吗？`, "确认导入", () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
+        progress = imported;
+        activeLevelId = firstAvailableLevel().id;
+        render();
+        byId("backupStatus").textContent = `已恢复备份：${imported.completedLevelIds.length} / ${campaignLevels.length} 关完成。`;
+      } catch {
+        byId("backupStatus").textContent = "浏览器未能保存导入的进度；原有进度未更改。";
+      }
+    });
+  } catch (error) {
+    byId("backupStatus").textContent = error instanceof Error ? error.message : "无法读取关卡备份。";
+  }
+});
+
+byId("clearCampaign").addEventListener("click", () => {
+  askConfirm("清空此设备上的全部关卡进度和规则草稿？已下载的备份文件不会受影响。", "确认清空", () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      progress = emptyCampaignProgress();
+      activeLevelId = campaignLevels[0].id;
+      render();
+      byId("backupStatus").textContent = "关卡进度与规则草稿已清空。";
+    } catch {
+      byId("backupStatus").textContent = "浏览器未能清空本地存档；原有进度未更改。";
+    }
+  });
+});
 
 render();

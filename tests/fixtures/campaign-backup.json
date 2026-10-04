@@ -1,0 +1,12 @@
+{
+  "format": "turing-machine-campaign",
+  "version": 1,
+  "exportedAt": "2026-10-04T00:00:00.000Z",
+  "progress": {
+    "version": 1,
+    "completedLevelIds": ["write-one"],
+    "drafts": {
+      "write-one": "q0,□ -> HALT,1,N"
+    }
+  }
+}
