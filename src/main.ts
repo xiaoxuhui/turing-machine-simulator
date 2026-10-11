@@ -73,7 +73,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <label>初始输入<input id="input" /></label>
             <label>空白符<input id="blankSymbol" maxlength="2" /></label>
             <label>初始状态<input id="initialState" /></label>
-            <label>最大步数<input id="maxSteps" type="number" min="1" max="1000000" /></label>
+            <div class="step-limit-field"><label for="maxSteps">最大步数</label><div class="step-limit-control"><input id="maxSteps" type="number" min="1" max="1000000" /><label class="max-steps-option"><input id="unlimitedSteps" type="checkbox" /> Max</label></div></div>
             <label>接受状态<input id="acceptStates" placeholder="逗号分隔" /></label>
             <label>拒绝状态<input id="rejectStates" placeholder="逗号分隔" /></label>
             <label>普通停机状态<input id="haltStates" placeholder="逗号分隔" /></label>
@@ -139,7 +139,7 @@ function collectProject(): ProjectData {
     rejectStates: value("rejectStates"),
     haltStates: value("haltStates"),
     rules: value("rules"),
-    maxSteps: Number(value("maxSteps")) || 10000,
+    maxSteps: byId<HTMLInputElement>("unlimitedSteps").checked ? null : Number(value("maxSteps")) || 10000,
     speed: Number(value("speed")) || 5,
   };
 }
@@ -147,8 +147,10 @@ function collectProject(): ProjectData {
 function fillProject(project: ProjectData | ExampleProject): void {
   const fields = ["input", "blankSymbol", "initialState", "acceptStates", "rejectStates", "haltStates", "rules"] as const;
   for (const field of fields) byId<HTMLInputElement | HTMLTextAreaElement>(field).value = project[field];
-  if ("maxSteps" in project) byId<HTMLInputElement>("maxSteps").value = String(project.maxSteps);
-  else byId<HTMLInputElement>("maxSteps").value = "10000";
+  const unlimited = "maxSteps" in project && project.maxSteps === null;
+  byId<HTMLInputElement>("unlimitedSteps").checked = unlimited;
+  byId<HTMLInputElement>("maxSteps").value = "maxSteps" in project && project.maxSteps !== null ? String(project.maxSteps) : "10000";
+  byId<HTMLInputElement>("maxSteps").disabled = unlimited;
   if ("speed" in project) byId<HTMLInputElement>("speed").value = String(project.speed);
   updateSpeedText();
 }
@@ -430,8 +432,8 @@ function ensureCurrentDraftApplied(): boolean {
 function singleStep(applyDraft = true, renderAfter = true): boolean {
   if (applyDraft && !ensureCurrentDraftApplied()) return false;
   if (!machine) return false;
-  const maxSteps = Number(value("maxSteps")) || 10000;
-  if (machine!.stepCount >= maxSteps) {
+  const maxSteps = byId<HTMLInputElement>("unlimitedSteps").checked ? null : Number(value("maxSteps")) || 10000;
+  if (maxSteps !== null && machine!.stepCount >= maxSteps) {
     status = "达到步数限制";
     stopMessage = `已暂停在 ${maxSteps} 步`;
     pause(false);
@@ -471,6 +473,7 @@ function run(): void {
   if (scheduler.running) return;
   if (!ensureCurrentDraftApplied()) return;
   status = "运行中";
+  stopMessage = "";
   scheduler.start();
   render();
 }
@@ -552,6 +555,15 @@ byId("addRule").addEventListener("click", () => {
   renderRuleTable();
 });
 byId("rules").addEventListener("input", renderRuleTable);
+byId("unlimitedSteps").addEventListener("change", () => {
+  byId<HTMLInputElement>("maxSteps").disabled = byId<HTMLInputElement>("unlimitedSteps").checked;
+  const storageError = saveProject(localStorage, STORAGE_KEY, collectProject());
+  if (storageError) byId("errors").textContent = storageError;
+});
+byId("maxSteps").addEventListener("change", () => {
+  const storageError = saveProject(localStorage, STORAGE_KEY, collectProject());
+  if (storageError) byId("errors").textContent = storageError;
+});
 byId("example").addEventListener("change", () => {
   byId("exampleNote").textContent = examples[value("example")].description;
 });

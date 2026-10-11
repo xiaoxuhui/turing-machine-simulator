@@ -59,6 +59,11 @@ body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }
 .panel-title h2 { margin: 0; font-size: 16px; }
 .panel-title small { color: #758194; }
 .form-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
+.step-limit-field { display: grid; gap: 5px; }
+.step-limit-control { display: flex; align-items: center; gap: 7px; }
+.step-limit-control > input { min-width: 0; flex: 1; }
+.max-steps-option { display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: pointer; }
+.max-steps-option input { margin: 0; }
 label { color: #566275; font-size: 12px; display: grid; gap: 5px; }
 input, textarea, select { border: 1px solid #ccd5e1; border-radius: 8px; padding: 8px 10px; color: #1d2939; background: white; }
 input:focus, textarea:focus, select:focus { outline: 2px solid #67c8a6; outline-offset: 1px; }
