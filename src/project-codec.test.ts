@@ -15,10 +15,19 @@ describe("project codec", () => {
     expect(parseProjectJson(JSON.stringify(validProject))).toEqual(validProject);
   });
 
+  it("accepts Max mode and preserves it through storage", () => {
+    const project = { ...validProject, maxSteps: null };
+    const storage = { setItem: vi.fn(), getItem: vi.fn(() => JSON.stringify(project)) };
+    expect(parseProjectJson(JSON.stringify(project))).toEqual(project);
+    expect(saveProject(storage, "project", project)).toBeNull();
+    expect(loadProject(storage, "project")).toEqual(project);
+  });
+
   it.each([
     ["future version", { ...validProject, version: 2 }],
     ["missing field", { ...validProject, rules: undefined }],
     ["invalid limit", { ...validProject, maxSteps: 0 }],
+    ["invalid Max text", { ...validProject, maxSteps: "Max" }],
     ["invalid rules", { ...validProject, rules: "q0,1 -> broken" }],
     ["duplicate rules", { ...validProject, rules: "q0,1 -> q0,1,R\nq0,1 -> q1,1,N" }],
   ])("rejects %s before it reaches the workbench", (_name, project) => {

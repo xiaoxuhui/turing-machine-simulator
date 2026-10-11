@@ -4,7 +4,7 @@ import type { ExampleProject } from "./examples";
 export interface ProjectData extends ExampleProject {
   format: "turing-machine-simulator";
   version: 1;
-  maxSteps: number;
+  maxSteps: number | null;
   speed: number;
 }
 
@@ -32,8 +32,8 @@ export function validateProjectData(value: unknown): ProjectData {
   for (const field of textFields) {
     if (typeof value[field] !== "string") throw new Error(`字段 ${field} 必须是文本`);
   }
-  if (!Number.isSafeInteger(value.maxSteps) || (value.maxSteps as number) < 1 || (value.maxSteps as number) > 1_000_000) {
-    throw new Error("最大步数必须是 1–1000000 的整数");
+  if (value.maxSteps !== null && (!Number.isSafeInteger(value.maxSteps) || (value.maxSteps as number) < 1 || (value.maxSteps as number) > 1_000_000)) {
+    throw new Error("最大步数必须是 1–1000000 的整数，或设为 Max");
   }
   if (!Number.isFinite(value.speed) || (value.speed as number) < 1 || (value.speed as number) > 1000) {
     throw new Error("目标速度必须在 1–1000 步/秒之间");
