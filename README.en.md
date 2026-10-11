@@ -24,7 +24,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 ## Features
 
 - Sparse tape that extends left and right, with head-following view
-- Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and step limits
+- Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
 - Unary increment, binary increment, palindrome, and busy-beaver examples
 - Local autosave, project JSON import/export, and execution-log CSV export
@@ -33,6 +33,10 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Click/drag tiling, edge-match validation, cycle detection, and one-click correct solution
 - Full-route overview (default 10,000 steps, larger values allowed) compressed into a space-time diagram
 - A standalone 16-level campaign split into Tutorial (10), Challenge (4), and Hard (2), with multi-input verification, sequential unlocking, and per-level drafts
+
+## Running Modes
+
+The workbench's **Max** checkbox disables its fixed step limit. You can still pause manually, and the machine still stops normally; a non-halting machine will keep using computing resources. This preference is saved in local and exported project data. Campaign verification and the full-route overview keep their own limits.
 
 ## Campaign Mode
 
