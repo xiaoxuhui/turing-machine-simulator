@@ -5,7 +5,7 @@
 
 - 包名：`com.xiaoxuhui.turing`
 - 应用名：图灵机实验台
-- 版本：0.5.1（versionCode 3）
+- 版本：0.6.0（versionCode 4）
 - minSdk 24（Android 7.0）/ targetSdk 34
 - 权限：**无**（完全离线，不申请网络权限）
 
@@ -74,7 +74,7 @@ gradlew.bat assembleDebug      # Windows
 `versionName` 有测试守着自动对齐（`tests/android-shell.test.js` 比对 `package.json`），
 **不会静默漂移**。唯独 `versionCode` 没有「本次该写几」的真源，只能在发版时人工确认递增 ——
 这是本清单里唯一需要靠人的一项。测试守住下限：**必须 ≥ 2**
-（v0.3.1 已占用 1，且是随机签名包），当前 `versionCode = 2`。
+（v0.3.1 已占用 1，且是随机签名包），当前 `versionCode = 4`。
 
 ### 版本与 versionCode 对照
 
@@ -83,6 +83,7 @@ gradlew.bat assembleDebug      # Windows
 | `0.3.1`（2026-09-11） | 1 | **随机** —— CI 现场生成，私钥未保存 |
 | `0.5.0`（2026-09-30） | 2 | 固定 —— 用仓库内 `android/app/debug.keystore` |
 | `0.5.1`（2026-10-03） | 3 | 固定 —— 与 `0.5.0` 证书相同，**首个具备覆盖升级条件的版本** |
+| `0.6.0`（2026-10-12） | 4 | 固定 —— 延续同一证书，可覆盖安装 `0.5.1` |
 
 ### 固定 debug 签名
 
