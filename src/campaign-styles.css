@@ -12,7 +12,7 @@ button { cursor: pointer; }
 .course-progress { display: grid; gap: 5px; color: #c4cfdd; font-size: 12px; }
 .course-progress progress { width: 100%; height: 8px; accent-color: #4bd1a0; }
 .course-layout { max-width: 1500px; margin: auto; padding: 22px 28px 36px; display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 18px; }
-.level-sidebar, .lesson-card, .editor-card, .test-card { border: 1px solid #dbe4ec; border-radius: 15px; background: white; box-shadow: 0 6px 24px #20364d0c; }
+.level-sidebar, .save-card, .lesson-card, .editor-card, .test-card { border: 1px solid #dbe4ec; border-radius: 15px; background: white; box-shadow: 0 6px 24px #20364d0c; }
 .level-sidebar { min-width: 0; padding: 15px; align-self: start; position: sticky; top: 18px; }
 .sidebar-heading { display: grid; gap: 2px; padding: 3px 5px 12px; }
 .sidebar-heading small { color: #8290a2; }
@@ -33,6 +33,15 @@ button { cursor: pointer; }
 .level-button.completed > span { background: #168963; color: white; }
 .level-button.locked { color: #9ca5b1; cursor: not-allowed; opacity: .72; }
 .lesson-workspace { min-width: 0; display: grid; gap: 16px; }
+.save-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 9px 16px; padding: 14px 20px; }
+.save-card strong { font-size: 14px; }
+.save-card p { margin: 3px 0 0; color: #718093; font-size: 11px; line-height: 1.5; }
+.save-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.save-actions .button { width: auto; min-height: 36px; margin: 0; padding: 6px 11px; font-size: 12px; }
+.save-actions .button.danger { border-color: #e8b4b4; color: #ab3636; }
+.save-actions .button.danger:hover { background: #fff1f1; }
+.save-card .backup-status { grid-column: 1 / -1; margin: 0; color: #24634e; }
+.save-card .backup-status:empty { display: none; }
 .lesson-card, .editor-card, .test-card { padding: 20px; }
 .lesson-heading { display: flex; justify-content: space-between; align-items: start; gap: 16px; }
 .lesson-badges { display: flex; align-items: center; gap: 7px; }
@@ -85,6 +94,7 @@ textarea:focus { outline: 2px solid #58c89f; outline-offset: 1px; }
 .tape-preview > span:not(.empty-tape) { flex: 0 0 38px; height: 38px; display: grid; place-items: center; margin-left: -1px; border: 1px solid #aebac8; background: white; font-weight: 800; }
 .empty-tape { margin: auto; color: #8a95a3; font-size: 12px; }
 @media (max-width: 980px) {
+  .save-card { grid-template-columns: 1fr; }
   /* 必须用 minmax(0, 1fr)：裸 1fr 的自动最小尺寸取 min-content，
      会被 #levelList 内三组横排关卡（约 3650px）顶穿，导致整页横向溢出。 */
   .course-layout { grid-template-columns: minmax(0, 1fr); padding-inline: 16px; }
