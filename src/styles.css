@@ -114,6 +114,29 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .tray-tile.selected { border-color: #168963; background: #e9fff7; }
 .puzzle-message { min-height: 20px; margin-top: 9px; color: #536174; font-size: 13px; }
 .route-panel { padding: 20px; }
+.gijswijt-converter { padding: 20px; }
+.sequence-mode-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
+.sequence-mode-bar h2 { margin: 0; font-size: 18px; }
+.sequence-mode-bar label { display: flex; align-items: center; gap: 8px; }
+.sequence-mode-bar select { width: auto; }
+.direct-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-top: 12px; }
+.direct-actions input { width: 100px; }
+.sequence-tape { display: flex; gap: 6px; overflow-x: auto; padding: 10px; margin-top: 10px; border: 1px solid #dfe5ed; border-radius: 10px; background: #f6f8fb; }
+.sequence-cell { flex: 0 0 42px; display: grid; place-items: center; padding: 5px; background: #e3f8ee; border-radius: 7px; color: #146947; }
+.sequence-cell small { font-size: 10px; }
+.sequence-cell strong { font-size: 17px; }
+.sequence-cell.unwritten { color: #8c98a7; background: #edf0f4; }
+#directOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
+.converter-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.converter-heading h2 { margin: 0 0 6px; font-size: 18px; }
+.converter-heading p { margin: 0; color: #697588; font-size: 13px; max-width: 720px; }
+.converter-actions { display: flex; gap: 8px; align-items: end; flex-shrink: 0; }
+.converter-actions input { width: 110px; }
+.converter-status { min-height: 18px; margin: 10px 0 0; color: #16664d; font-size: 13px; }
+#gijswijtResult { margin-top: 12px; }
+#gijswijtOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
+.rule-pagination { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.rule-pagination span { margin-right: auto; color: #697588; font-size: 12px; }
 .route-heading { display: flex; justify-content: space-between; align-items: end; gap: 18px; }
 .route-heading h2 { margin: 0 0 5px; font-size: 18px; }
 .route-heading p { margin: 0; color: #697588; font-size: 13px; }
@@ -148,6 +171,8 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
   .form-grid { grid-template-columns: 1fr; }
   .puzzle-heading { align-items: stretch; flex-direction: column; }
   .route-heading { align-items: stretch; flex-direction: column; }
+  .converter-heading { align-items: stretch; flex-direction: column; }
+  .sequence-mode-bar { align-items: stretch; flex-direction: column; }
   .route-progress { align-items: stretch; flex-direction: column; }
   .puzzle-actions .btn { flex: 1 1 135px; }
   .route-actions .btn { flex: 1 1 110px; }
