@@ -13,6 +13,7 @@ import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./
 import { shuffled } from "./shuffle";
 import { compileGijswijtMachine, readGijswijtOutput } from "./gijswijt-tm";
 import { editRuleSource } from "./rule-source";
+import { attachDirectGijswijt } from "./gijswijt-direct";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -72,13 +73,24 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         </div>
       </section>
       <section class="panel gijswijt-converter" aria-labelledby="gijswijtTitle">
+        <div class="sequence-mode-bar"><h2 id="gijswijtTitle">吉斯维杰特数列</h2><label for="sequenceMode">计算模式<select id="sequenceMode"><option value="tm">图灵机计算 · 规则与单步</option><option value="direct">直接计算 · 快速生成</option></select></label></div>
+        <div id="tmSequenceMode">
         <div class="converter-heading">
-          <div><h2 id="gijswijtTitle">吉斯维杰特数列 → 图灵机</h2><p>输入阈值，转换后的规则会显示在下方。点击上方“运行”开始计算；新项严格超过阈值时写出并停机，等于时继续。</p></div>
+          <div><p>输入阈值，转换后的规则会显示在下方。点击上方“运行”开始计算；新项严格超过阈值时写出并停机，等于时继续。</p></div>
           <div class="converter-actions"><label for="gijswijtThreshold">整数阈值（0–16）<input id="gijswijtThreshold" type="number" min="0" max="16" step="1" value="2" /></label><button id="compileGijswijt" class="btn primary">开始转换</button></div>
         </div>
         <p class="hint">0 表示未写入；数字表示数列项。计算时 |O、S、A、B 为比较标记，#数字记录本轮最大重复次数，停机时会清除。建议先试 2；阈值越大，运行可能极长。</p>
         <p id="gijswijtCompileStatus" class="converter-status" role="status"></p>
         <div id="gijswijtResult" hidden><label for="gijswijtOutput">已写入的数列（直接读取纸带）</label><textarea id="gijswijtOutput" readonly rows="3" spellcheck="false"></textarea><p id="gijswijtOutputStatus" class="hint" aria-live="polite"></p></div>
+        </div>
+        <div id="directSequenceMode" hidden>
+          <div class="converter-heading"><p>按最大重复后缀的定义快速生成数列。切换模式会保留当前页中两种模式各自的进度。</p></div>
+          <div class="direct-actions"><button id="directNext" class="btn">写入下一项</button><label for="directTarget">生成到第几项<input id="directTarget" type="number" min="1" step="1" value="30" /></label><button id="directGenerate" class="btn primary">批量生成</button><button id="directCancel" class="btn" disabled>取消</button><button id="directReset" class="btn">重置数列</button></div>
+          <p id="directStatus" class="converter-status" role="status"></p>
+          <div id="directTape" class="sequence-tape" aria-label="直接计算的数列纸带"></div>
+          <p class="hint">0 = 尚未写入；正整数 = 数列项。纸带显示最新 40 项，完整数列见下方。</p>
+          <label for="directOutput">完整数列</label><textarea id="directOutput" readonly rows="3" spellcheck="false"></textarea>
+        </div>
       </section>
       <div class="lower">
         <section class="panel editor">
@@ -140,6 +152,13 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const value = (id: string) => byId<HTMLInputElement | HTMLTextAreaElement>(id).value;
 const splitStates = (raw: string) => raw.split(",").map((item) => item.trim()).filter(Boolean);
+
+attachDirectGijswijt(byId("directSequenceMode"));
+byId("sequenceMode").addEventListener("change", () => {
+  const direct = value("sequenceMode") === "direct";
+  byId("tmSequenceMode").hidden = direct;
+  byId("directSequenceMode").hidden = !direct;
+});
 
 function collectProject(): ProjectData {
   return {
