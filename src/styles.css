@@ -114,6 +114,17 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .tray-tile.selected { border-color: #168963; background: #e9fff7; }
 .puzzle-message { min-height: 20px; margin-top: 9px; color: #536174; font-size: 13px; }
 .route-panel { padding: 20px; }
+.gijswijt-converter { padding: 20px; }
+.converter-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.converter-heading h2 { margin: 0 0 6px; font-size: 18px; }
+.converter-heading p { margin: 0; color: #697588; font-size: 13px; max-width: 720px; }
+.converter-actions { display: flex; gap: 8px; align-items: end; flex-shrink: 0; }
+.converter-actions input { width: 110px; }
+.converter-status { min-height: 18px; margin: 10px 0 0; color: #16664d; font-size: 13px; }
+#gijswijtResult { margin-top: 12px; }
+#gijswijtOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
+.rule-pagination { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.rule-pagination span { margin-right: auto; color: #697588; font-size: 12px; }
 .route-heading { display: flex; justify-content: space-between; align-items: end; gap: 18px; }
 .route-heading h2 { margin: 0 0 5px; font-size: 18px; }
 .route-heading p { margin: 0; color: #697588; font-size: 13px; }
@@ -148,6 +159,7 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
   .form-grid { grid-template-columns: 1fr; }
   .puzzle-heading { align-items: stretch; flex-direction: column; }
   .route-heading { align-items: stretch; flex-direction: column; }
+  .converter-heading { align-items: stretch; flex-direction: column; }
   .route-progress { align-items: stretch; flex-direction: column; }
   .puzzle-actions .btn { flex: 1 1 135px; }
   .route-actions .btn { flex: 1 1 110px; }

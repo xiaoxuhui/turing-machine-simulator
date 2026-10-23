@@ -11,6 +11,8 @@ import { RouteController, type RouteFrame } from "./route-controller";
 import { renderExecutionLog } from "./execution-log";
 import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./project-codec";
 import { shuffled } from "./shuffle";
+import { compileGijswijtMachine, readGijswijtOutput } from "./gijswijt-tm";
+import { editRuleSource } from "./rule-source";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -24,6 +26,9 @@ let selectedTileId: string | null = null;
 let solutionVisible = false;
 let tileOrder: string[] = [];
 let tapeScroll = 0;
+let ruleTablePage = 0;
+const RULE_PAGE_SIZE = 100;
+let appliedGijswijtThreshold: number | null = null;
 // 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
 let tapeRenderCenter: number | null = null;
 
@@ -66,6 +71,15 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <div class="speed"><span>目标速度</span><input id="speed" type="range" min="1" max="1000" value="5" /><input id="speedNumber" type="number" min="1" max="1000" step="1" value="5" title="手动输入目标速度（步/秒）" /><span id="speedText">5 步/秒</span><strong id="actualSpeed">实际 0 步/秒</strong></div>
         </div>
       </section>
+      <section class="panel gijswijt-converter" aria-labelledby="gijswijtTitle">
+        <div class="converter-heading">
+          <div><h2 id="gijswijtTitle">吉斯维杰特数列 → 图灵机</h2><p>输入阈值，转换后的规则会显示在下方。点击上方“运行”开始计算；新项严格超过阈值时写出并停机，等于时继续。</p></div>
+          <div class="converter-actions"><label for="gijswijtThreshold">整数阈值（0–16）<input id="gijswijtThreshold" type="number" min="0" max="16" step="1" value="2" /></label><button id="compileGijswijt" class="btn primary">开始转换</button></div>
+        </div>
+        <p class="hint">0 表示未写入；数字表示数列项。计算时 |O、S、A、B 为比较标记，#数字记录本轮最大重复次数，停机时会清除。建议先试 2；阈值越大，运行可能极长。</p>
+        <p id="gijswijtCompileStatus" class="converter-status" role="status"></p>
+        <div id="gijswijtResult" hidden><label for="gijswijtOutput">已写入的数列（直接读取纸带）</label><textarea id="gijswijtOutput" readonly rows="3" spellcheck="false"></textarea><p id="gijswijtOutputStatus" class="hint" aria-live="polite"></p></div>
+      </section>
       <div class="lower">
         <section class="panel editor">
           <div class="panel-title"><h2>机器定义</h2><small>每行一条规则：状态,符号 → 状态,符号,方向</small></div>
@@ -81,6 +95,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <label>转移规则<textarea id="rules" spellcheck="false"></textarea></label>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
+          <div class="rule-pagination"><span id="rulePageInfo"></span><button id="rulePrev" class="btn">上一页</button><button id="ruleNext" class="btn">下一页</button></div>
           <div class="editor-actions"><button id="apply" class="btn primary">应用并重置</button><button id="clear" class="btn danger">清空规则</button><span id="errors" class="error"></span></div>
           <div class="hint">快捷键：空格运行/暂停，Alt + → 单步，Ctrl + R 重置（输入框聚焦时不触发）。</div>
         </section>
@@ -180,6 +195,9 @@ function createMachine(): boolean {
     return false;
   }
   records = [];
+  const thresholdMatch = project.initialState === "G.seed" && project.blankSymbol === "0"
+    ? project.rules.slice(0, 100).match(/^# Gijswijt threshold=(\d+)$/m) : null;
+  appliedGijswijtThreshold = thresholdMatch ? Number(thresholdMatch[1]) : null;
   tapeScroll = 0;
   tapeRenderCenter = null;
   appliedMachineKey = machineProjectKey(project);
@@ -368,34 +386,41 @@ function renderLog(): void {
   renderExecutionLog(byId("log"), records);
 }
 
-function serializeRuleRows(): void {
-  const rows = [...document.querySelectorAll<HTMLElement>(".rule-data-row")];
-  byId<HTMLTextAreaElement>("rules").value = rows.map((row) => {
-    const fields = [...row.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input,select")].map((field) => field.value.trim());
-    return `${fields[0]},${fields[1]} -> ${fields[2]},${fields[3]},${fields[4]}`;
-  }).join("\n");
-}
-
 function renderRuleTable(): void {
   const host = byId("ruleTable");
   const parsed = parseTransitions(value("rules"));
   if (parsed.errors.length) {
     host.innerHTML = `<div class="empty">修正文本规则后即可同步结构化表格</div>`;
+    byId("rulePageInfo").textContent = "规则格式待修正";
+    byId<HTMLButtonElement>("rulePrev").disabled = true;
+    byId<HTMLButtonElement>("ruleNext").disabled = true;
     return;
   }
+  const pages = Math.max(1, Math.ceil(parsed.transitions.length / RULE_PAGE_SIZE));
+  ruleTablePage = Math.min(ruleTablePage, pages - 1);
+  const start = ruleTablePage * RULE_PAGE_SIZE;
+  byId("rulePageInfo").textContent = `共 ${parsed.transitions.length} 条 · 第 ${ruleTablePage + 1}/${pages} 页`;
+  byId<HTMLButtonElement>("rulePrev").disabled = ruleTablePage === 0;
+  byId<HTMLButtonElement>("ruleNext").disabled = ruleTablePage === pages - 1;
   host.innerHTML = `<div class="rule-row rule-head"><span>当前状态</span><span>读取</span><span>下一状态</span><span>写入</span><span>移动</span><span></span></div>` +
-    parsed.transitions.map((rule, index) => `<div class="rule-row rule-data-row" data-index="${index}">
+    parsed.transitions.slice(start, start + RULE_PAGE_SIZE).map((rule, offset) => { const index = start + offset; return `<div class="rule-row rule-data-row" data-index="${index}">
       <input aria-label="规则 ${index + 1} 当前状态" value="${escapeAttribute(rule.fromState)}" />
       <input aria-label="规则 ${index + 1} 读取符号" value="${escapeAttribute(rule.readSymbol)}" />
       <input aria-label="规则 ${index + 1} 下一状态" value="${escapeAttribute(rule.toState)}" />
       <input aria-label="规则 ${index + 1} 写入符号" value="${escapeAttribute(rule.writeSymbol)}" />
       <select aria-label="规则 ${index + 1} 移动方向"><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
       <button class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
-    </div>`).join("");
-  host.querySelectorAll("input,select").forEach((field) => field.addEventListener("change", () => { serializeRuleRows(); createMachine(); }));
+    </div>`; }).join("");
+  host.querySelectorAll("input,select").forEach((field) => field.addEventListener("change", () => {
+    const row = field.closest<HTMLElement>(".rule-data-row")!;
+    const fields = [...row.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input,select")].map((item) => item.value.trim());
+    const replacement = `${fields[0]},${fields[1]} -> ${fields[2]},${fields[3]},${fields[4]}`;
+    byId<HTMLTextAreaElement>("rules").value = editRuleSource(value("rules"), Number(row.dataset.index), replacement);
+    createMachine();
+  }));
   host.querySelectorAll<HTMLButtonElement>(".delete-rule").forEach((button) => button.addEventListener("click", () => {
-    button.closest(".rule-data-row")?.remove();
-    serializeRuleRows();
+    const row = button.closest<HTMLElement>(".rule-data-row")!;
+    byId<HTMLTextAreaElement>("rules").value = editRuleSource(value("rules"), Number(row.dataset.index), null);
     createMachine();
   }));
 }
@@ -417,6 +442,20 @@ function render(): void {
   byId("stopMessage").textContent = stopMessage;
   renderTape();
   renderLog();
+  renderGijswijtOutput();
+}
+
+function renderGijswijtOutput(): void {
+  byId("gijswijtResult").hidden = appliedGijswijtThreshold === null;
+  if (appliedGijswijtThreshold === null || !machine) return;
+  const terms = readGijswijtOutput(machine.tape);
+  const output = byId<HTMLTextAreaElement>("gijswijtOutput");
+  const text = terms.join(", ");
+  if (output.value !== text) output.value = text;
+  const last = terms.at(-1);
+  byId("gijswijtOutputStatus").textContent = machine.currentState === "G.HALT"
+    ? `已停机：第 ${terms.length} 项为 ${last}，严格大于阈值 ${appliedGijswijtThreshold}。`
+    : `已写入 ${terms.length} 项${last === undefined ? "；点击运行或单步写入首项。" : `，最新项 ${last}；超过 ${appliedGijswijtThreshold} 才停机。`}`;
 }
 
 const reasonText = { accept: "接受", reject: "拒绝", halt: "已停机", "missing-transition": "缺少转移规则" } as const;
@@ -519,6 +558,21 @@ function download(name: string, content: string, type: string): void {
 }
 
 byId("apply").addEventListener("click", createMachine);
+byId("compileGijswijt").addEventListener("click", () => {
+  try {
+    const raw = value("gijswijtThreshold").trim();
+    if (!raw) throw new Error("请输入整数阈值。");
+    const project = compileGijswijtMachine(Number(raw));
+    fillProject(project);
+    ruleTablePage = 0;
+    createMachine();
+    byId("gijswijtCompileStatus").textContent = `转换完成，共 ${parseTransitions(project.rules).transitions.length} 条规则。已开启 Max 步数；点击上方“运行”开始。`;
+  } catch (error) {
+    byId("gijswijtCompileStatus").textContent = error instanceof Error ? error.message : "转换失败";
+  }
+});
+byId("rulePrev").addEventListener("click", () => { ruleTablePage = Math.max(0, ruleTablePage - 1); renderRuleTable(); });
+byId("ruleNext").addEventListener("click", () => { ruleTablePage += 1; renderRuleTable(); });
 byId("step").addEventListener("click", () => { pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
@@ -554,7 +608,7 @@ byId("addRule").addEventListener("click", () => {
   byId<HTMLTextAreaElement>("rules").value = `${source}${source ? "\n" : ""}q0,□ -> HALT,□,N`;
   renderRuleTable();
 });
-byId("rules").addEventListener("input", renderRuleTable);
+byId("rules").addEventListener("input", () => { ruleTablePage = 0; renderRuleTable(); });
 byId("unlimitedSteps").addEventListener("change", () => {
   byId<HTMLInputElement>("maxSteps").disabled = byId<HTMLInputElement>("unlimitedSteps").checked;
   const storageError = saveProject(localStorage, STORAGE_KEY, collectProject());
@@ -577,7 +631,8 @@ byId("exportProject").addEventListener("click", () => download("turing-machine-p
 byId("importProject").addEventListener("click", () => byId<HTMLInputElement>("fileInput").click());
 byId("fileInput").addEventListener("change", async () => {
   const file = byId<HTMLInputElement>("fileInput").files?.[0];
-  if (!file || file.size > 5_000_000) return;
+  if (!file) return;
+  if (file.size > 20_000_000) { byId("errors").textContent = "项目文件超过 20 MB，请缩小规则表后重试。"; return; }
   try {
     const project = parseProjectJson(await file.text());
     fillProject(project);
