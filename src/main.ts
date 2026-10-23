@@ -198,6 +198,7 @@ function createMachine(): boolean {
   const thresholdMatch = project.initialState === "G.seed" && project.blankSymbol === "0"
     ? project.rules.slice(0, 100).match(/^# Gijswijt threshold=(\d+)$/m) : null;
   appliedGijswijtThreshold = thresholdMatch ? Number(thresholdMatch[1]) : null;
+  if (appliedGijswijtThreshold !== null) byId<HTMLInputElement>("gijswijtThreshold").value = String(appliedGijswijtThreshold);
   tapeScroll = 0;
   tapeRenderCenter = null;
   appliedMachineKey = machineProjectKey(project);
@@ -454,7 +455,7 @@ function renderGijswijtOutput(): void {
   if (output.value !== text) output.value = text;
   const last = terms.at(-1);
   byId("gijswijtOutputStatus").textContent = machine.currentState === "G.HALT"
-    ? `已停机：第 ${terms.length} 项为 ${last}，严格大于阈值 ${appliedGijswijtThreshold}。`
+    ? `已停机：第 ${terms.length} 项为 ${last}${last !== undefined && last > appliedGijswijtThreshold ? `，严格大于阈值 ${appliedGijswijtThreshold}` : ""}。`
     : `已写入 ${terms.length} 项${last === undefined ? "；点击运行或单步写入首项。" : `，最新项 ${last}；超过 ${appliedGijswijtThreshold} 才停机。`}`;
 }
 
@@ -566,7 +567,8 @@ byId("compileGijswijt").addEventListener("click", () => {
     fillProject(project);
     ruleTablePage = 0;
     createMachine();
-    byId("gijswijtCompileStatus").textContent = `转换完成，共 ${parseTransitions(project.rules).transitions.length} 条规则。已开启 Max 步数；点击上方“运行”开始。`;
+    const runtimeNote = Number(raw) === 3 ? " 此机器超过 3 需约 1514 万步，在 1000 步/秒下约 4.2 小时。" : "";
+    byId("gijswijtCompileStatus").textContent = `转换完成，共 ${project.rules.split("\n").length - 3} 条规则。已开启 Max 步数；点击上方“运行”开始。${runtimeNote}`;
   } catch (error) {
     byId("gijswijtCompileStatus").textContent = error instanceof Error ? error.message : "转换失败";
   }

@@ -74,6 +74,18 @@ describe("Gijswijt single-tape compiler", () => {
     console.info(`threshold=10 rules=${project.rules.split("\n").length - 3} bytes=${project.rules.length}`);
   });
 
+  it("continues past 4 when the configured threshold is 4", () => {
+    const machine = machineFor(4);
+    for (let step = 0; step < 20_000_000; step += 1) {
+      const result = machine.step();
+      if (result.stopped) throw new Error(`意外停机：${result.reason} @ ${machine.currentState}`);
+      if (machine.currentState === "G.next" && machine.headPosition === 221) break;
+    }
+    expect(machine.currentState).toBe("G.next");
+    expect(readGijswijtOutput(machine.tape)).toEqual(reference(221));
+    expect(machine.tape.read(219)).toBe("4");
+  }, 60_000);
+
   it("exhaustively checks the next term for every binary prefix of length 1–6", () => {
     const definition = machineFor(3).definition;
     let checked = 0;
