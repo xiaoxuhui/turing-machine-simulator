@@ -24,6 +24,22 @@ function run(project: ExampleProject, input = project.input, limit = 10_000): { 
 const output = (machine: TuringMachine) => machine.tape.entries().map(([, symbol]) => symbol).join("");
 
 describe("built-in examples", () => {
+  it.each([
+    ["beaver3Steps", 3, 2, 21, 5],
+    ["beaver3Ones", 3, 2, 14, 6],
+    ["beaver4", 4, 2, 107, 13],
+    ["beaver23", 2, 3, 38, 9],
+    ["beaver24", 2, 4, 3_932_964, 2050],
+  ] as const)("runs %s with the published state/symbol counts and result", (key, states, symbols, steps, cells) => {
+    const project = examples[key];
+    const result = run(project, "", steps);
+    expect(result.reason).toBe("halt");
+    expect(result.machine.stepCount).toBe(steps);
+    expect(result.machine.tape.entries()).toHaveLength(cells);
+    const transitions = parseTransitions(project.rules).transitions;
+    expect(new Set(transitions.map((t) => t.fromState)).size).toBe(states);
+    expect(new Set(transitions.map((t) => t.readSymbol)).size).toBe(symbols);
+  }, 30_000);
   it("exhaustively multiplies unary operands 0–6 with a clean result tape", () => {
     for (let a = 0; a <= 6; a += 1) for (let b = 0; b <= 6; b += 1) {
       const result = run(examples.unaryMultiply, `${"1".repeat(a)}*${"1".repeat(b)}`);
