@@ -181,9 +181,10 @@ function collectProject(): ProjectData {
 function fillProject(project: ProjectData | ExampleProject): void {
   const fields = ["input", "blankSymbol", "initialState", "acceptStates", "rejectStates", "haltStates", "rules"] as const;
   for (const field of fields) byId<HTMLInputElement | HTMLTextAreaElement>(field).value = project[field];
-  const unlimited = "maxSteps" in project && project.maxSteps === null;
+  const stepLimit = project.maxSteps === undefined ? 10000 : project.maxSteps;
+  const unlimited = stepLimit === null;
   byId<HTMLInputElement>("unlimitedSteps").checked = unlimited;
-  byId<HTMLInputElement>("maxSteps").value = "maxSteps" in project && project.maxSteps !== null ? String(project.maxSteps) : "10000";
+  byId<HTMLInputElement>("maxSteps").value = stepLimit === null ? "10000" : String(stepLimit);
   byId<HTMLInputElement>("maxSteps").disabled = unlimited;
   if ("speed" in project) byId<HTMLInputElement>("speed").value = String(project.speed);
   updateSpeedText();
