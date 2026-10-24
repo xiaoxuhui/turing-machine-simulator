@@ -37,6 +37,8 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 
 ## Running Modes
 
+Target speed is saved immediately and retained across reloads and sequence conversion. Explicit project imports apply their own speed. The target remains capped at 1000 steps/s, with measured speed displayed separately.
+
 The workbench's **Max** checkbox disables its fixed step limit. You can still pause manually, and the machine still stops normally; a non-halting machine will keep using computing resources. This preference is saved in local and exported project data. Campaign verification and the full-route overview keep their own limits.
 
 ## Gijswijt's Sequence
