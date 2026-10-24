@@ -1,6 +1,7 @@
 import { unaryExamples } from "./unary-examples";
 import { busyBeaverExamples } from "./busy-beaver-examples";
 import { conjectureExamples } from "./conjecture-examples";
+import { hyperoperationExamples } from "./hyperoperation-examples";
 
 export interface ExampleProject {
   category?: "基础示例" | "一进制运算" | "忙碌海狸" | "猜想验证";
@@ -66,6 +67,7 @@ export const examples: Record<string, ExampleProject> = {
     rules: `A,0 -> B,1,R\nA,1 -> B,1,L\nB,0 -> A,1,L\nB,1 -> HALT,1,R`,
   },
   ...unaryExamples,
+  ...hyperoperationExamples,
   ...busyBeaverExamples,
   ...conjectureExamples,
 };
