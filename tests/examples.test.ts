@@ -24,6 +24,32 @@ function run(project: ExampleProject, input = project.input, limit = 10_000): { 
 const output = (machine: TuringMachine) => machine.tape.entries().map(([, symbol]) => symbol).join("");
 
 describe("built-in examples", () => {
+  it("exhaustively multiplies unary operands 0–6 with a clean result tape", () => {
+    for (let a = 0; a <= 6; a += 1) for (let b = 0; b <= 6; b += 1) {
+      const result = run(examples.unaryMultiply, `${"1".repeat(a)}*${"1".repeat(b)}`);
+      expect(result.reason).toBe("halt");
+      expect(output(result.machine)).toBe("1".repeat(a * b));
+      const positions = result.machine.tape.entries().map(([p]) => p);
+      expect(positions.every((p, i) => i === 0 || p === positions[i - 1] + 1)).toBe(true);
+    }
+  });
+
+  it("exhaustively compares unary operands 0–6", () => {
+    for (let a = 0; a <= 6; a += 1) for (let b = 0; b <= 6; b += 1) {
+      const result = run(examples.unaryCompare, `${"1".repeat(a)}?${"1".repeat(b)}`);
+      expect(result.reason).toBe("halt");
+      expect(output(result.machine)).toBe(a === b ? "=" : a < b ? "<" : ">");
+    }
+  });
+
+  it("checks divisibility by 2 for every unary input 0–30", () => {
+    for (let n = 0; n <= 30; n += 1) {
+      const input = "1".repeat(n);
+      const result = run(examples.unaryEven, input);
+      expect(result.reason).toBe(n % 2 === 0 ? "accept" : "reject");
+      expect(output(result.machine)).toBe(input);
+    }
+  });
   it("exhaustively adds all unary operands 0–6", () => {
     for (let a = 0; a <= 6; a += 1) for (let b = 0; b <= 6; b += 1) {
       const result = run(examples.unaryAdd, `${"1".repeat(a)}+${"1".repeat(b)}`);
