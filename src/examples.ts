@@ -1,5 +1,6 @@
 import { unaryExamples } from "./unary-examples";
 import { busyBeaverExamples } from "./busy-beaver-examples";
+import { conjectureExamples } from "./conjecture-examples";
 
 export interface ExampleProject {
   category?: "基础示例" | "一进制运算" | "忙碌海狸" | "猜想验证";
@@ -66,4 +67,5 @@ export const examples: Record<string, ExampleProject> = {
   },
   ...unaryExamples,
   ...busyBeaverExamples,
+  ...conjectureExamples,
 };

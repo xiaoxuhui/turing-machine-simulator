@@ -24,6 +24,43 @@ function run(project: ExampleProject, input = project.input, limit = 10_000): { 
 const output = (machine: TuringMachine) => machine.tape.entries().map(([, symbol]) => symbol).join("");
 
 describe("built-in examples", () => {
+  it("verifies Goldbach by actual rule execution for every input 0–101", () => {
+    const prime = (n: number) => n >= 2 && Array.from({ length: Math.max(0, n - 2) }, (_, i) => i + 2).every((d) => n % d !== 0);
+    for (let n = 0; n <= 101; n += 1) {
+      const result = run(examples.goldbach, "1".repeat(n), 100_000);
+      const valid = n >= 4 && n <= 100 && n % 2 === 0;
+      expect(result.reason, `n=${n}`).toBe(valid ? "accept" : "reject");
+      if (valid) {
+        const split = output(result.machine).split("+");
+        expect(split).toHaveLength(2);
+        expect(split.every((part) => /^1+$/.test(part) && prime(part.length))).toBe(true);
+        expect(split[0].length + split[1].length).toBe(n);
+      }
+    }
+  });
+
+  it("matches every Collatz value for starting numbers 1–64", () => {
+    const project = examples.collatz;
+    const definition = { blankSymbol: project.blankSymbol, initialState: project.initialState, acceptStates: ["ACCEPT"], rejectStates: ["REJECT"], haltStates: [], transitions: parseTransitions(project.rules).transitions };
+    for (let n = 1; n <= 64; n += 1) {
+      const expected = [n];
+      while (expected.at(-1)! !== 1) {
+        const last = expected.at(-1)!;
+        expected.push(last % 2 === 0 ? last / 2 : 3 * last + 1);
+      }
+      const machine = new TuringMachine(definition, inputToTape(n.toString(2), project.blankSymbol));
+      const actual: number[] = [];
+      for (let step = 0; step < 100_000; step += 1) {
+        if (machine.currentState === "C.check") actual.push(parseInt(output(machine), 2));
+        const result = machine.step();
+        if (result.stopped) { expect(result.reason).toBe("accept"); break; }
+      }
+      expect(actual, `n=${n}`).toEqual(expected);
+      expect(machine.currentState).toBe("ACCEPT");
+      expect(output(machine)).toBe("1");
+    }
+    for (const invalid of ["", "0", "01"]) expect(run(project, invalid).reason).toBe("reject");
+  });
   it.each([
     ["beaver3Steps", 3, 2, 21, 5],
     ["beaver3Ones", 3, 2, 14, 6],

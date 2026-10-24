@@ -113,9 +113,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         </section>
         <aside class="side">
           <section class="panel">
-            <div class="panel-title"><h2>示例程序</h2></div>
+            <div class="panel-title"><h2>示例程序</h2><small>${Object.keys(examples).length} 个</small></div>
             <select id="example" style="width:100%">
-              ${Object.entries(examples).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}
+              ${["一进制运算", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
             <p id="exampleNote" class="example-note"></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
