@@ -14,6 +14,7 @@ import { shuffled } from "./shuffle";
 import { compileGijswijtMachine, readGijswijtOutput } from "./gijswijt-tm";
 import { editRuleSource } from "./rule-source";
 import { attachDirectGijswijt } from "./gijswijt-direct";
+import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -188,6 +189,7 @@ function fillProject(project: ProjectData | ExampleProject): void {
   byId<HTMLInputElement>("maxSteps").disabled = unlimited;
   if ("speed" in project) byId<HTMLInputElement>("speed").value = String(project.speed);
   updateSpeedText();
+  persistTargetSpeed(Number(value("speed")));
 }
 
 function createMachine(): boolean {
@@ -570,6 +572,11 @@ function updateSpeedText(): void {
   applySpeed(speedEls, Number(speedEls.slider.value));
 }
 
+function persistTargetSpeed(speed: number): void {
+  const error = saveSpeedPreference(localStorage, speed);
+  if (error) byId("errors").textContent = error;
+}
+
 function download(name: string, content: string, type: string): void {
   const anchor = document.createElement("a");
   anchor.href = URL.createObjectURL(new Blob([content], { type }));
@@ -584,7 +591,7 @@ byId("compileGijswijt").addEventListener("click", () => {
     const raw = value("gijswijtThreshold").trim();
     if (!raw) throw new Error("请输入整数阈值。");
     const project = compileGijswijtMachine(Number(raw));
-    fillProject(project);
+    fillProject({ ...project, speed: Number(value("speed")) });
     ruleTablePage = 0;
     createMachine();
     const runtimeNote = Number(raw) === 3 ? " 此机器超过 3 需约 1514 万步，在 1000 步/秒下约 4.2 小时。" : "";
@@ -599,7 +606,7 @@ byId("step").addEventListener("click", () => { pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
 byId("reset").addEventListener("click", resetMachine);
-attachSpeedSync(speedEls);
+attachSpeedSync(speedEls, persistTargetSpeed);
 byId("tapeViewMode").addEventListener("change", () => {
   tapeScroll = 0; // 切换视角归零，避免跨模式串扰
   tapeRenderCenter = null; // 下次渲染直接定位，不从上一个视角滑入
@@ -722,7 +729,8 @@ document.addEventListener("keydown", (event) => {
   if (event.ctrlKey && event.code === "KeyR") { event.preventDefault(); resetMachine(); }
 });
 
-fillProject(loadProject(localStorage, STORAGE_KEY) ?? defaultProject);
+const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
+fillProject({ ...savedProject, speed: loadSpeedPreference(localStorage) ?? savedProject.speed });
 byId("exampleNote").textContent = examples.unary.description;
 createMachine();
 renderRuleTable();

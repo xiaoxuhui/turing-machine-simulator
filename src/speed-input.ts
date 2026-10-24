@@ -21,7 +21,11 @@ export function applySpeed(els: SpeedSyncElements, raw: number): void {
  * 让「目标速度」的滑块与数字输入框双向同步：
  * 任一控件改动都规范化后回填双方（程序化设 .value 不会触发 input 事件，故无死循环）。
  */
-export function attachSpeedSync(els: SpeedSyncElements): void {
-  els.slider.addEventListener("input", () => applySpeed(els, Number(els.slider.value)));
-  els.number.addEventListener("input", () => applySpeed(els, Number(els.number.value)));
+export function attachSpeedSync(els: SpeedSyncElements, onChange: (speed: number) => void = () => {}): void {
+  const sync = (raw: number) => {
+    applySpeed(els, raw);
+    onChange(Number(els.slider.value));
+  };
+  els.slider.addEventListener("input", () => sync(Number(els.slider.value)));
+  els.number.addEventListener("input", () => sync(Number(els.number.value)));
 }

@@ -18,6 +18,16 @@ function makeSpeedStub() {
 }
 
 describe("applySpeed / attachSpeedSync", () => {
+  it("notifies preference persistence for both controls after normalization", () => {
+    const { els, sliderListeners, numberListeners } = makeSpeedStub();
+    const changes: number[] = [];
+    attachSpeedSync(els, (speed) => changes.push(speed));
+    els.slider.value = "25";
+    sliderListeners.input({});
+    els.number.value = "137";
+    numberListeners.input({});
+    expect(changes).toEqual([25, 137]);
+  });
   it("types into the number box syncs slider and text", () => {
     const { els, numberListeners } = makeSpeedStub();
     attachSpeedSync(els);
