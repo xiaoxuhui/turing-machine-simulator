@@ -26,7 +26,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Sparse tape that extends left and right, with head-following view
 - Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
-- 16 grouped examples: unary arithmetic, basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
+- 20 grouped examples: unary arithmetic (addition through pentation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
 - Local autosave, project JSON import/export, and execution-log CSV export
 - Clear accept / reject / halt / missing-rule feedback
@@ -51,7 +51,11 @@ Generated rules are editable, with 100 rows per table page. Conversion enables M
 
 ## Example Programs
 
-The selector groups 16 programs into unary arithmetic, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+The selector groups 20 programs into unary arithmetic, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+
+Four more arithmetic examples use `/` for floor division (`1111111/11` gives 3), `^` for exponentiation (`111^11` gives 9), `^^` for tetration (`11^^11` gives 4), and `^^^` for pentation (`11^^^11` gives 4). A finite register program is compiled into tape transitions, without precomputing the answer or adding runtime arithmetic shortcuts. Working counters lie left of the input, separated by `|`, with `#` marking the origin. At halt, only the contiguous unary answer remains. Use head-following view to see this negative-position output.
+
+Exponent zero returns 1, including the explicit convention `0^0=1`. Tetration and pentation require a positive base; height/count zero returns 1. Towers associate rightward: `2↑↑3=2^(2^2)=16`. Pentation follows `a↑↑↑0=1`, `a↑↑↑(n+1)=a↑↑(a↑↑↑n)`; see [Knuth up-arrow notation](https://mathworld.wolfram.com/KnuthUp-ArrowNotation.html). Loading these examples enables Max but preserves target speed. Default runs take 2,865 / 9,799 / 10,624 / 18,710 tape steps respectively. `2↑↑4` and `2↑↑↑3` already require 65,536 output cells and vastly more tape operations; completion of these large inputs has not been tested. Start small and use pause or finite limits as needed.
 
 Busy-beaver examples include 2-, 3-, and 4-state binary machines and 2-state machines with 3 or 4 symbols. The two 3-state examples distinguish the step champion (21 steps, 5 ones) from the ones champion (14 steps, 6 ones). The 2-state 4-symbol machine runs 3,932,964 steps and leaves 2050 nonblank cells; loading it enables Max. Sources and a complete input/result table are in the Chinese README.
 
