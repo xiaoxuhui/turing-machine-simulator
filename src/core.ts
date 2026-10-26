@@ -225,7 +225,8 @@ export function effectiveTapeScroll(mode: TapeViewMode, scroll: number): number 
  * - 快速(如 1000) → 远小于间隔、近乎瞬时，能跟上演进、不积压。
  * speed 非法(0/负/NaN/超范围)时夹紧到 [1,1000]，默认当 1 处理。
  */
-export function slideDurationMs(stepsPerSecond: number): number {
+export function slideDurationMs(stepsPerSecond: number, motion: "continuous" | "manual" = "continuous"): number {
+  if (motion === "manual") return 180;
   const speed = Math.min(1000, Math.max(1, Number.isFinite(stepsPerSecond) ? stepsPerSecond : 1));
   const interval = 1000 / speed;
   return Math.min(900, Math.max(8, interval * 0.9));
