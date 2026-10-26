@@ -378,22 +378,22 @@ function renderTape(): void {
   }
   // 平滑跟随：仅「跟随读写头」模式、且中心相对上次渲染发生变化时，
   // 先把新渲染的纸带瞬时移回旧中心位置，再用过渡滑回新中心，得到连续滑动而非逐格跳变。
-  if (mode === "follow-head") {
+  const slideMs = slideDurationMs(Number(value("speed")));
+  if (mode === "follow-head" && slideMs > 0) {
     if (tapeRenderCenter !== null && center !== tapeRenderCenter) {
       const shift = headFollowShift(tapeRenderCenter, center, tapeCellPitch());
-      const slideMs = slideDurationMs(Number(value("speed")));
       tape.style.transition = "none";
       tape.style.transform = `translateX(${shift}px)`;
       void tape.offsetWidth; // 强制重排，确保上面的瞬时位移先生效，再开始过渡
       tape.style.transition = `transform ${slideMs}ms ease-out`;
       tape.style.transform = "translateX(0)";
     }
-    tapeRenderCenter = center;
   } else {
-    // 非跟随模式（固定 0 / 随意拖动）不累积跟随偏移；并清除过渡，保证随意拖动时即时跟手。
-    tapeRenderCenter = center;
+    // 高速跟随直接定位，并取消低速遗留的过渡；其它视角保留自由拖动的偏移。
     tape.style.transition = "none";
+    if (mode === "follow-head") tape.style.transform = "";
   }
+  tapeRenderCenter = center;
 }
 
 function tapeCellPitch(): number {
@@ -606,7 +606,10 @@ byId("step").addEventListener("click", () => { pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
 byId("reset").addEventListener("click", resetMachine);
-attachSpeedSync(speedEls, persistTargetSpeed);
+attachSpeedSync(speedEls, (speed) => {
+  persistTargetSpeed(speed);
+  renderTape(); // 暂停时跨过动画阈值也立即生效，不重置机器。
+});
 byId("tapeViewMode").addEventListener("change", () => {
   tapeScroll = 0; // 切换视角归零，避免跨模式串扰
   tapeRenderCenter = null; // 下次渲染直接定位，不从上一个视角滑入

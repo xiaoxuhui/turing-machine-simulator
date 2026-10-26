@@ -103,11 +103,13 @@ describe("slideDurationMs", () => {
   it("shrinks with the interval at medium speed", () => {
     expect(slideDurationMs(10)).toBe(90); // interval 100 -> 90
   });
-  it("keeps up at high speed without exceeding the interval", () => {
-    expect(slideDurationMs(100)).toBe(9); // interval 10 -> 9
+  it("switches to direct movement strictly above ten steps per second", () => {
+    expect(slideDurationMs(11)).toBe(0);
+    expect(slideDurationMs(100)).toBe(0);
   });
-  it("floors to the 8ms minimum at extreme speed", () => {
-    expect(slideDurationMs(1000)).toBe(8); // interval 1 -> 0.9 -> clamped to 8
+  it("keeps direct movement at extreme and clamped speeds", () => {
+    expect(slideDurationMs(1000)).toBe(0);
+    expect(slideDurationMs(5000)).toBe(0);
   });
   it("treats invalid speeds as 1 step/sec (900ms)", () => {
     expect(slideDurationMs(0)).toBe(900);
