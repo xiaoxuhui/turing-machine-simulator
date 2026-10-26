@@ -33,6 +33,7 @@ const RULE_PAGE_SIZE = 100;
 let appliedGijswijtThreshold: number | null = null;
 // 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
 let tapeRenderCenter: number | null = null;
+let tapeMotion: "continuous" | "manual" = "manual";
 
 const defaultProject: ProjectData = {
   format: "turing-machine-simulator",
@@ -378,7 +379,7 @@ function renderTape(): void {
   }
   // 平滑跟随：仅「跟随读写头」模式、且中心相对上次渲染发生变化时，
   // 先把新渲染的纸带瞬时移回旧中心位置，再用过渡滑回新中心，得到连续滑动而非逐格跳变。
-  const slideMs = slideDurationMs(Number(value("speed")));
+  const slideMs = slideDurationMs(Number(value("speed")), tapeMotion);
   if (mode === "follow-head" && slideMs > 0) {
     if (tapeRenderCenter !== null && center !== tapeRenderCenter) {
       const shift = headFollowShift(tapeRenderCenter, center, tapeCellPitch());
@@ -536,6 +537,7 @@ function run(): void {
   if (!ensureCurrentDraftApplied()) return;
   status = "运行中";
   stopMessage = "";
+  tapeMotion = "continuous";
   scheduler.start();
   render();
 }
@@ -602,7 +604,7 @@ byId("compileGijswijt").addEventListener("click", () => {
 });
 byId("rulePrev").addEventListener("click", () => { ruleTablePage = Math.max(0, ruleTablePage - 1); renderRuleTable(); });
 byId("ruleNext").addEventListener("click", () => { ruleTablePage += 1; renderRuleTable(); });
-byId("step").addEventListener("click", () => { pause(false); singleStep(); });
+byId("step").addEventListener("click", () => { tapeMotion = "manual"; pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
 byId("reset").addEventListener("click", resetMachine);

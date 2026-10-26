@@ -218,11 +218,13 @@ export function effectiveTapeScroll(mode: TapeViewMode, scroll: number): number 
 /**
  * 跟随读写头模式下，纸带滑动的过渡时长（毫秒），跟随目标速度自适应。
  *
- * 目标速度 >10 时返回 0，渲染层直接定位，不创建滑动过渡。
+ * 手动单步固定 180ms，不受目标速度影响。
+ * 连续运行目标速度 >10 时返回 0，渲染层直接定位，不创建滑动过渡。
  * ≤10 时取单步间隔的约 90%，最高 900ms，保持低速连续缓行。
  * speed 非法(0/负/NaN/超范围)时夹紧到 [1,1000]，默认当 1 处理。
  */
-export function slideDurationMs(stepsPerSecond: number): number {
+export function slideDurationMs(stepsPerSecond: number, motion: "continuous" | "manual" = "continuous"): number {
+  if (motion === "manual") return 180;
   const speed = Math.min(1000, Math.max(1, Number.isFinite(stepsPerSecond) ? stepsPerSecond : 1));
   if (speed > 10) return 0;
   const interval = 1000 / speed;

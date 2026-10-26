@@ -94,6 +94,11 @@ describe("headFollowShift", () => {
 });
 
 describe("slideDurationMs", () => {
+  it("keeps manual steps at the same duration regardless of target speed", () => {
+    for (const speed of [1, 5, 10, 11, 100, 1000, 5000, 0, NaN]) {
+      expect(slideDurationMs(speed, "manual")).toBe(180);
+    }
+  });
   it("spreads the slide across most of the step interval at slow speed", () => {
     expect(slideDurationMs(1)).toBe(900); // interval 1000 -> 900, capped
   });
