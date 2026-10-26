@@ -39,8 +39,6 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 
 Target speed is saved immediately and retained across reloads and sequence conversion. Explicit project imports apply their own speed. The target remains capped at 1000 steps/s, with measured speed displayed separately.
 
-Continuous runs move instantly above 10 steps/s and animate at 10 or below. Manual Step always uses the same 180ms slide regardless of target speed. Only the visual transition changes; computation and individual tape transitions are unchanged.
-
 The workbench's **Max** checkbox disables its fixed step limit. You can still pause manually, and the machine still stops normally; a non-halting machine will keep using computing resources. This preference is saved in local and exported project data. Campaign verification and the full-route overview keep their own limits.
 
 ## Gijswijt's Sequence

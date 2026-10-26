@@ -26,7 +26,9 @@ button { cursor: pointer; }
 .metric span { display: block; color: #6c7788; font-size: 12px; margin-bottom: 3px; }
 .metric strong { font-size: 16px; }
 .status-pill { color: #126b4b; }
-.tape-shell { position: relative; overflow: hidden; padding: 44px 0 52px; background: linear-gradient(180deg,#f9fbfd,#f3f6fa); border: 1px solid #dfe5ed; border-radius: 12px; }
+.tape-shell { position: relative; overflow: hidden; padding: 18px 0 14px; background: linear-gradient(180deg,#f9fbfd,#f3f6fa); border: 1px solid #dfe5ed; border-radius: 12px; }
+/* 固定窗口不参与平移；17 格（含重叠边框）之外的格子在滑动时也不可见。 */
+.tape-viewport { width: min(100%, 970px); margin-inline: auto; padding: 26px 0 38px; overflow: hidden; }
 .tape { position: relative; display: flex; justify-content: center; touch-action: none; }
 /* 平滑拖动：提示浏览器对 transform 做合成层优化，跟手更顺 */
 .tape.can-drag { cursor: grab; will-change: transform; }
@@ -151,7 +153,7 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 #routeCanvas { display: block; width: 100%; min-height: 180px; image-rendering: pixelated; }
 #routeEmpty { position: absolute; inset: 0; display: grid; place-items: center; color: #8b96a7; font-size: 13px; }
 #routeEmpty[hidden] { display: none; }
-@media (max-width: 1200px) { .workspace { padding-inline: 18px; } .cell { flex-basis: 52px; height: 52px; } }
+@media (max-width: 1200px) { .workspace { padding-inline: 18px; } .tape-viewport { max-width: 868px; } .cell { flex-basis: 52px; height: 52px; } }
 @media (max-width: 980px) {
   .topbar { padding-inline: 16px; }
   .lower { grid-template-columns: 1fr; }

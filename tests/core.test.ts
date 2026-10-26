@@ -94,11 +94,6 @@ describe("headFollowShift", () => {
 });
 
 describe("slideDurationMs", () => {
-  it("keeps manual steps at the same duration regardless of target speed", () => {
-    for (const speed of [1, 5, 10, 11, 100, 1000, 5000, 0, NaN]) {
-      expect(slideDurationMs(speed, "manual")).toBe(180);
-    }
-  });
   it("spreads the slide across most of the step interval at slow speed", () => {
     expect(slideDurationMs(1)).toBe(900); // interval 1000 -> 900, capped
   });
@@ -108,13 +103,11 @@ describe("slideDurationMs", () => {
   it("shrinks with the interval at medium speed", () => {
     expect(slideDurationMs(10)).toBe(90); // interval 100 -> 90
   });
-  it("switches to direct movement strictly above ten steps per second", () => {
-    expect(slideDurationMs(11)).toBe(0);
-    expect(slideDurationMs(100)).toBe(0);
+  it("keeps up at high speed without exceeding the interval", () => {
+    expect(slideDurationMs(100)).toBe(9); // interval 10 -> 9
   });
-  it("keeps direct movement at extreme and clamped speeds", () => {
-    expect(slideDurationMs(1000)).toBe(0);
-    expect(slideDurationMs(5000)).toBe(0);
+  it("floors to the 8ms minimum at extreme speed", () => {
+    expect(slideDurationMs(1000)).toBe(8); // interval 1 -> 0.9 -> clamped to 8
   });
   it("treats invalid speeds as 1 step/sec (900ms)", () => {
     expect(slideDurationMs(0)).toBe(900);
