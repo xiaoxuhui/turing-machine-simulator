@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { examples, type ExampleProject } from "../src/examples";
-import { inputToTape, parseTransitions, TuringMachine, type MachineDefinition, type StopReason } from "../src/core";
+import { inputToTape, parseTransitions, resolveInitialState, TuringMachine, type MachineDefinition, type StopReason } from "../src/core";
 
 function run(project: ExampleProject, input = project.input, limit = 10_000): { machine: TuringMachine; reason: StopReason } {
-  const parsed = parseTransitions(project.rules);
+  const parsed = parseTransitions(project.rules, { acceptStates: project.acceptStates.split(",").filter(Boolean), rejectStates: project.rejectStates.split(",").filter(Boolean), haltStates: project.haltStates.split(",").filter(Boolean) });
   expect(parsed.errors).toEqual([]);
   const definition: MachineDefinition = {
     blankSymbol: project.blankSymbol,
-    initialState: project.initialState,
+    initialState: resolveInitialState(parsed, project.initialState),
     acceptStates: project.acceptStates.split(",").filter(Boolean),
     rejectStates: project.rejectStates.split(",").filter(Boolean),
     haltStates: project.haltStates.split(",").filter(Boolean),
@@ -24,6 +24,12 @@ function run(project: ExampleProject, input = project.input, limit = 10_000): { 
 const output = (machine: TuringMachine) => machine.tape.entries().map(([, symbol]) => symbol).join("");
 
 describe("built-in examples", () => {
+  it("runs the function example through its compiled entry", () => {
+    const { machine, reason } = run(examples.functions);
+    expect(reason).toBe("halt");
+    expect(output(machine)).toBe("11111");
+    expect(machine.stepCount).toBe(5);
+  });
   it("verifies Goldbach by actual rule execution for every input 0–101", () => {
     const prime = (n: number) => n >= 2 && Array.from({ length: Math.max(0, n - 2) }, (_, i) => i + 2).every((d) => n % d !== 0);
     for (let n = 0; n <= 101; n += 1) {

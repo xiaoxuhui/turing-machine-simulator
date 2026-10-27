@@ -1,4 +1,4 @@
-import { parseTransitions, TuringMachine } from "./core";
+import { parseTransitions, resolveInitialState, TuringMachine } from "./core";
 import type { ExampleProject } from "./examples";
 
 export interface ProjectData extends ExampleProject {
@@ -40,16 +40,16 @@ export function validateProjectData(value: unknown): ProjectData {
   }
 
   const project = value as unknown as ProjectData;
-  if (!project.initialState.trim()) throw new Error("初始状态不能为空");
   if (Array.from(project.blankSymbol).length !== 1) throw new Error("空白符必须是一个字符");
-  const parsed = parseTransitions(project.rules);
+  const terminalStates = { acceptStates: splitStates(project.acceptStates), rejectStates: splitStates(project.rejectStates), haltStates: splitStates(project.haltStates) };
+  const parsed = parseTransitions(project.rules, terminalStates);
   if (parsed.errors.length) throw new Error(parsed.errors.slice(0, 4).join("；"));
+  const initialState = resolveInitialState(parsed, project.initialState);
+  if (!initialState) throw new Error("初始状态不能为空");
   new TuringMachine({
     blankSymbol: project.blankSymbol,
-    initialState: project.initialState.trim(),
-    acceptStates: splitStates(project.acceptStates),
-    rejectStates: splitStates(project.rejectStates),
-    haltStates: splitStates(project.haltStates),
+    initialState,
+    ...terminalStates,
     transitions: parsed.transitions,
   }, []);
   return { ...project };

@@ -1,7 +1,7 @@
 import "./campaign-styles.css";
 import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, resetDraft, uncompleteLevel, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
-import { parseTransitions, type MachineDefinition } from "./core";
-import { insertAtSelection } from "./text-insertion";
+import { parseTransitions, resolveInitialState, type MachineDefinition } from "./core";
+import { attachSpaceIndentation, insertAtSelection } from "./text-insertion";
 import { encodeCampaignBackup, MAX_CAMPAIGN_BACKUP_BYTES, parseCampaignBackup } from "./campaign-backup";
 
 const STORAGE_KEY = "turing-machine-simulator.campaign.v1";
@@ -118,7 +118,7 @@ function activeLevel(): CampaignLevel {
 
 function definitionFromEditor(): MachineDefinition | null {
   const level = activeLevel();
-  const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value);
+  const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value, { haltStates: ["HALT"], acceptStates: [], rejectStates: [] });
   if (parsed.errors.length) {
     byId("editorError").textContent = parsed.errors.slice(0, 4).join("；");
     return null;
@@ -126,7 +126,7 @@ function definitionFromEditor(): MachineDefinition | null {
   byId("editorError").textContent = "";
   return {
     blankSymbol: level.starter.blankSymbol,
-    initialState: level.starter.initialState,
+    initialState: resolveInitialState(parsed, level.starter.initialState),
     acceptStates: [],
     rejectStates: [],
     haltStates: ["HALT"],
@@ -136,7 +136,7 @@ function definitionFromEditor(): MachineDefinition | null {
 
 function updateRuleRecognition(): void {
   const level = activeLevel();
-  const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value);
+  const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value, { haltStates: ["HALT"], acceptStates: [], rejectStates: [] });
   const blankRules = parsed.transitions.filter((rule) => rule.readSymbol === level.starter.blankSymbol);
   const status = byId("ruleRecognition");
   if (parsed.errors.length) {
@@ -264,6 +264,7 @@ byId("levelList").addEventListener("click", (event) => {
   render();
 });
 
+attachSpaceIndentation(byId<HTMLTextAreaElement>("rulesEditor"));
 byId("rulesEditor").addEventListener("input", () => {
   progress = { ...progress, drafts: { ...progress.drafts, [activeLevelId]: byId<HTMLTextAreaElement>("rulesEditor").value } };
   const warning = saveProgress();

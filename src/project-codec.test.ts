@@ -11,6 +11,12 @@ const validProject: ProjectData = {
 };
 
 describe("project codec", () => {
+  it("preserves function source and allows the call list to select the entry", () => {
+    const project = { ...validProject, ...examples.functions, initialState: "" };
+    expect(parseProjectJson(JSON.stringify(project))).toEqual(project);
+    const custom = { ...project, haltStates: "完成", rules: project.rules.replaceAll("HALT", "完成") };
+    expect(parseProjectJson(JSON.stringify(custom))).toEqual(custom);
+  });
   it("accepts and preserves a version 1 project", () => {
     expect(parseProjectJson(JSON.stringify(validProject))).toEqual(validProject);
   });

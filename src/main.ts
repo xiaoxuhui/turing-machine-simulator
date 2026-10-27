@@ -1,5 +1,5 @@
 import "./styles.css";
-import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
+import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, resolveInitialState, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
@@ -16,6 +16,7 @@ import { editRuleSource } from "./rule-source";
 import { attachDirectGijswijt } from "./gijswijt-direct";
 import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
 import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
+import { attachSpaceIndentation } from "./text-insertion";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -109,6 +110,17 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </div>
           <label>转移规则<textarea id="rules" spellcheck="false"></textarea></label>
           <div id="draftStatus" class="hint" role="status"></div>
+          <details class="function-help"><summary>函数定义与调用写法</summary>
+            <p>定义：函数名(初始状态):，规则前用相同数量的空格缩进。调用只写函数名，不写括号或 return。函数走到普通停机态（默认 HALT）后接着执行下一个调用，最后一次停机；缺少规则仍报错。Tab 插入四个空格。</p>
+            <pre>追加(q0):
+    q0,1 -&gt; q0,1,R
+    q0,□ -&gt; HALT,1,R
+
+追加
+追加</pre>
+            <p>初始输入填 111，普通停机状态填 HALT，结果是 11111。有顶格调用列表时，程序自动使用定义中的入口；不必重复填写初始状态。此版本不支持递归。</p>
+          </details>
+          <div id="functionStatus" class="hint" role="status"></div>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
           <div class="rule-pagination"><span id="rulePageInfo"></span><button id="rulePrev" class="btn">上一页</button><button id="ruleNext" class="btn">下一页</button></div>
@@ -206,19 +218,19 @@ function createMachine(): boolean {
   pause();
   const project = collectProject();
   persistEditorDraft();
-  const parsed = parseTransitions(project.rules);
+  const terminalStates = { acceptStates: splitStates(project.acceptStates), rejectStates: splitStates(project.rejectStates), haltStates: splitStates(project.haltStates) };
+  const parsed = parseTransitions(project.rules, terminalStates);
   const errors = [...parsed.errors];
-  if (!project.initialState.trim()) errors.unshift("初始状态不能为空");
+  const initialState = resolveInitialState(parsed, project.initialState);
+  if (!initialState) errors.unshift("初始状态不能为空");
   if (!project.blankSymbol) errors.unshift("空白符不能为空");
   if (Array.from(project.blankSymbol).length !== 1) errors.unshift("空白符必须是一个字符");
   byId("errors").textContent = errors.slice(0, 4).join("；");
   if (errors.length) return false;
   const definition: MachineDefinition = {
     blankSymbol: project.blankSymbol,
-    initialState: project.initialState.trim(),
-    acceptStates: splitStates(project.acceptStates),
-    rejectStates: splitStates(project.rejectStates),
-    haltStates: splitStates(project.haltStates),
+    initialState,
+    ...terminalStates,
     transitions: parsed.transitions,
   };
   try {
@@ -424,7 +436,12 @@ function renderLog(): void {
 
 function renderRuleTable(): void {
   const host = byId("ruleTable");
-  const parsed = parseTransitions(value("rules"));
+  const parsed = parseTransitions(value("rules"), { acceptStates: splitStates(value("acceptStates")), rejectStates: splitStates(value("rejectStates")), haltStates: splitStates(value("haltStates")) });
+  byId<HTMLButtonElement>("addRule").disabled = Boolean(parsed.hasFunctions);
+  byId("functionStatus").textContent = parsed.hasFunctions
+    ? parsed.errors.length ? parsed.errors[0]
+      : `已识别 ${parsed.functionEntries?.length ?? 0} 个函数，展开为 ${parsed.transitions.length} 条普通规则。${parsed.initialState ? "按顶格调用顺序运行，入口已自动选择。" : "初始状态可填写函数名。"} 下方展开表只读，请在上方文本编辑函数。`
+    : "";
   if (parsed.errors.length) {
     host.innerHTML = `<div class="empty">修正文本规则后即可同步结构化表格</div>`;
     byId("rulePageInfo").textContent = "规则格式待修正";
@@ -447,6 +464,10 @@ function renderRuleTable(): void {
       <select aria-label="规则 ${index + 1} 移动方向"><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
       <button class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
     </div>`; }).join("");
+  if (parsed.hasFunctions) {
+    host.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input,select,button").forEach(field => { field.disabled = true; });
+    return;
+  }
   host.querySelectorAll("input,select").forEach((field) => field.addEventListener("change", () => {
     const row = field.closest<HTMLElement>(".rule-data-row")!;
     const fields = [...row.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input,select")].map((item) => item.value.trim());
@@ -659,6 +680,8 @@ byId("addRule").addEventListener("click", () => {
 });
 for (const field of editorFields) byId(field).addEventListener("input", persistEditorDraft);
 byId("rules").addEventListener("input", () => { ruleTablePage = 0; renderRuleTable(); });
+for (const field of ["acceptStates", "rejectStates", "haltStates"]) byId(field).addEventListener("input", renderRuleTable);
+attachSpaceIndentation(byId<HTMLTextAreaElement>("rules"));
 byId("unlimitedSteps").addEventListener("change", () => {
   byId<HTMLInputElement>("maxSteps").disabled = byId<HTMLInputElement>("unlimitedSteps").checked;
   const storageError = saveProject(localStorage, STORAGE_KEY, collectProject());

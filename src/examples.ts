@@ -18,6 +18,14 @@ export interface ExampleProject {
 }
 
 export const examples: Record<string, ExampleProject> = {
+  functions: {
+    category: "基础示例",
+    name: "函数：连续追加两次",
+    description: "用 函数名(初始状态): 定义函数，规则前缩进空格；顶格只写函数名即可调用。追加两次把 111 变成 11111。每次进入 HALT 自动继续下一次调用，最后停机，不写 def 或 return。",
+    input: "111", initialState: "追加", blankSymbol: "□",
+    acceptStates: "", rejectStates: "", haltStates: "HALT",
+    rules: "追加(q0):\n    q0,1 -> q0,1,R\n    q0,□ -> HALT,1,R\n\n追加\n追加",
+  },
   unary: {
     category: "一进制运算",
     name: "一进制加一",

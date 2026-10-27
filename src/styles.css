@@ -89,6 +89,9 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .log-row span:first-child { color: #8b96a7; }
 .empty { color: #929dab; text-align: center; padding: 30px 4px; font-size: 13px; }
 .hint { margin-top: 10px; color: #7b8798; font-size: 12px; }
+.function-help { margin-block: 10px; color: #526178; font-size: 13px; }
+.function-help summary { cursor: pointer; }
+.function-help pre { padding: 10px; overflow: auto; border-radius: 8px; background: #f3f6fa; }
 .puzzle-panel { padding: 20px; overflow: hidden; }
 .puzzle-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; }
 .puzzle-heading h2 { margin: 0 0 5px; font-size: 18px; }
