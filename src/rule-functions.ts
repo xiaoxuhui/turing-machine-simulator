@@ -152,7 +152,7 @@ export function parseRuleFunctions(
     const entry = `${scope}${fn.initial}`;
     memo.set(key, entry);
     for (const { rule } of fn.rules) {
-      const exits = fn.exit ? rule.toState === fn.exit : halt.has(rule.toState);
+      const exits = fn.exit ? rule.toState === fn.exit : halt.has(rule.toState) && !accept.has(rule.toState) && !reject.has(rule.toState);
       const target = exits ? continuation
         : terminal.has(rule.toState) ? rule.toState
         : functions.has(rule.toState) ? compile(rule.toState, continuation)

@@ -35,6 +35,12 @@ describe("indented rule functions", () => {
     expect(output).toBe("1");
     expect(machine.stepCount).toBe(1);
   });
+  it("preserves acceptance precedence in legacy functions when terminal lists overlap", () => {
+    const source = `接受(q):\n    q,□ -> ACCEPT,1,R\n${append}\n接受\n追加`;
+    const { machine, result } = execute(source, "", "q", { haltStates: ["HALT", "ACCEPT"] });
+    expect(machine.stepCount).toBe(1);
+    expect(result?.reason).toBe("accept");
+  });
   it("supports explicit exits in nested composition with custom final halt states", () => {
     const source = `写(q, 出):\n    q,□ -> 出,1,R\n两次(入, 出):\n    写\n    写\n两次\n两次`;
     const { output, machine } = execute(source, "", "q", { haltStates: ["完成"] });
