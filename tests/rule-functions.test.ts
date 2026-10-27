@@ -166,6 +166,7 @@ describe("indented rule functions", () => {
     expect(errors.join()).toContain("重复");
   });
   it.each([
+    ["子(s,end):\n    s,□ -> end,1,N\n父(q,out,x=子):\n    q,□ -> out,1,N\n    返回状态 x\n父.x,□ -> HALT,2,N", "不能与子函数名或别名"],
     ["甲(q,out,不存在):\n    q,□ -> out,1,N", "未定义子函数"],
     ["甲(q,out,x=甲,x=甲):\n    q,□ -> out,1,N", "别名 x 重复"],
     ["甲(q,out,q=甲):\n    q,□ -> out,1,N", "与状态冲突"],

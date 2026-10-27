@@ -126,6 +126,7 @@ export function parseRuleFunctions(
       if (state.startsWith(`${fn.name}.`)) knownStates.add(state.slice(fn.name.length + 1));
     }
     for (const [state, line] of fn.exports) {
+      if (callee(fn, state)) fail(line, "导出状态不能与子函数名或别名重名");
       if (!knownStates.has(state)) fail(line, `导出状态 ${state} 未在函数内使用`);
       if (fn.calls.length && state !== fn.initial && state !== fn.exit) fail(line, "组合函数只能导出初始状态或退出状态");
     }
