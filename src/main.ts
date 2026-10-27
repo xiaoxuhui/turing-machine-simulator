@@ -15,6 +15,7 @@ import { compileGijswijtMachine, readGijswijtOutput } from "./gijswijt-tm";
 import { editRuleSource } from "./rule-source";
 import { attachDirectGijswijt } from "./gijswijt-direct";
 import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
+import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -107,6 +108,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <label>普通停机状态<input id="haltStates" placeholder="逗号分隔" /></label>
           </div>
           <label>转移规则<textarea id="rules" spellcheck="false"></textarea></label>
+          <div id="draftStatus" class="hint" role="status"></div>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
           <div class="rule-pagination"><span id="rulePageInfo"></span><button id="rulePrev" class="btn">上一页</button><button id="ruleNext" class="btn">下一页</button></div>
@@ -191,11 +193,19 @@ function fillProject(project: ProjectData | ExampleProject): void {
   if ("speed" in project) byId<HTMLInputElement>("speed").value = String(project.speed);
   updateSpeedText();
   persistTargetSpeed(Number(value("speed")));
+  persistEditorDraft();
+}
+
+function persistEditorDraft(): void {
+  const error = saveEditorDraft(localStorage, collectProject());
+  byId("draftStatus").textContent = error ?? "草稿已自动保存，刷新后保留（无需先应用）。";
+  byId("draftStatus").classList.toggle("error", error !== null);
 }
 
 function createMachine(): boolean {
   pause();
   const project = collectProject();
+  persistEditorDraft();
   const parsed = parseTransitions(project.rules);
   const errors = [...parsed.errors];
   if (!project.initialState.trim()) errors.unshift("初始状态不能为空");
@@ -635,12 +645,19 @@ attachTapeDrag(byId("tape"), {
   },
   isEnabled: () => value("tapeViewMode") === "free-drag",
 });
-byId("clear").addEventListener("click", () => { pause(); byId<HTMLTextAreaElement>("rules").value = ""; });
+byId("clear").addEventListener("click", () => {
+  pause();
+  byId<HTMLTextAreaElement>("rules").value = "";
+  persistEditorDraft();
+  renderRuleTable();
+});
 byId("addRule").addEventListener("click", () => {
   const source = value("rules").trim();
   byId<HTMLTextAreaElement>("rules").value = `${source}${source ? "\n" : ""}q0,□ -> HALT,□,N`;
+  persistEditorDraft();
   renderRuleTable();
 });
+for (const field of editorFields) byId(field).addEventListener("input", persistEditorDraft);
 byId("rules").addEventListener("input", () => { ruleTablePage = 0; renderRuleTable(); });
 byId("unlimitedSteps").addEventListener("change", () => {
   byId<HTMLInputElement>("maxSteps").disabled = byId<HTMLInputElement>("unlimitedSteps").checked;
@@ -734,7 +751,8 @@ document.addEventListener("keydown", (event) => {
 });
 
 const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
-fillProject({ ...savedProject, speed: loadSpeedPreference(localStorage) ?? savedProject.speed });
+const editorDraft = loadEditorDraft(localStorage);
+fillProject({ ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed });
 byId("exampleNote").textContent = examples.unary.description;
 createMachine();
 renderRuleTable();
