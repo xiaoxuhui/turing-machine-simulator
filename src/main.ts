@@ -108,7 +108,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <label>拒绝状态<input id="rejectStates" placeholder="逗号分隔" /></label>
             <label>普通停机状态<input id="haltStates" placeholder="逗号分隔" /></label>
           </div>
-          <label>转移规则<textarea id="rules" spellcheck="false"></textarea></label>
+          <label>转移规则 / 函数源码<textarea id="rules" spellcheck="false"></textarea></label>
           <div id="draftStatus" class="hint" role="status"></div>
           <details class="function-help"><summary>函数定义与调用写法</summary>
             <p>定义：函数名(初始状态):，规则前用相同数量的空格缩进。调用只写函数名，不写括号或 return。函数走到普通停机态（默认 HALT）后接着执行下一个调用，最后一次停机；缺少规则仍报错。Tab 插入四个空格。</p>
@@ -776,6 +776,6 @@ document.addEventListener("keydown", (event) => {
 const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
 const editorDraft = loadEditorDraft(localStorage);
 fillProject({ ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed });
-byId("exampleNote").textContent = examples.unary.description;
+byId("exampleNote").textContent = examples[value("example")].description;
 createMachine();
 renderRuleTable();
