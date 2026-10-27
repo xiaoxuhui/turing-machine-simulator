@@ -135,9 +135,24 @@ export class TuringMachine {
 export interface ParseResult {
   transitions: Transition[];
   errors: string[];
+  hasFunctions?: boolean;
+  initialState?: string;
+  functionEntries?: Array<{ name: string; state: string }>;
 }
 
-export function parseTransitions(source: string): ParseResult {
+export interface ParseOptions {
+  haltStates?: string[];
+  acceptStates?: string[];
+  rejectStates?: string[];
+}
+
+export function resolveInitialState(parsed: ParseResult, requested: string): string {
+  return parsed.initialState ?? parsed.functionEntries?.find(fn => fn.name === requested.trim())?.state ?? requested.trim();
+}
+
+export function parseTransitions(source: string, options: ParseOptions = {}): ParseResult {
+  const program = parseRuleFunctions(source, options, parseTransitions);
+  if (program) return program;
   const transitions: Transition[] = [];
   const errors: string[] = [];
   const seen = new Set<string>();
@@ -232,4 +247,6 @@ export function slideDurationMs(stepsPerSecond: number, motion: "continuous" | "
   const interval = 1000 / speed;
   return Math.min(900, Math.max(8, interval * 0.9));
 }
+
+import { parseRuleFunctions } from "./rule-functions";
 
