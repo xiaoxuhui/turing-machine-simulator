@@ -5,13 +5,14 @@ interface Call { name: string; line: number }
 interface RuleFunction {
   name: string;
   initial: string;
+  exit?: string;
   line: number;
   indent: number;
   rules: SourceRule[];
   calls: Call[];
 }
 
-const header = /^([^,():\s]+)\(([^,():\s]+)\):$/u;
+const header = /^([^,():\s]+)\(\s*([^,():\s]+)\s*(?:,\s*([^,():\s]+)\s*)?\):$/u;
 const identifier = /^[\p{L}_][\p{L}\p{N}_-]*$/u;
 
 /** Expand finite calls into ordinary transitions. Never evaluate tape data. */
@@ -39,9 +40,9 @@ export function parseRuleFunctions(
     const definition = line.match(header);
     if (definition) {
       if (indent) { fail(number, "函数定义必须顶格，不能嵌套定义"); continue; }
-      const [, name, initial] = definition;
+      const [, name, initial, exit] = definition;
       if (!identifier.test(name)) { fail(number, "函数名只能使用字母、汉字、数字、下划线或连字符，且不能以数字开头"); continue; }
-      current = { name, initial, line: number, indent: 0, rules: [], calls: [] };
+      current = { name, initial, exit, line: number, indent: 0, rules: [], calls: [] };
       if (functions.has(name)) fail(number, `函数 ${name} 重复定义`);
       else functions.set(name, current);
       continue;
@@ -81,12 +82,16 @@ export function parseRuleFunctions(
   }
   for (const fn of functions.values()) {
     if (terminal.has(fn.name)) fail(fn.line, "函数名不能与终态相同");
+    if (fn.exit === fn.initial) fail(fn.line, "初始状态与退出状态不能相同");
+    if (fn.exit && functions.has(fn.exit)) fail(fn.line, "退出状态不能与函数名重名");
+    if (fn.exit && (accept.has(fn.exit) || reject.has(fn.exit))) fail(fn.line, "退出状态不能与接受或拒绝状态相同");
     if (!fn.rules.length && !fn.calls.length) fail(fn.line, `函数 ${fn.name} 的函数体不能为空`);
     if (fn.rules.length && fn.calls.length) fail(fn.line, "函数体不能混写转移规则和顺序调用列表");
     const locals = new Set(fn.rules.map(item => item.rule.fromState));
     if (fn.rules.length && !locals.has(fn.initial)) fail(fn.line, `函数 ${fn.name} 的初始状态 ${fn.initial} 没有定义`);
     for (const { rule, line } of fn.rules) {
       if (terminal.has(rule.fromState)) fail(line, "终态不能再定义转移规则");
+      if (rule.fromState === fn.exit) fail(line, "退出状态不能再定义转移规则");
       if (functions.has(rule.fromState)) fail(line, "函数内局部状态不能与函数名重名");
     }
     checkDuplicates(fn.rules);
@@ -147,8 +152,9 @@ export function parseRuleFunctions(
     const entry = `${scope}${fn.initial}`;
     memo.set(key, entry);
     for (const { rule } of fn.rules) {
-      const target = accept.has(rule.toState) || reject.has(rule.toState) ? rule.toState
-        : halt.has(rule.toState) ? continuation
+      const exits = fn.exit ? rule.toState === fn.exit : halt.has(rule.toState);
+      const target = exits ? continuation
+        : terminal.has(rule.toState) ? rule.toState
         : functions.has(rule.toState) ? compile(rule.toState, continuation)
         : `${scope}${rule.toState}`;
       append({ ...rule, fromState: `${scope}${rule.fromState}`, toState: target });

@@ -22,6 +22,25 @@ function execute(source: string, input = "111", initial = "q0", options: ParseOp
 }
 
 describe("indented rule functions", () => {
+  it("returns at an explicit exit state, with spaces around the state parameters", () => {
+    const source = `追加( q0 , 结束 ):\n    q0,1 -> q0,1,R\n    q0,□ -> 结束,1,R\n追加\n追加`;
+    const { output, machine } = execute(source);
+    expect(output).toBe("11111");
+    expect(machine.currentState).toBe("HALT");
+    expect(machine.stepCount).toBe(5);
+  });
+  it("keeps non-exit HALT as a whole-program stop when an exit is explicit", () => {
+    const source = `停止(q, 结束):\n    q,□ -> HALT,1,R\n${append}\n停止\n追加`;
+    const { output, machine } = execute(source, "");
+    expect(output).toBe("1");
+    expect(machine.stepCount).toBe(1);
+  });
+  it("supports explicit exits in nested composition with custom final halt states", () => {
+    const source = `写(q, 出):\n    q,□ -> 出,1,R\n两次(入, 出):\n    写\n    写\n两次\n两次`;
+    const { output, machine } = execute(source, "", "q", { haltStates: ["完成"] });
+    expect(output).toBe("1111");
+    expect(machine.currentState).toBe("完成");
+  });
   it("calls a Chinese function by name twice, including calls before definitions", () => {
     const { output, machine, parsed } = execute(`追加\n追加\n\n${append}`);
     expect(output).toBe("11111");
@@ -70,6 +89,10 @@ describe("indented rule functions", () => {
     expect(errors.join()).toContain("重复");
   });
   it.each([
+    ["坏(q,q):\n    q,□ -> q,1,N", "不能相同"],
+    ["坏(q,出):\n    q,□ -> 出,1,N\n    出,□ -> q,1,N", "退出状态不能再定义"],
+    ["坏(q,ACCEPT):\n    q,□ -> ACCEPT,1,N", "接受或拒绝"],
+    ["甲(q,乙):\n    q,□ -> 乙,1,N\n乙(q):\n    q,□ -> HALT,1,N", "退出状态不能与函数名"],
     ["未知", "未定义函数"],
     ["空(q):", "不能为空"],
     ["坏(q):\n    p,□ -> HALT,1,N\n坏", "初始状态"],

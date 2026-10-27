@@ -9,7 +9,7 @@ function memory() {
 
 it("restores incomplete function text and exact indentation without program validation", () => {
   const storage = memory();
-  const draft = { ...examples.unary, input: "11", initialState: "", rules: "追加(q0):\n    q0,□ ->\n    " };
+  const draft = { ...examples.unary, input: "11", initialState: "", rules: "追加(q0, 结束):\n    q0,□ ->\n    " };
   expect(saveEditorDraft(storage, draft)).toBeNull();
   expect(loadEditorDraft(storage)).toEqual(Object.fromEntries(editorFields.map(field => [field, draft[field]])));
 });
