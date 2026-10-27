@@ -26,7 +26,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Sparse tape that extends left and right, with head-following view
 - Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
-- 21 grouped examples: indented functions, unary arithmetic (addition through pentation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
+- 23 grouped examples: function calls/returns/state exports, unary arithmetic (addition through pentation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
 - Local autosave, project JSON import/export, and execution-log CSV export
 - Clear accept / reject / halt / missing-rule feedback
@@ -56,9 +56,13 @@ append
 append
 ```
 
-Input `111` with ordinary halt state `HALT` takes 5 transitions and leaves `11111`. Reaching `exit` continues the next call; the final call halts. Do not define outgoing exit rules. Other halt, accept or reject states still stop the whole program. Legacy `append(q0):` instead uses configured ordinary halt states as implicit exits. Missing transitions remain errors, not returns.
+Input `111` with ordinary halt state `HALT` takes 5 transitions and leaves `11111`. A call list continues its next call; the final call continues matching outer exit rules if present, otherwise halts. An ordinary rule calling `fn(q0,q1)` returns to outer `q1` instead of always halting; missing outer rules remain errors. Exit rules may be defined outside, not inside the function. Other terminal states still stop the program. Legacy single-state definitions retain implicit halt-based completion.
 
-Top-level calls select their own entry. With definitions alone, Initial State can name a function; ordinary rule destinations may tail-call functions. Composite bodies may contain only indented calls. Do not mix call lists and rules in the same body or at top level. Local states are isolated. Recursion is unsupported; expansion is limited to 64 levels, 10000 instances and 100000 transitions.
+Top-level calls select their own entry and may coexist with outer rules. Without a call list, Initial State may name a function or exported state. Composite bodies contain only calls; mixing rules and calls within a body remains unsupported. Local states are isolated. Recursion is unsupported; expansion is limited to 64 levels, 10000 instances and 100000 transitions.
+
+Extra header fields declare child functions or local aliases, e.g. `parent(q0,q1,write=child):`. A child returns to its exit-named state in the parent scope when present, otherwise to that outer state. These are function bindings, not arbitrary value arguments.
+
+Indented `返回状态 inside` exports a local state as `parent.inside`; separate multiple states with commas. Outer rules may target or extend exports, and Initial State may select one. Extensions apply independently to repeated invocations and duplicate transitions are rejected. A public target names the default-return context, not an active temporary sequence instance. Composite functions export only entry/exit states. Two new runnable examples demonstrate outer continuation and child/export composition, producing `12` in 3 steps and `1234` in 5 steps.
 
 Functions compile to ordinary tape rules without computation shortcuts. Their expanded table is read-only; edit source instead. Tab inserts four spaces and Enter retains indentation. Raw drafts save independently of valid projects, including unfinished syntax, exact spaces and intentional clearing. Reload restores text without Apply; execution restarts at the beginning. Explicit imports/example loads replace the draft. Storage failures show a warning. Text lost by refreshing an older version cannot be recovered automatically.
 
@@ -72,7 +76,7 @@ Generated rules are editable, with 100 rows per table page. Conversion enables M
 
 ## Example Programs
 
-The selector groups 21 programs into unary arithmetic, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+The selector groups 23 programs into unary arithmetic, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
 
 Four more arithmetic examples use `/` for floor division (`1111111/11` gives 3), `^` for exponentiation (`111^11` gives 9), `^^` for tetration (`11^^11` gives 4), and `^^^` for pentation (`11^^^11` gives 4). A finite register program is compiled into tape transitions, without precomputing the answer or adding runtime arithmetic shortcuts. Working counters lie left of the input, separated by `|`, with `#` marking the origin. At halt, only the contiguous unary answer remains. Use head-following view to see this negative-position output.
 
