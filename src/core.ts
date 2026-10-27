@@ -138,6 +138,7 @@ export interface ParseResult {
   hasFunctions?: boolean;
   initialState?: string;
   functionEntries?: Array<{ name: string; state: string }>;
+  stateExports?: Array<{ name: string; state: string }>;
 }
 
 export interface ParseOptions {
@@ -147,7 +148,8 @@ export interface ParseOptions {
 }
 
 export function resolveInitialState(parsed: ParseResult, requested: string): string {
-  return parsed.initialState ?? parsed.functionEntries?.find(fn => fn.name === requested.trim())?.state ?? requested.trim();
+  return parsed.initialState ?? parsed.functionEntries?.find(fn => fn.name === requested.trim())?.state
+    ?? parsed.stateExports?.find(state => state.name === requested.trim())?.state ?? requested.trim();
 }
 
 export function parseTransitions(source: string, options: ParseOptions = {}): ParseResult {

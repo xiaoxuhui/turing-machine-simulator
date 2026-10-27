@@ -22,6 +22,60 @@ function execute(source: string, input = "111", initial = "q0", options: ParseOp
 }
 
 describe("indented rule functions", () => {
+  it("binds a local child-function alias and returns into the parent scope", () => {
+    const source = `写一(s,after):\n    s,□ -> after,1,R\n父(q0,out, 写=写一):\n    q0,□ -> 写,□,N\n    after,□ -> out,2,R\nstart,□ -> 父,□,N\nout,□ -> HALT,3,N`;
+    const { output, machine } = execute(source, "", "start");
+    expect(output).toBe("123");
+    expect(machine.stepCount).toBe(5);
+  });
+  it("accepts bare child names in a composite function header", () => {
+    const source = `写(s,after):\n    s,□ -> after,1,R\n两次(入,done,写):\n    写\n    写\n两次\ndone,□ -> HALT,2,N`;
+    expect(execute(source, "").output).toBe("112");
+  });
+  it("exports identical local names without colliding with each other or outer states", () => {
+    const source = `甲(s,done):\n    s,□ -> q,□,N\n    q,□ -> done,1,R\n    返回状态 q\n乙(s,done):\n    s,□ -> q,□,N\n    q,□ -> done,2,R\n    返回状态: q\nq,□ -> HALT,9,N\ndone,□ -> HALT,3,N`;
+    const a = execute(source, "", "甲.q"), b = execute(source, "", "乙.q");
+    expect(a.output).toBe("13");
+    expect(b.output).toBe("23");
+    expect(execute(source, "", "q").output).toBe("9");
+    expect(a.parsed.stateExports?.map(item => item.name)).toEqual(["甲.q", "乙.q"]);
+    const states = a.parsed.stateExports?.map(item => item.state) ?? [];
+    expect(new Set(states).size).toBe(2);
+    expect(states).not.toContain("q");
+    expect(execute(`${source}\nstart,□ -> 甲.q,□,N`, "", "start").output).toBe("13");
+  });
+  it("extends exported state rules for every repeated invocation, not just one copy", () => {
+    const source = `写(s,done):\n    s,□ -> private,□,N\n    返回状态 private\n写.private,□ -> done,1,R\n写\n写`;
+    const { output, machine } = execute(source, "");
+    expect(output).toBe("11");
+    expect(machine.stepCount).toBe(4);
+    for (let count = 1; count <= 5; count++) {
+      const program = source.slice(0, source.lastIndexOf("\n写\n写")) + `\n${Array(count).fill("写").join("\n")}`;
+      expect(execute(program, "").output).toBe("1".repeat(count));
+    }
+  });
+  it("continues qualified local exports within their own invocation", () => {
+    const source = `写(s,done):\n    s,□ -> a,□,N\n    返回状态 a,b\n写.a,□ -> 写.b,1,R\n写.b,□ -> done,2,R\n写\n写`;
+    expect(execute(source, "").output).toBe("1212");
+  });
+  it("exposes composite entries and exit aliases without changing their contexts", () => {
+    const source = `写(s,after):\n    s,□ -> after,1,R\n组合(入,done,写):\n    写\n    返回状态 入\nstart,□ -> 组合.入,□,N\ndone,□ -> HALT,2,N`;
+    expect(execute(source, "", "start").output).toBe("12");
+    const exit = `写(s,done):\n    s,□ -> done,1,R\n    返回状态 done\n写.done,□ -> HALT,2,N\n写`;
+    expect(execute(exit, "").output).toBe("12");
+  });
+  it("avoids exported names that resemble the generated namespace", () => {
+    const source = `__fn(s,done):\n    s,□ -> q,□,N\n    返回状态 q\n__fn.q,□ -> done,1,R\nstart,□ -> __fn,□,N\ndone,□ -> HALT,2,N`;
+    expect(execute(source, "", "start").output).toBe("12");
+  });
+  it("isolates repeated exported-state invocations for several namespace-like names", () => {
+    for (const name of ["写", "__fn", "__proto__", "constructor"]) for (let count = 1; count <= 4; count++) {
+      const source = `${name}(s,done):\n    s,□ -> q,□,N\n    返回状态 q\n${name}.q,□ -> done,1,R\n${Array(count).fill(name).join("\n")}`;
+      const { output, machine } = execute(source, "");
+      expect(output).toBe("1".repeat(count));
+      expect(machine.stepCount).toBe(count * 2);
+    }
+  });
   it("returns from a rule call to the declared outer state instead of halting", () => {
     const source = `写(q0,q1):\n    q0,□ -> q1,1,R\nq0,□ -> 写,□,N\nq1,□ -> HALT,2,N`;
     const { output, machine } = execute(source, "");
@@ -112,6 +166,14 @@ describe("indented rule functions", () => {
     expect(errors.join()).toContain("重复");
   });
   it.each([
+    ["甲(q,out,不存在):\n    q,□ -> out,1,N", "未定义子函数"],
+    ["甲(q,out,x=甲,x=甲):\n    q,□ -> out,1,N", "别名 x 重复"],
+    ["甲(q,out,q=甲):\n    q,□ -> out,1,N", "与状态冲突"],
+    ["甲(q,out,x=甲):\n    q,□ -> x,1,N", "不支持递归"],
+    ["甲(q,out):\n    q,□ -> out,1,N\n    返回状态 不存在", "未在函数内使用"],
+    ["甲(q,out):\n    q,□ -> out,1,N\n    返回状态 q,q", "重复导出"],
+    ["甲(q,out):\n    q,□ -> out,1,N\nstart,□ -> 甲.q,□,N", "未导出"],
+    ["甲(q,out):\n    q,□ -> out,1,N\n    返回状态 q\n甲.q,□ -> HALT,2,N", "合并后与已有规则重复"],
     ["坏(q,q):\n    q,□ -> q,1,N", "不能相同"],
     ["坏(q,出):\n    q,□ -> 出,1,N\n    出,□ -> q,1,N", "退出状态不能再定义"],
     ["坏(q,ACCEPT):\n    q,□ -> ACCEPT,1,N", "接受或拒绝"],

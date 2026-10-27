@@ -10,10 +10,13 @@ interface RuleFunction {
   indent: number;
   rules: SourceRule[];
   calls: Call[];
+  bindings: Map<string, string>;
+  exports: Map<string, number>;
 }
 
-const header = /^([^,():\s]+)\(\s*([^,():\s]+)\s*(?:,\s*([^,():\s]+)\s*)?\):$/u;
+const header = /^([^,():\s]+)\(([^()]*)\):$/u;
 const identifier = /^[\p{L}_][\p{L}\p{N}_-]*$/u;
+const stateName = /^[^,():\s=]+$/u;
 
 /** Expand finite calls into ordinary transitions. Never evaluate tape data. */
 export function parseRuleFunctions(
@@ -40,9 +43,19 @@ export function parseRuleFunctions(
     const definition = line.match(header);
     if (definition) {
       if (indent) { fail(number, "函数定义必须顶格，不能嵌套定义"); continue; }
-      const [, name, initial, exit] = definition;
+      const [, name, parameters] = definition;
+      const [initial, exit, ...extras] = parameters.split(",").map(part => part.trim());
       if (!identifier.test(name)) { fail(number, "函数名只能使用字母、汉字、数字、下划线或连字符，且不能以数字开头"); continue; }
-      current = { name, initial, exit, line: number, indent: 0, rules: [], calls: [] };
+      if (!stateName.test(initial) || (exit !== undefined && !stateName.test(exit))) fail(number, "前两个参数必须是初始状态、退出状态，且不能为空");
+      const bindings = new Map<string, string>();
+      for (const extra of extras) {
+        const parts = extra.split("=").map(part => part.trim());
+        const [alias, target = alias] = parts;
+        if (parts.length > 2 || !identifier.test(alias) || !identifier.test(target)) { fail(number, "子函数参数使用 函数名 或 别名=函数名"); continue; }
+        if (bindings.has(alias)) fail(number, `子函数别名 ${alias} 重复`);
+        bindings.set(alias, target);
+      }
+      current = { name, initial, exit, line: number, indent: 0, rules: [], calls: [], bindings, exports: new Map() };
       if (functions.has(name)) fail(number, `函数 ${name} 重复定义`);
       else functions.set(name, current);
       continue;
@@ -52,6 +65,16 @@ export function parseRuleFunctions(
     if (current) {
       if (current.indent === 0) current.indent = indent;
       if (indent !== current.indent) { fail(number, "同一函数体的空格缩进必须一致"); continue; }
+    }
+    const exported = line.match(/^(?:返回状态|导出状态)(?:\s+|:\s*)(.*)$/u);
+    if (exported) {
+      if (!current) { fail(number, "返回状态声明必须缩进在函数内"); continue; }
+      for (const state of exported[1].split(",").map(item => item.trim())) {
+        if (!stateName.test(state)) { fail(number, "返回状态必须是逗号分隔的状态名"); continue; }
+        if (current.exports.has(state)) fail(number, `状态 ${state} 重复导出`);
+        current.exports.set(state, number);
+      }
+      continue;
     }
     if (identifier.test(line)) (current?.calls ?? calls).push({ name: line, line: number });
     else {
@@ -65,6 +88,7 @@ export function parseRuleFunctions(
   const accept = new Set(options.acceptStates ?? ["ACCEPT"]);
   const reject = new Set(options.rejectStates ?? ["REJECT"]);
   const terminal = new Set([...halt, ...accept, ...reject]);
+  const callee = (owner: RuleFunction | undefined, name: string) => functions.get(owner?.bindings.get(name) ?? name);
   if (functions.size && halt.size === 0) fail(1, "函数需要至少一个普通停机态，例如 HALT，作为自动结束点");
   const references = new Map<string, Call[]>();
   const checkDuplicates = (items: SourceRule[]) => {
@@ -84,6 +108,10 @@ export function parseRuleFunctions(
     if (fn.exit === fn.initial) fail(fn.line, "初始状态与退出状态不能相同");
     if (fn.exit && functions.has(fn.exit)) fail(fn.line, "退出状态不能与函数名重名");
     if (fn.exit && (accept.has(fn.exit) || reject.has(fn.exit))) fail(fn.line, "退出状态不能与接受或拒绝状态相同");
+    for (const [alias, target] of fn.bindings) {
+      if (!functions.has(target)) fail(fn.line, `未定义子函数 ${target}`);
+      if (terminal.has(alias) || alias === fn.initial || alias === fn.exit) fail(fn.line, `子函数别名 ${alias} 与状态冲突`);
+    }
     if (!fn.rules.length && !fn.calls.length) fail(fn.line, `函数 ${fn.name} 的函数体不能为空`);
     if (fn.rules.length && fn.calls.length) fail(fn.line, "函数体不能混写转移规则和顺序调用列表");
     const locals = new Set(fn.rules.map(item => item.rule.fromState));
@@ -91,13 +119,56 @@ export function parseRuleFunctions(
     for (const { rule, line } of fn.rules) {
       if (terminal.has(rule.fromState)) fail(line, "终态不能再定义转移规则");
       if (rule.fromState === fn.exit) fail(line, "退出状态不能再定义转移规则");
-      if (functions.has(rule.fromState)) fail(line, "函数内局部状态不能与函数名重名");
+      if (callee(fn, rule.fromState)) fail(line, "函数内局部状态不能与函数名或子函数别名重名");
+    }
+    const knownStates = new Set([fn.initial, ...(fn.exit ? [fn.exit] : []), ...fn.rules.flatMap(({ rule }) => [rule.fromState, rule.toState]).filter(state => !callee(fn, state))]);
+    for (const { rule } of rules) for (const state of [rule.fromState, rule.toState]) {
+      if (state.startsWith(`${fn.name}.`)) knownStates.add(state.slice(fn.name.length + 1));
+    }
+    for (const [state, line] of fn.exports) {
+      if (!knownStates.has(state)) fail(line, `导出状态 ${state} 未在函数内使用`);
+      if (fn.calls.length && state !== fn.initial && state !== fn.exit) fail(line, "组合函数只能导出初始状态或退出状态");
     }
     checkDuplicates(fn.rules);
-    references.set(fn.name, [...fn.calls, ...fn.rules.filter(({ rule }) => functions.has(rule.toState)).map(({ rule, line }) => ({ name: rule.toState, line }))]);
+    references.set(fn.name, [...fn.calls.map(call => ({ ...call, name: callee(fn, call.name)?.name ?? call.name })), ...fn.rules.filter(({ rule }) => callee(fn, rule.toState)).map(({ rule, line }) => ({ name: callee(fn, rule.toState)!.name, line }))]);
   }
-  for (const call of [...calls, ...[...functions.values()].flatMap(fn => fn.calls)]) {
+  for (const call of calls) {
     if (!functions.has(call.name)) fail(call.line, `未定义函数 ${call.name}`);
+  }
+  for (const fn of functions.values()) for (const call of fn.calls) {
+    if (!callee(fn, call.name)) fail(call.line, `未定义函数 ${call.name}`);
+  }
+  const publicRef = (state: string, owner?: RuleFunction, line?: number) => {
+    const dot = state.indexOf(".");
+    if (dot < 0) return null;
+    const fn = callee(owner, state.slice(0, dot));
+    if (!fn) return null;
+    const local = state.slice(dot + 1);
+    if (!fn.exports.has(local)) {
+      if (line !== undefined) fail(line, `状态 ${fn.name}.${local} 未导出，请在函数内声明 返回状态 ${local}`);
+      return null;
+    }
+    return { fn, local, alias: `${fn.name}.${local}` };
+  };
+  const extensions = new Map<string, Array<{ local: string; source: SourceRule }>>();
+  for (const item of rules) {
+    const from = publicRef(item.rule.fromState, undefined, item.line);
+    publicRef(item.rule.toState, from?.fn, item.line);
+    if (from) {
+      const list = extensions.get(from.fn.name) ?? [];
+      list.push({ local: from.local, source: item });
+      extensions.set(from.fn.name, list);
+      const called = callee(from.fn, item.rule.toState);
+      if (called) references.get(from.fn.name)!.push({ name: called.name, line: item.line });
+    }
+  }
+  for (const fn of functions.values()) {
+    publicRef(fn.initial, fn, fn.line);
+    if (fn.exit) publicRef(fn.exit, fn, fn.line);
+    for (const { rule, line } of fn.rules) {
+      publicRef(rule.fromState, fn, line);
+      publicRef(rule.toState, fn, line);
+    }
   }
   const depths = new Map<string, number>(), visiting = new Set<string>();
   const checkGraph = (name: string, depth: number): number => {
@@ -122,59 +193,121 @@ export function parseRuleFunctions(
 
   const states = [...rules, ...[...functions.values()].flatMap(fn => fn.rules)].flatMap(({ rule }) => [rule.fromState, rule.toState]);
   let prefix = "__fn.";
-  while ([...states, ...terminal, ...functions.keys()].some(state => state.startsWith(prefix))) prefix = `_${prefix}`;
+  const publicNames = [...functions.values()].flatMap(fn => [...fn.exports.keys()].map(state => `${fn.name}.${state}`));
+  while ([...states, ...terminal, ...functions.keys(), ...publicNames].some(state => state.startsWith(prefix))) prefix = `_${prefix}`;
   const transitions: Transition[] = [];
-  const memo = new Map<string, string>();
+  const origins: number[] = [];
+  interface Context { fn: RuleFunction; continuation: string; entry: string; scope?: string }
+  const contexts = new Map<string, Context>();
   let instances = 0;
   const finalState = [...halt][0] ?? "HALT";
   const globalStates = new Set(rules.map(({ rule }) => rule.fromState));
+  for (const [name, items] of extensions) {
+    const fn = functions.get(name)!;
+    if (fn.exit && items.some(item => item.local === fn.exit)) globalStates.add(fn.exit);
+  }
   const defaultReturn = (name: string) => functions.get(name)!.exit ?? finalState;
-  const append = (rule: Transition) => {
+  const append = (rule: Transition, line: number) => {
     if (transitions.length >= 100_000) throw new Error("函数展开超过 100000 条规则，请减少调用或拆分程序");
     transitions.push(rule);
+    origins.push(line);
   };
-  const sequence = (items: Call[], continuation: string): string => {
+  const sequence = (items: Call[], continuation: string, owner?: RuleFunction): string => {
     let entry = continuation;
-    for (let index = items.length - 1; index >= 0; index--) entry = compile(items[index].name, entry);
+    for (let index = items.length - 1; index >= 0; index--) entry = compile(callee(owner, items[index].name)!.name, entry);
     return entry;
+  };
+  const exits = (fn: RuleFunction, state: string) => fn.exit ? state === fn.exit : halt.has(state) && !accept.has(state) && !reject.has(state);
+  const localState = (ctx: Context, state: string): string => {
+    if (state === ctx.fn.initial && !ctx.scope) return ctx.entry;
+    if (exits(ctx.fn, state)) return ctx.continuation;
+    if (terminal.has(state)) return state;
+    return publicRef(state, ctx.fn)?.alias ?? `${ctx.scope}${state}`;
+  };
+  const callFrom = (ctx: Context, called: RuleFunction): string => {
+    const state = called.exit;
+    if (state && ctx.fn.bindings.has(state)) throw new Error(`函数 ${called.name} 的返回状态与父函数子函数别名 ${state} 冲突`);
+    const known = ctx.fn.rules.some(({ rule }) => rule.fromState === state || rule.toState === state) || ctx.fn.exports.has(state ?? "");
+    const resume = !state || state === ctx.fn.exit ? ctx.continuation
+      : terminal.has(state) ? state
+      : publicRef(state, ctx.fn)?.alias ?? (known ? localState(ctx, state) : state);
+    return compile(called.name, resume);
   };
   const compile = (name: string, continuation: string): string => {
     const key = JSON.stringify([name, continuation]);
-    const cached = memo.get(key);
-    if (cached) return cached;
+    const cached = contexts.get(key);
+    if (cached) return cached.entry;
     const fn = functions.get(name)!;
     if (++instances > 10_000) throw new Error("函数展开超过 10000 个实例，请减少重复调用");
     if (fn.calls.length) {
-      const entry = sequence(fn.calls, continuation);
-      memo.set(key, entry);
+      const entry = sequence(fn.calls, continuation, fn);
+      contexts.set(key, { fn, continuation, entry });
       return entry;
     }
     const scope = `${prefix}${instances}.${name}.`;
-    const localStates = new Set(fn.rules.flatMap(({ rule }) => [rule.fromState, rule.toState]));
-    const entry = `${scope}${fn.initial}`;
-    memo.set(key, entry);
-    for (const { rule } of fn.rules) {
-      const exits = fn.exit ? rule.toState === fn.exit : halt.has(rule.toState) && !accept.has(rule.toState) && !reject.has(rule.toState);
-      const callee = functions.get(rule.toState);
-      const returnState = callee?.exit;
-      const resume = returnState === fn.exit ? continuation
-        : returnState && terminal.has(returnState) ? returnState
-        : returnState && localStates.has(returnState) ? `${scope}${returnState}`
-        : returnState ?? continuation;
-      const target = exits ? continuation
+    const entry = publicRef(fn.initial, fn)?.alias ?? `${scope}${fn.initial}`;
+    const ctx = { fn, continuation, entry, scope };
+    contexts.set(key, ctx);
+    for (const { rule, line } of fn.rules) {
+      const called = callee(fn, rule.toState);
+      const target = exits(fn, rule.toState) ? continuation
         : terminal.has(rule.toState) ? rule.toState
-        : callee ? compile(callee.name, resume)
-        : `${scope}${rule.toState}`;
-      append({ ...rule, fromState: `${scope}${rule.fromState}`, toState: target });
+        : called ? callFrom(ctx, called)
+        : localState(ctx, rule.toState);
+      append({ ...rule, fromState: localState(ctx, rule.fromState), toState: target }, line);
     }
     return entry;
   };
   try {
-    for (const { rule } of rules) append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, defaultReturn(rule.toState)) : rule.toState });
+    for (const { rule, line } of rules) {
+      if (publicRef(rule.fromState)) continue;
+      append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, defaultReturn(rule.toState)) : rule.toState }, line);
+    }
     const lastExit = calls.length ? functions.get(calls[calls.length - 1].name)!.exit : undefined;
-    const initialState = calls.length ? sequence(calls, lastExit && globalStates.has(lastExit) ? lastExit : finalState) : undefined;
+    const initialState = calls.length ? sequence(calls, lastExit && (globalStates.has(lastExit) || publicRef(lastExit)) ? lastExit : finalState) : undefined;
     const functionEntries = [...functions.keys()].map(name => ({ name, state: compile(name, defaultReturn(name)) }));
-    return { transitions, errors, hasFunctions: true, initialState, functionEntries };
+    // Extend each isolated invocation, not just one copy of an exported state.
+    for (const ctx of contexts.values()) for (const { local, source } of extensions.get(ctx.fn.name) ?? []) {
+      const { rule, line } = source;
+      if ((!ctx.scope || exits(ctx.fn, local) || terminal.has(local)) && ctx.continuation !== defaultReturn(ctx.fn.name)) continue;
+      const called = callee(ctx.fn, rule.toState);
+      const targetRef = publicRef(rule.toState, ctx.fn);
+      const target = exits(ctx.fn, rule.toState) ? ctx.continuation
+        : terminal.has(rule.toState) ? rule.toState
+        : called ? callFrom(ctx, called)
+        : targetRef?.fn.name === ctx.fn.name ? localState(ctx, targetRef.local)
+        : targetRef?.alias ?? rule.toState;
+      append({ ...rule, fromState: localState(ctx, local), toState: target }, line);
+    }
+    const aliases = new Map<string, string>();
+    for (const fn of functions.values()) {
+      const ctx = contexts.get(JSON.stringify([fn.name, defaultReturn(fn.name)]))!;
+      for (const local of fn.exports.keys()) aliases.set(`${fn.name}.${local}`, local === fn.initial ? ctx.entry : localState(ctx, local));
+    }
+    const resolved = new Map<string, string>();
+    const resolve = (state: string): string => {
+      const path: string[] = [], visiting = new Set<string>();
+      while (aliases.has(state)) {
+        if (resolved.has(state)) { state = resolved.get(state)!; break; }
+        if (visiting.has(state)) throw new Error("导出状态存在循环别名，无法确定实际状态");
+        visiting.add(state);
+        path.push(state);
+        state = aliases.get(state)!;
+      }
+      for (const alias of path) resolved.set(alias, state);
+      return state;
+    };
+    const keys = new Set<string>();
+    const expanded = transitions.map((rule, index) => {
+      const fromState = resolve(rule.fromState), toState = resolve(rule.toState);
+      if (terminal.has(fromState)) throw new Error(`第 ${origins[index]} 行：不能为全局终态定义导出转移规则`);
+      const key = JSON.stringify([fromState, rule.readSymbol]);
+      if (keys.has(key)) throw new Error(`第 ${origins[index]} 行：导出状态合并后与已有规则重复，不能覆盖同名转移`);
+      keys.add(key);
+      return { ...rule, fromState, toState };
+    });
+    const stateExports = [...aliases.keys()].map(name => ({ name, state: resolve(name) }));
+    return { transitions: expanded, errors, hasFunctions: true, initialState: initialState ? resolve(initialState) : undefined, functionEntries: functionEntries.map(fn => ({ ...fn, state: resolve(fn.state) })), stateExports };
   } catch (error) {
     return { transitions: [], errors: [error instanceof Error ? error.message : "函数展开失败"], hasFunctions: true };
   }
