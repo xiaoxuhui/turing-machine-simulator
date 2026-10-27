@@ -11,6 +11,10 @@ const validProject: ProjectData = {
 };
 
 describe("project codec", () => {
+  it("round-trips child bindings and exported state source without flattening it", () => {
+    const project = { ...validProject, ...examples.functionExports };
+    expect(parseProjectJson(JSON.stringify(project))).toEqual(project);
+  });
   it("preserves function source and allows the call list to select the entry", () => {
     const project = { ...validProject, ...examples.functions, initialState: "" };
     expect(parseProjectJson(JSON.stringify(project))).toEqual(project);

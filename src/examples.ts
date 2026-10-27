@@ -18,6 +18,18 @@ export interface ExampleProject {
 }
 
 export const examples: Record<string, ExampleProject> = {
+  functionReturn: {
+    category: "基础示例", name: "函数：返回外部状态",
+    description: "start 调用 写入(q0,q1)，函数退出后继续外面的 q1 规则，而不是直接停机。空输入运行 3 步，输出 12。",
+    input: "", initialState: "start", blankSymbol: "□", acceptStates: "", rejectStates: "", haltStates: "HALT",
+    rules: "写入(q0, q1):\n    q0,□ -> q1,1,R\n\nstart,□ -> 写入,□,N\nq1,□ -> HALT,2,N",
+  },
+  functionExports: {
+    category: "基础示例", name: "函数：子函数与返回状态",
+    description: "主函数(q0,q1,写=写一) 绑定自定义子函数；子函数返回父函数的 after，返回状态 inside 导出为 主函数.inside，外部补写规则，最后继续外部 q1。空输入 5 步输出 1234，内部同名状态不会串用。",
+    input: "", initialState: "主函数", blankSymbol: "□", acceptStates: "", rejectStates: "", haltStates: "HALT",
+    rules: "写一(s, after):\n    s,□ -> after,1,R\n\n主函数(q0, q1, 写=写一):\n    q0,□ -> 写,□,N\n    after,□ -> inside,2,R\n    返回状态 inside\n\n主函数.inside,□ -> q1,3,R\nq1,□ -> HALT,4,N\n\n主函数",
+  },
   functions: {
     category: "基础示例",
     name: "函数：连续追加两次",

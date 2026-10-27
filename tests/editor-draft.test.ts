@@ -14,6 +14,12 @@ it("restores incomplete function text and exact indentation without program vali
   expect(loadEditorDraft(storage)).toEqual(Object.fromEntries(editorFields.map(field => [field, draft[field]])));
 });
 
+it("retains the advanced function binding and exported-state syntax verbatim", () => {
+  const storage = memory();
+  saveEditorDraft(storage, examples.functionExports);
+  expect(loadEditorDraft(storage)?.rules).toBe(examples.functionExports.rules);
+});
+
 it("preserves intentional clearing and invalid machine fields", () => {
   const storage = memory();
   const draft = { ...examples.unary, rules: "", blankSymbol: "", haltStates: "" };

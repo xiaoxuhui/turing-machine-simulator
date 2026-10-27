@@ -111,7 +111,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <label>转移规则 / 函数源码<textarea id="rules" spellcheck="false"></textarea></label>
           <div id="draftStatus" class="hint" role="status"></div>
           <details class="function-help"><summary>函数定义与调用写法</summary>
-            <p>定义：函数名(初始状态, 退出状态):，规则前用相同数量的空格缩进。调用只写函数名，不写括号或 return。走到指定退出状态后继续下一个调用，最后一次停机；缺少规则仍报错。Tab 插入四个空格。</p>
+            <p>定义：函数名(初始状态, 退出状态, 可选子函数...):。规则调用退出后继续外部同名状态；顺序调用则进入下一次调用，最后可继续外部退出规则。调用只写函数名，不写括号或 return。Tab 插入四个空格。</p>
             <pre>追加(q0, 结束):
     q0,1 -&gt; q0,1,R
     q0,□ -&gt; 结束,1,R
@@ -119,6 +119,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 追加
 追加</pre>
             <p>初始输入填 111，普通停机状态填 HALT，结果是 11111。有顶格调用列表时，程序自动使用定义中的入口。原来的单状态定义仍兼容，默认走到普通停机态就退出；指定退出状态后，其它普通停机态会终止整个程序。此版本不支持递归。</p>
+            <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。子函数退出后优先继续父函数内同名状态，没有则进入外部状态。</p>
+            <p>函数体中写“返回状态 inside”即可导出；外部用“主函数.inside”作为来源、目标或初始状态，不能直接用内部同名态。外部补写的导出规则会匹配每次调用。示例菜单提供“返回外部状态”和“子函数与返回状态”两个完整例子。</p>
           </details>
           <div id="functionStatus" class="hint" role="status"></div>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
@@ -440,7 +442,7 @@ function renderRuleTable(): void {
   byId<HTMLButtonElement>("addRule").disabled = Boolean(parsed.hasFunctions);
   byId("functionStatus").textContent = parsed.hasFunctions
     ? parsed.errors.length ? parsed.errors[0]
-      : `已识别 ${parsed.functionEntries?.length ?? 0} 个函数，展开为 ${parsed.transitions.length} 条普通规则。${parsed.initialState ? "按顶格调用顺序运行，入口已自动选择。" : "初始状态可填写函数名。"} 下方展开表只读，请在上方文本编辑函数。`
+      : `已识别 ${parsed.functionEntries?.length ?? 0} 个函数，展开为 ${parsed.transitions.length} 条普通规则。${parsed.initialState ? "按顶格调用顺序运行，入口已自动选择。" : "初始状态可填写函数名或公开状态。"}${parsed.stateExports?.length ? ` 已导出：${parsed.stateExports.slice(0, 10).map(item => item.name).join("、")}（共 ${parsed.stateExports.length} 个）。` : ""} 下方展开表只读，请在上方文本编辑函数。`
     : "";
   if (parsed.errors.length) {
     host.innerHTML = `<div class="empty">修正文本规则后即可同步结构化表格</div>`;

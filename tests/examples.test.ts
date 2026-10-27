@@ -24,6 +24,14 @@ function run(project: ExampleProject, input = project.input, limit = 10_000): { 
 const output = (machine: TuringMachine) => machine.tape.entries().map(([, symbol]) => symbol).join("");
 
 describe("built-in examples", () => {
+  it("continues external states after function exits and exposes custom child/export usage", () => {
+    const resumed = run(examples.functionReturn);
+    expect(output(resumed.machine)).toBe("12");
+    expect(resumed.machine.stepCount).toBe(3);
+    const exported = run(examples.functionExports);
+    expect(output(exported.machine)).toBe("1234");
+    expect(exported.machine.stepCount).toBe(5);
+  });
   it("runs the function example through its compiled entry", () => {
     const { machine, reason } = run(examples.functions);
     expect(reason).toBe("halt");
