@@ -66,7 +66,6 @@ export function parseRuleFunctions(
   const reject = new Set(options.rejectStates ?? ["REJECT"]);
   const terminal = new Set([...halt, ...accept, ...reject]);
   if (functions.size && halt.size === 0) fail(1, "函数需要至少一个普通停机态，例如 HALT，作为自动结束点");
-  if (calls.length && rules.length) fail(calls[0].line, "顶格调用列表不能与顶格普通转移规则混写");
   const references = new Map<string, Call[]>();
   const checkDuplicates = (items: SourceRule[]) => {
     const keys = new Set<string>();
@@ -128,6 +127,8 @@ export function parseRuleFunctions(
   const memo = new Map<string, string>();
   let instances = 0;
   const finalState = [...halt][0] ?? "HALT";
+  const globalStates = new Set(rules.map(({ rule }) => rule.fromState));
+  const defaultReturn = (name: string) => functions.get(name)!.exit ?? finalState;
   const append = (rule: Transition) => {
     if (transitions.length >= 100_000) throw new Error("函数展开超过 100000 条规则，请减少调用或拆分程序");
     transitions.push(rule);
@@ -149,22 +150,30 @@ export function parseRuleFunctions(
       return entry;
     }
     const scope = `${prefix}${instances}.${name}.`;
+    const localStates = new Set(fn.rules.flatMap(({ rule }) => [rule.fromState, rule.toState]));
     const entry = `${scope}${fn.initial}`;
     memo.set(key, entry);
     for (const { rule } of fn.rules) {
       const exits = fn.exit ? rule.toState === fn.exit : halt.has(rule.toState) && !accept.has(rule.toState) && !reject.has(rule.toState);
+      const callee = functions.get(rule.toState);
+      const returnState = callee?.exit;
+      const resume = returnState === fn.exit ? continuation
+        : returnState && terminal.has(returnState) ? returnState
+        : returnState && localStates.has(returnState) ? `${scope}${returnState}`
+        : returnState ?? continuation;
       const target = exits ? continuation
         : terminal.has(rule.toState) ? rule.toState
-        : functions.has(rule.toState) ? compile(rule.toState, continuation)
+        : callee ? compile(callee.name, resume)
         : `${scope}${rule.toState}`;
       append({ ...rule, fromState: `${scope}${rule.fromState}`, toState: target });
     }
     return entry;
   };
   try {
-    for (const { rule } of rules) append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, finalState) : rule.toState });
-    const initialState = calls.length ? sequence(calls, finalState) : undefined;
-    const functionEntries = [...functions.keys()].map(name => ({ name, state: compile(name, finalState) }));
+    for (const { rule } of rules) append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, defaultReturn(rule.toState)) : rule.toState });
+    const lastExit = calls.length ? functions.get(calls[calls.length - 1].name)!.exit : undefined;
+    const initialState = calls.length ? sequence(calls, lastExit && globalStates.has(lastExit) ? lastExit : finalState) : undefined;
+    const functionEntries = [...functions.keys()].map(name => ({ name, state: compile(name, defaultReturn(name)) }));
     return { transitions, errors, hasFunctions: true, initialState, functionEntries };
   } catch (error) {
     return { transitions: [], errors: [error instanceof Error ? error.message : "函数展开失败"], hasFunctions: true };

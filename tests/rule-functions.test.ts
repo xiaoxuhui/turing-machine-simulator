@@ -22,6 +22,23 @@ function execute(source: string, input = "111", initial = "q0", options: ParseOp
 }
 
 describe("indented rule functions", () => {
+  it("returns from a rule call to the declared outer state instead of halting", () => {
+    const source = `写(q0,q1):\n    q0,□ -> q1,1,R\nq0,□ -> 写,□,N\nq1,□ -> HALT,2,N`;
+    const { output, machine } = execute(source, "");
+    expect(output).toBe("12");
+    expect(machine.stepCount).toBe(3);
+  });
+  it("continues outer exit rules after a bare call or selected function entry", () => {
+    const source = `写(q0,q1):\n    q0,□ -> q1,1,R\nq1,□ -> HALT,2,N`;
+    expect(execute(`${source}\n写`, "").output).toBe("12");
+    expect(execute(source, "", "写").output).toBe("12");
+  });
+  it("returns a subfunction into the matching local state of its caller", () => {
+    const source = `子(s,after):\n    s,□ -> after,1,R\n父(q0,out):\n    q0,□ -> 子,□,N\n    after,□ -> out,2,R\nstart,□ -> 父,□,N\nout,□ -> HALT,3,N`;
+    const { output, machine } = execute(source, "", "start");
+    expect(output).toBe("123");
+    expect(machine.stepCount).toBe(5);
+  });
   it("returns at an explicit exit state, with spaces around the state parameters", () => {
     const source = `追加( q0 , 结束 ):\n    q0,1 -> q0,1,R\n    q0,□ -> 结束,1,R\n追加\n追加`;
     const { output, machine } = execute(source);
@@ -106,7 +123,6 @@ describe("indented rule functions", () => {
     ["坏(q):\n\tq,□ -> HALT,1,N", "Tab"],
     ["坏(q):\n    q,1 -> q,1,R\n  q,□ -> HALT,1,N", "缩进必须一致"],
     ["外(q):\n    内(p):\n        p,□ -> HALT,1,N", "不能嵌套定义"],
-    [`${append}\n追加\ns,□ -> HALT,1,N`, "不能与顶格普通"],
     ["混合(q):\n    q,□ -> HALT,1,N\n    未知", "不能混写"],
     ["递归(q):\n    q,□ -> 递归,□,N\n递归", "不支持递归"],
     ["甲(q):\n    乙\n乙(q):\n    甲\n甲", "不支持递归"],
