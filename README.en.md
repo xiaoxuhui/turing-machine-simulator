@@ -26,7 +26,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Sparse tape that extends left and right, with head-following view
 - Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
-- 20 grouped examples: unary arithmetic (addition through pentation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
+- 21 grouped examples: indented functions, unary arithmetic (addition through pentation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
 - Local autosave, project JSON import/export, and execution-log CSV export
 - Clear accept / reject / halt / missing-rule feedback
@@ -43,6 +43,25 @@ Manual Step always uses a fixed 180ms smooth slide. Continuous runs also remain 
 
 The workbench's **Max** checkbox disables its fixed step limit. You can still pause manually, and the machine still stops normally; a non-halting machine will keep using computing resources. This preference is saved in local and exported project data. Campaign verification and the full-route overview keep their own limits.
 
+## Rule Functions and Drafts
+
+Define `append(q0, exit):` followed by consistently space-indented rules. The values name its initial and exit states, not tape arguments. Call it by writing only its name on an unindented line; no `def`, call parentheses or `return` is needed:
+
+```text
+append(q0, exit):
+    q0,1 -> q0,1,R
+    q0,□ -> exit,1,R
+
+append
+append
+```
+
+Input `111` with ordinary halt state `HALT` takes 5 transitions and leaves `11111`. Reaching `exit` continues the next call; the final call halts. Do not define outgoing exit rules. Other halt, accept or reject states still stop the whole program. Legacy `append(q0):` instead uses configured ordinary halt states as implicit exits. Missing transitions remain errors, not returns.
+
+Top-level calls select their own entry. With definitions alone, Initial State can name a function; ordinary rule destinations may tail-call functions. Composite bodies may contain only indented calls. Do not mix call lists and rules in the same body or at top level. Local states are isolated. Recursion is unsupported; expansion is limited to 64 levels, 10000 instances and 100000 transitions.
+
+Functions compile to ordinary tape rules without computation shortcuts. Their expanded table is read-only; edit source instead. Tab inserts four spaces and Enter retains indentation. Raw drafts save independently of valid projects, including unfinished syntax, exact spaces and intentional clearing. Reload restores text without Apply; execution restarts at the beginning. Explicit imports/example loads replace the draft. Storage failures show a warning. Text lost by refreshing an older version cannot be recovered automatically.
+
 ## Gijswijt's Sequence
 
 Choose direct calculation to append one term or generate a target number of terms, with cancellation and reset. The latest 40 terms appear on a tape, and the full result is available in a text box. Switching modes retains both modes' progress for the current page session.
@@ -53,7 +72,7 @@ Generated rules are editable, with 100 rows per table page. Conversion enables M
 
 ## Example Programs
 
-The selector groups 20 programs into unary arithmetic, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+The selector groups 21 programs into unary arithmetic, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
 
 Four more arithmetic examples use `/` for floor division (`1111111/11` gives 3), `^` for exponentiation (`111^11` gives 9), `^^` for tetration (`11^^11` gives 4), and `^^^` for pentation (`11^^^11` gives 4). A finite register program is compiled into tape transitions, without precomputing the answer or adding runtime arithmetic shortcuts. Working counters lie left of the input, separated by `|`, with `#` marking the origin. At halt, only the contiguous unary answer remains. Use head-following view to see this negative-position output.
 
