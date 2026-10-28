@@ -26,7 +26,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Sparse tape that extends left and right, with head-following view
 - Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
-- 23 grouped examples: function calls/returns/state exports, unary arithmetic (addition through pentation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
+- 28 grouped examples: 8 function tutorials in a dedicated group, unary arithmetic (addition through pentation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
 - Local autosave, project JSON import/export, and execution-log CSV export
 - Clear accept / reject / halt / missing-rule feedback
@@ -76,7 +76,9 @@ Generated rules are editable, with 100 rows per table page. Conversion enables M
 
 ## Example Programs
 
-The selector groups 23 programs into unary arithmetic, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+The selector groups 28 programs into unary arithmetic, function tutorials, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+
+The 8 function tutorials progress from a single call to repeated calls, outer continuations, multiple child bindings, child-to-parent returns, exported entry states, repeated public extensions, and a combined example. Five new examples produce `1` / `123` / `123` / `23` / `1212` in 1 / 3 / 4 / 2 / 4 steps. Their descriptions and source comments explain what to change. In the exported-entry example, selecting `流程`, `流程.第二步`, or `流程.第三步` as Initial State produces `123`, `23`, or `3`. `返回状态` declares public states; it does not immediately return. Selecting an example only previews its description; clicking Load replaces the editor contents.
 
 Four more arithmetic examples use `/` for floor division (`1111111/11` gives 3), `^` for exponentiation (`111^11` gives 9), `^^` for tetration (`11^^11` gives 4), and `^^^` for pentation (`11^^^11` gives 4). A finite register program is compiled into tape transitions, without precomputing the answer or adding runtime arithmetic shortcuts. Working counters lie left of the input, separated by `|`, with `#` marking the origin. At halt, only the contiguous unary answer remains. Use head-following view to see this negative-position output.
 
