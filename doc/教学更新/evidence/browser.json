@@ -1,0 +1,32 @@
+{
+  "total": 28,
+  "groups": [
+    16,
+    7,
+    5
+  ],
+  "principles": [
+    {
+      "id": "unary-power",
+      "preview": true,
+      "practiceLocked": true
+    },
+    {
+      "id": "unary-tetration",
+      "preview": true,
+      "practiceLocked": true
+    },
+    {
+      "id": "unary-pentation",
+      "preview": true,
+      "practiceLocked": true
+    }
+  ],
+  "oldProgressPreserved": true,
+  "allDraftArrowsMigrated": true,
+  "oldNextMigratedToDone": true,
+  "functionLessonsSubmitted": 4,
+  "progressPersistedAfterReload": true,
+  "mobileOverflow": false,
+  "pageErrors": []
+}
