@@ -26,6 +26,7 @@
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:background": "node scripts/start-dev-server.mjs",
     "build": "tsc -b && vite build",
     "build:android": "vite build --base=./",
     "sync:android": "node scripts/sync-android-assets.mjs",
