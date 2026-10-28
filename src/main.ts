@@ -120,7 +120,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 追加</pre>
             <p>初始输入填 111，普通停机状态填 HALT，结果是 11111。有顶格调用列表时，程序自动使用定义中的入口。原来的单状态定义仍兼容，默认走到普通停机态就退出；指定退出状态后，其它普通停机态会终止整个程序。此版本不支持递归。</p>
             <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。子函数退出后优先继续父函数内同名状态，没有则进入外部状态。</p>
-            <p>函数体中写“返回状态 inside”即可导出；外部用“主函数.inside”作为来源、目标或初始状态，不能直接用内部同名态。外部补写的导出规则会匹配每次调用。示例菜单提供“返回外部状态”和“子函数与返回状态”两个完整例子。</p>
+            <p>函数体中写“返回状态 inside”即可导出；外部用“主函数.inside”作为来源、目标或初始状态，不能直接用内部同名态。外部补写的导出规则会匹配每次调用。“返回状态”用于公开状态，不是立刻退出。示例菜单的“函数教程”分组提供 8 个由浅入深的例子，说明中列有预期输出与步数。</p>
           </details>
           <div id="functionStatus" class="hint" role="status"></div>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
@@ -133,7 +133,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <section class="panel">
             <div class="panel-title"><h2>示例程序</h2><small>${Object.keys(examples).length} 个</small></div>
             <select id="example" style="width:100%">
-              ${["一进制运算", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
+              ${["一进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
             <p id="exampleNote" class="example-note"></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>

@@ -24,6 +24,39 @@ function run(project: ExampleProject, input = project.input, limit = 10_000): { 
 const output = (machine: TuringMachine) => machine.tape.entries().map(([, symbol]) => symbol).join("");
 
 describe("built-in examples", () => {
+  it.each([
+    ["functionBasics", "1", 1],
+    ["functionComposition", "123", 3],
+    ["functionParentReturn", "123", 4],
+    ["functionExportEntry", "23", 2],
+    ["functionExportRepeat", "1212", 4],
+  ] as const)("runs function tutorial %s with its advertised output and steps", (key, expected, steps) => {
+    const { machine, reason } = run(examples[key]);
+    expect(reason).toBe("halt");
+    expect(output(machine)).toBe(expected);
+    expect(machine.stepCount).toBe(steps);
+  });
+
+  it("starts from each documented public entry without a call list overriding it", () => {
+    for (const [initialState, expected, steps] of [["流程", "123", 3], ["流程.第二步", "23", 2], ["流程.第三步", "3", 1]] as const) {
+      const result = run({ ...examples.functionExportEntry, initialState });
+      expect(result.reason).toBe("halt");
+      expect(output(result.machine)).toBe(expected);
+      expect(result.machine.stepCount).toBe(steps);
+    }
+  });
+
+  it("applies the public extension separately for every repeat of the example", () => {
+    const project = examples.functionExportRepeat;
+    const definition = project.rules.slice(0, project.rules.lastIndexOf("\n\n"));
+    for (let count = 1; count <= 5; count += 1) {
+      const result = run({ ...project, rules: `${definition}\n\n${Array(count).fill("写一对").join("\n")}` });
+      expect(result.reason).toBe("halt");
+      expect(output(result.machine)).toBe("12".repeat(count));
+      expect(result.machine.stepCount).toBe(2 * count);
+    }
+  });
+
   it("continues external states after function exits and exposes custom child/export usage", () => {
     const resumed = run(examples.functionReturn);
     expect(output(resumed.machine)).toBe("12");
