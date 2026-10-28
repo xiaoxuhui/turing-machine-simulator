@@ -15,3 +15,12 @@ it.each(Object.entries(examples))("keeps the actual program identical for both c
   expect(commented).toMatch(/^# /);
   expect(exampleSource({ ...project, rules: commented }, "plain")).toBe(plain);
 });
+
+it.each(["unaryMultiply", "unaryDivide", "unaryPower", "unaryTetration", "unaryPentation"])("explains arithmetic phases between the actual rules: %s", id => {
+  const lines = exampleSource(examples[id], "commented").split("\n");
+  const firstRule = lines.findIndex(line => !line.startsWith("#") && line.includes("->"));
+  const middleNotes = lines.map((line, index) => ({ line, index })).filter(item => item.index > firstRule && item.line.startsWith("#"));
+  expect(middleNotes.length).toBeGreaterThanOrEqual(6);
+  expect(middleNotes.some(item => /清理|擦除/.test(item.line))).toBe(true);
+  expect(middleNotes.some(item => item.index > lines.length / 2)).toBe(true);
+});

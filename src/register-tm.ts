@@ -59,6 +59,10 @@ export function compileRegisterMachine(
 
   for (const [label, instruction] of instructions) {
     const state = `I.${label}`;
+    if (instruction.kind === "inc") lines.push(`# ${state}：计数器 R${instruction.register} 加 1，再回到原点 # 执行 I.${instruction.next}。`);
+    else if (instruction.kind === "dec") lines.push(`# ${state}：检查 R${instruction.register}；为 0 执行 I.${instruction.zero}，否则减 1 后执行 I.${instruction.positive}。`);
+    else if (instruction.kind === "jump") lines.push(`# ${state}：不改计数值，转到 I.${instruction.next} 继续这个算法阶段。`);
+    else lines.push(`# ${state}：${instruction.kind === "halt" ? "计算完成，转入清理阶段；只保留结果寄存器。" : "输入或运算条件不满足，进入 REJECT。"}`);
     if (instruction.kind === "inc") increment(state, instruction.register, `I.${instruction.next}`);
     else if (instruction.kind === "dec") {
       const op = locate(state, instruction.register);
@@ -76,6 +80,7 @@ export function compileRegisterMachine(
 
   // Build an empty register array to the left of the fixed origin.
   const inputSymbols = ["1", "0", "+", "-", "*", "/", "^", "?", "□", "#", "|", "a", "b"];
+  lines.push("# 初始化：从原点左侧建立用 | 分隔的计数器区域，# 固定原点位置。");
   for (const read of inputSymbols) add("BOOT", read, "init.fence", read, "L");
   add("init.fence", "□", "init.0", "#", "L");
   for (let i = 0; i < registers; i += 1) add(`init.${i}`, "□", i === registers - 1 ? "init.back" : `init.${i + 1}`, "|", i === registers - 1 ? "R" : "L");
@@ -87,11 +92,13 @@ export function compileRegisterMachine(
       add(state, read, next, read, direction);
     }
   };
+  lines.push(`# 检查输入：左侧只允许 1，中间必须为 ${operator}，右侧只允许 1；其它字符拒绝。`);
   validate("validate.a", { "1": ["validate.a", "R"], [operator[0]]: [operator.length === 1 ? "validate.b" : "validate.op1", "R"] });
   for (let i = 1; i < operator.length; i += 1) validate(`validate.op${i}`, { [operator[i]]: [i === operator.length - 1 ? "validate.b" : `validate.op${i + 1}`, "R"] });
   validate("validate.b", { "1": ["validate.b", "R"], "□": ["validate.rewind", "L"] });
   for (const read of ["1", operator[0]]) add("validate.rewind", read, "validate.rewind", read, "L");
   add("validate.rewind", "#", "parse.A");
+  lines.push("# 读入参数：逐个标记输入的 1 并累加，左操作数存入 R0，右操作数存入 R1。");
   for (const [name, register] of [["A", 0], ["B", 1]] as const) {
     add(`parse.${name}`, "#", `parse.scan${name}`, "#", "R");
     add(`parse.scan${name}`, "1", `parse.seek${name}`, name.toLowerCase(), "L");
@@ -102,12 +109,14 @@ export function compileRegisterMachine(
   add("parse.scanA", "a", "parse.scanA", "a", "R");
   add("parse.scanA", operator[0], "parse.scanB");
   for (const read of ["a", "b", operator[0]]) add("parse.scanB", read, "parse.scanB", read, "R");
+  lines.push(`# 参数读入后擦除右侧输入，从 I.${entry} 开始计算；每次增减都仍由读写头移动实现。`);
   add("parse.scanB", "□", "parse.erase", "□", "L");
   for (const read of ["a", "b", operator[0]]) add("parse.erase", read, "parse.erase", "□", "L");
   add("parse.erase", "#", `I.${entry}`);
 
   // Discard every register except the result. Keep the origin until the last
   // sweep so blank zero registers cannot be mistaken for the end of the tape.
+  lines.push(`# 清理：只保留 R${result} 的 1，擦除其它计数器和分隔符；最后删除 #。`);
   for (let i = 0; i < registers; i += 1) for (const nonzero of [0, 1]) {
     const state = `clean.${i}.${nonzero}`;
     add(state, "1", `clean.${i}.${nonzero || i === result ? 1 : 0}`, i === result ? "1" : "□", "L");
@@ -118,6 +127,7 @@ export function compileRegisterMachine(
     for (const read of ["1", "□"]) add(state, read, state, read, "R");
     add(state, "#", nonzero ? "clean.find" : "HALT", "□", nonzero ? "L" : "N");
   }
+  lines.push("# 定位答案：回到结果的最左侧 1 后停机，零结果保持空纸带。");
   add("clean.find", "□", "clean.find", "□", "L");
   add("clean.find", "1", "clean.start", "1", "L");
   add("clean.start", "1", "clean.start", "1", "L");

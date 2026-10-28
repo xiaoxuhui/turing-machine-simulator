@@ -58,6 +58,22 @@ try {
   assert.equal(await page.inputValue("#rules"), commentedSource);
   await page.click("#loadExample");
   assert.doesNotMatch(await page.inputValue("#rules"), /^\s*#/m);
+  const arithmeticNotes = [];
+  for (const id of ["unaryMultiply", "unaryDivide", "unaryPower", "unaryTetration", "unaryPentation"]) {
+    await page.selectOption("#example", id);
+    await page.selectOption("#exampleSourceStyle", "commented");
+    await page.click("#loadExample");
+    assert.equal(await page.locator("#errors").textContent(), "");
+    const lines = (await page.inputValue("#rules")).split("\n");
+    const firstRule = lines.findIndex(line => !line.startsWith("#") && line.includes("->"));
+    const notes = lines.filter((line, index) => index > firstRule && line.startsWith("#"));
+    assert.ok(notes.length >= 6, `${id}: arithmetic needs comments between rules`);
+    assert.ok(notes.some(line => /清理|擦除/.test(line)));
+    arithmeticNotes.push({ id, notesBetweenRules: notes.length });
+  }
+  await page.selectOption("#example", "functionExports");
+  await page.selectOption("#exampleSourceStyle", "plain");
+  await page.click("#loadExample");
   const source = await page.inputValue("#rules");
   await page.selectOption("#example", "functionBasics");
   assert.equal(await page.inputValue("#rules"), source, "preview must preserve the draft");
@@ -144,7 +160,7 @@ try {
   // Vite has no default favicon; record its 404 separately from application failures.
   assert.deepEqual(failedResources.filter(resource => !new URL(resource.url).pathname.endsWith("/favicon.ico")), []);
   assert.deepEqual(consoleErrors.filter(error => !error.url.endsWith("/favicon.ico") || !error.text.includes("404")), []);
-  const report = { groups, cases: results, exampleStyles: { default: "plain", switchPreservesDraft: true, commentedOutput: "1234", plainReloadRemovesComments: true }, previewPreserved: true, reloadPreserved: true, alternateEntries: 2, continuousRun: "3 steps, HALT", retComparison: { explicit: "12", normal: "19" }, initialChoices, userProgram: { steps: 8, head: 2, state: "H", trace: userTrace }, internalNameRows: nameMap.split("\n").length, pureActualRules: true, arrowDraftMigrated: true, pageErrors, consoleErrors, failedResources };
+  const report = { groups, cases: results, exampleStyles: { default: "plain", switchPreservesDraft: true, commentedOutput: "1234", plainReloadRemovesComments: true, arithmeticNotes }, previewPreserved: true, reloadPreserved: true, alternateEntries: 2, continuousRun: "3 steps, HALT", retComparison: { explicit: "12", normal: "19" }, initialChoices, userProgram: { steps: 8, head: 2, state: "H", trace: userTrace }, internalNameRows: nameMap.split("\n").length, pureActualRules: true, arrowDraftMigrated: true, pageErrors, consoleErrors, failedResources };
   const evidenceDir = new URL("../doc/调用返回顺序/evidence/", import.meta.url);
   await mkdir(evidenceDir, { recursive: true });
   await writeFile(new URL("browser.json", evidenceDir), JSON.stringify(report, null, 2) + "\n");
