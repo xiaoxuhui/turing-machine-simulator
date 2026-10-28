@@ -3,6 +3,7 @@ import { busyBeaverExamples } from "./busy-beaver-examples";
 import { conjectureExamples } from "./conjecture-examples";
 import { hyperoperationExamples } from "./hyperoperation-examples";
 import { functionExamples } from "./function-examples";
+import { compactRuleArrows } from "./rule-format";
 
 export interface ExampleProject {
   category?: "基础示例" | "函数教程" | "一进制运算" | "忙碌海狸" | "猜想验证";
@@ -18,7 +19,7 @@ export interface ExampleProject {
   rules: string;
 }
 
-export const examples: Record<string, ExampleProject> = {
+const exampleDefinitions: Record<string, ExampleProject> = {
   ...functionExamples,
   unary: {
     category: "一进制运算",
@@ -73,3 +74,5 @@ export const examples: Record<string, ExampleProject> = {
   ...busyBeaverExamples,
   ...conjectureExamples,
 };
+
+export const examples: Record<string, ExampleProject> = Object.fromEntries(Object.entries(exampleDefinitions).map(([id, project]) => [id, { ...project, rules: compactRuleArrows(project.rules) }]));

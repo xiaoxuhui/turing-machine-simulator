@@ -1,4 +1,5 @@
 import "./styles.css";
+import { compactRuleArrows } from "./rule-format";
 import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, resolveInitialState, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
@@ -205,7 +206,7 @@ function collectProject(): ProjectData {
 
 function fillProject(project: ProjectData | ExampleProject): void {
   const fields = ["input", "blankSymbol", "initialState", "acceptStates", "rejectStates", "haltStates", "rules"] as const;
-  for (const field of fields) byId<HTMLInputElement | HTMLTextAreaElement>(field).value = project[field];
+  for (const field of fields) byId<HTMLInputElement | HTMLTextAreaElement>(field).value = field === "rules" ? compactRuleArrows(project[field]) : project[field];
   const stepLimit = project.maxSteps === undefined ? 10000 : project.maxSteps;
   const unlimited = stepLimit === null;
   byId<HTMLInputElement>("unlimitedSteps").checked = unlimited;
@@ -453,7 +454,7 @@ function renderCompiledProgram(parsed: ReturnType<typeof parseTransitions>): voi
   mapping.value = parsed.internalNames?.length
     ? parsed.internalNames.map(item => `${item.source} → ${item.actual}  [${item.context}]`).join("\n")
     : [...new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]))].map(state => `${state} → ${state}`).join("\n");
-  source.value = parsed.transitions.map(rule => `${rule.fromState},${rule.readSymbol} -> ${rule.toState},${rule.writeSymbol},${rule.direction}`).join("\n");
+  source.value = parsed.transitions.map(rule => `${rule.fromState},${rule.readSymbol}->${rule.toState},${rule.writeSymbol},${rule.direction}`).join("\n");
 }
 
 function renderRuleTable(): void {
@@ -697,7 +698,7 @@ byId("clear").addEventListener("click", () => {
 });
 byId("addRule").addEventListener("click", () => {
   const source = value("rules").trim();
-  byId<HTMLTextAreaElement>("rules").value = `${source}${source ? "\n" : ""}q0,□ -> HALT,□,N`;
+  byId<HTMLTextAreaElement>("rules").value = `${source}${source ? "\n" : ""}q0,□->HALT,□,N`;
   persistEditorDraft();
   renderRuleTable();
 });
