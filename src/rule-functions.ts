@@ -318,6 +318,12 @@ export function parseRuleFunctions(
   const afterCall = (index: number, _fn: RuleFunction): string => {
     return scriptEntry(index, undefined, finalState);
   };
+  const scriptTarget = (index: number, state: string): string => {
+    if (globalStates.has(state)) return state;
+    let target = statements.findIndex((item, position) => position >= index && item.kind === "rules" && item.state === state);
+    if (target < 0) target = statements.findIndex(item => item.kind === "rules" && item.state === state);
+    return target < 0 ? scriptEntry(index, state, state) : scriptEntries.get(target)!;
+  };
   const compileScript = (): string => {
     // Build continuations backwards so long straight-line scripts do not recurse in JS.
     for (let index = statements.length - 1; index >= 0; index--) {
@@ -333,19 +339,19 @@ export function parseRuleFunctions(
         const called = functions.get(rule.toState);
         const target = terminal.has(rule.toState) ? rule.toState
           : called ? compile(called.name, afterCall(index + 1, called))
-          : scriptEntry(index + 1, rule.toState, rule.toState);
+          : scriptTarget(index + 1, rule.toState);
         append({ ...rule, fromState: entry, toState: target }, line);
       }
     }
     return scriptEntry(0, undefined, finalState);
   };
   try {
+    const initialState = calls.length ? compileScript() : undefined;
     for (const { rule, line } of declarations) {
       if (publicRef(rule.fromState)) continue;
       const next = declarations.find(item => item.line > line && item.rule.fromState !== rule.fromState && !publicRef(item.rule.fromState));
-      append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, next?.rule.fromState ?? finalState) : rule.toState }, line);
+      append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, next?.rule.fromState ?? initialState ?? finalState) : rule.toState }, line);
     }
-    const initialState = calls.length ? compileScript() : undefined;
     const functionEntries = [...functions.keys()].map(name => ({ name, state: compile(name, finalState) }));
     // Extend each isolated invocation, not just one copy of an exported state.
     for (const ctx of contexts.values()) for (const { local, source } of extensions.get(ctx.fn.name) ?? []) {
@@ -365,6 +371,11 @@ export function parseRuleFunctions(
     for (const fn of functions.values()) {
       const ctx = [...contexts.values()].find(item => item.fn === fn && item.continuation === finalState)!;
       for (const local of fn.exports.keys()) aliases.set(`${fn.name}.${local}`, local === fn.initial ? ctx.entry : localState(ctx, local));
+    }
+    for (const [index, statement] of statements.entries()) {
+      if (statement.kind === "rules" && !globalStates.has(statement.state) && !terminal.has(statement.state) && !publicRef(statement.state) && !aliases.has(statement.state)) {
+        aliases.set(statement.state, scriptEntries.get(index)!);
+      }
     }
     const resolved = new Map<string, string>();
     const resolve = (state: string): string => {
@@ -388,7 +399,7 @@ export function parseRuleFunctions(
       keys.add(key);
       return { ...rule, fromState, toState };
     });
-    const stateExports = [...aliases.keys()].map(name => ({ name, state: resolve(name) }));
+    const stateExports = publicNames.map(name => ({ name, state: resolve(name) }));
     const sourceEntries: Array<{ name: string; state: string }> = [];
     for (const [index, statement] of statements.entries()) {
       const name = statement.kind === "call" ? statement.call.name : statement.state;

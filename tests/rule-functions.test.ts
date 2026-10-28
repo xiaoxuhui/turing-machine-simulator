@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { inputToTape, parseTransitions, resolveInitialState, TuringMachine, type ParseOptions } from "../src/core";
 
 const append = `追加(q0):
@@ -22,6 +23,55 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("runs the user's complete no-ret program from a1 through later labels and resumes after each call", () => {
+    const source = readFileSync(new URL("./fixtures/function-calls-no-ret.tm", import.meta.url), "utf8");
+    const parsed = parseTransitions(source, { haltStates: ["H"] });
+    expect(parsed.errors).toEqual([]);
+    const machine = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, "a1"), acceptStates: [], rejectStates: [], haltStates: ["H"], transitions: parsed.transitions }, []);
+    const states: string[] = [];
+    for (let i = 0; i < 8; i++) {
+      const result = machine.step();
+      expect(result.reason, `step ${i + 1}: ${machine.currentState}`).not.toBe("missing-transition");
+      expect(result.stopped).toBe(i === 7);
+      states.push(machine.currentState);
+    }
+    expect(states[0]).toMatch(/\.d1$/);
+    expect(states[1]).toMatch(/\.r\.q0$/);
+    expect(states[2]).toMatch(/\.a3$/);
+    expect(states[3]).toMatch(/\.d3$/);
+    expect(states[4]).toMatch(/\.r\.q0$/);
+    expect(states[5]).toMatch(/\.f\.q0$/);
+    expect(states[6]).toMatch(/\.r\.q0$/);
+    expect(states[7]).toBe("H");
+    expect(machine.headPosition).toBe(2);
+    expect(machine.tape.entries()).toEqual([[2, "1"]]);
+  });
+  it("never loses a written label in 279 entry/input combinations of the user's program", () => {
+    const source = readFileSync(new URL("./fixtures/function-calls-no-ret.tm", import.meta.url), "utf8");
+    const parsed = parseTransitions(source, { haltStates: ["H"] });
+    expect(parsed.errors).toEqual([]);
+    const inputs = [""];
+    for (let size = 1; size <= 4; size++) for (let bits = 0; bits < 2 ** size; bits++) inputs.push(bits.toString(2).padStart(size, "0"));
+    for (const initial of ["", "a1", "a2", "a3", "d1", "d2", "d3", "r", "f"]) for (const input of inputs) {
+      const machine = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, initial), acceptStates: [], rejectStates: [], haltStates: ["H"], transitions: parsed.transitions }, inputToTape(input, "0"));
+      for (let step = 0; step < 500; step++) {
+        const result = machine.step();
+        expect(result.reason, `${initial}/${input}, step ${step}, ${machine.currentState}`).not.toBe("missing-transition");
+        if (result.stopped) break;
+      }
+    }
+  });
+  it.each([
+    ["outer expression", `r(q,done):\n    q,□ -> done,1,R\nstart,□ -> r,□,N\nafter,□ -> HALT,2,N`, "start", "12", 3],
+    ["source sequence", `r(q,done):\n    q,□ -> done,1,R\nfirst(q,done):\n    q,□ -> done,9,R\nfirst\nnext,□ -> r,□,N\nafter,□ -> HALT,2,N`, "first", "912", 4],
+    ["bound child", `r(q,done):\n    q,□ -> done,1,R\nparent(q,end,x=r):\n    q,□ -> x,□,N\n    after,□ -> end,2,N\nparent`, "parent", "12", 3],
+    ["underscore name", `move_right(q,done):\n    q,□ -> done,1,R\nstart,□ -> move_right,□,N\nafter,□ -> HALT,2,N`, "start", "12", 3],
+  ] as const)("calls a function without ret from the next-state column: %s", (_label, source, initial, expected, steps) => {
+    const { output, machine, result } = execute(source, "", initial);
+    expect(result?.reason).toBe("halt");
+    expect(output).toBe(expected);
+    expect(machine.stepCount).toBe(steps);
+  });
   it("honors the requested state or function and only defaults to the first call for an empty field", () => {
     const source = `甲(q,out):\n    q,□ -> out,1,R\n乙(q,out):\n    q,□ -> out,2,R\nstart,□ -> HALT,9,N\n甲\n乙`;
     expect(execute(source, "", "").output).toBe("12");
