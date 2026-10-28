@@ -30,12 +30,14 @@ export const functionExamples: Record<string, ExampleProject> = {
   },
   functionReturn: {
     ...defaults, name: "函数：返回外部状态", initialState: "start",
-    description: "第 3 课：start 的下一状态写函数名来调用。写入(q0,q1) 退出后继续外面的 q1 规则。空输入 3 步输出 12。本例没有顶格调用列表，入口使用初始状态框的 start。",
+    description: "第 3 课：函数内写 ret q1，执行到 q1 才跳到外面的 q1，3 步输出 12。删掉 ret q1 就正常续行到 下一行，3 步输出 19。初始状态填 start；函数名不用加下划线。",
     rules: `写入(q0, q1):
     q0,□ -> q1,1,R
+    ret q1
 
 # 这一步只调用，不移动；函数写 1 后返回外部 q1
 start,□ -> 写入,□,N
+下一行,□ -> HALT,9,N
 q1,□ -> HALT,2,N`,
   },
   functionComposition: {
@@ -61,9 +63,10 @@ q1,□ -> HALT,2,N`,
   },
   functionParentReturn: {
     ...defaults, name: "函数：子函数返回父状态", initialState: "主函数",
-    description: "第 5 课：子函数退出名 接着 对应父函数内的 接着，执行后继续父函数。父子都使用 q0，实际状态仍隔离。父写 1、子写 2、父写 3，空输入 4 步输出 123。",
+    description: "第 5 课：子函数内写 ret 接着，才跳到父函数内的 接着。父子都使用 q0，实际状态仍隔离。父写 1、子写 2、父写 3，空输入 4 步输出 123。",
     rules: `写二(q0, 接着):
     q0,□ -> 接着,2,R
+    ret 接着
 
 主函数(q0, 结束, 写=写二):
     q0,□ -> 中间,1,R
@@ -75,13 +78,13 @@ q1,□ -> HALT,2,N`,
   },
   functionExportEntry: {
     ...defaults, name: "函数：选择公开状态为入口", initialState: "流程.第二步",
-    description: "第 6 课：返回状态 公开多个内部状态，不是立刻返回。此例没有顶格调用，入口在初始状态框：流程.第二步 得到 23（2 步）；改成 流程 得到 123（3 步）；流程.第三步 得到 3（1 步）。",
+    description: "第 6 课：导出状态 用于公开内部状态，ret 用于跳到外部。初始状态填 流程.第二步 得到 23（2 步）；改成 流程 得到 123（3 步）；流程.第三步 得到 3（1 步）。",
     rules: `# 从初始状态框选择入口；本例不要添加顶格调用，否则列表会决定入口
 流程(q0, HALT):
     q0,□ -> 第二步,1,R
     第二步,□ -> 第三步,2,R
     第三步,□ -> HALT,3,N
-    返回状态 第二步, 第三步
+    导出状态 第二步, 第三步
 
 # 初始状态：流程.第二步；可改成 流程 或 流程.第三步`,
   },
@@ -90,7 +93,7 @@ q1,□ -> HALT,2,N`,
     description: "第 7 课：函数内部公开 补写，外面用 写一对.补写 补充规则。重复调用时，这条规则会匹配各自的内部副本。空输入 4 步输出 1212；每增加一行 写一对 多输出 12、多运行 2 步。",
     rules: `写一对(q0, 结束):
     q0,□ -> 补写,1,R
-    返回状态 补写
+    导出状态 补写
 
 # 外部补写公开状态；结束会接回当前调用的后续位置
 写一对.补写,□ -> 结束,2,R
@@ -100,14 +103,16 @@ q1,□ -> HALT,2,N`,
   },
   functionExports: {
     ...defaults, name: "函数：子函数与返回状态", initialState: "主函数",
-    description: "第 8 课（综合）：绑定 写=写一，子函数返回父函数 after；返回状态 inside 公开为 主函数.inside，外部补写后继续外部 q1。空输入 5 步输出 1234。",
+    description: "第 8 课（综合）：绑定 写=写一，子函数用 ret after 返回父状态；导出状态 inside 公开为 主函数.inside；主函数用 ret q1 跳到外部 q1。空输入 5 步输出 1234。",
     rules: `写一(s, after):
     s,□ -> after,1,R
+    ret after
 
 主函数(q0, q1, 写=写一):
     q0,□ -> 写,□,N
     after,□ -> inside,2,R
-    返回状态 inside
+    导出状态 inside
+    ret q1
 
 # 点号访问公开状态；q1 是主函数的外部退出状态
 主函数.inside,□ -> q1,3,R

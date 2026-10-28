@@ -121,7 +121,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <p>初始输入填 111，普通停机状态填 HALT，结果是 11111。有顶格调用列表时，程序自动使用定义中的入口。原来的单状态定义仍兼容，默认走到普通停机态就退出；指定退出状态后，其它普通停机态会终止整个程序。此版本不支持递归。</p>
             <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。子函数退出后优先继续父函数内同名状态，没有则进入外部状态。</p>
             <p>从第一个顶格函数调用开始，按源码位置继续：函数执行完就执行下面的表达式；表达式的下一状态是函数名时，调用结束后继续该表达式下面的代码。相邻同状态、不同读取符号的规则作为分支选择；不会回到上面已经执行过的表达式。</p>
-            <p>函数体中写“返回状态 inside”即可导出；外部用“主函数.inside”作为来源、目标或初始状态，不能直接用内部同名态。放在第一个调用之前的规则仍是状态声明，可补写导出规则。“返回状态”用于公开状态，不是立刻退出。示例菜单的“函数教程”分组提供 8 个由浅入深的例子，说明中列有预期输出与步数。</p>
+            <p>正常执行完函数就继续下一行。函数内写“ret q1”，执行到 q1 才跳到外面对应的状态；兼容中文“返回状态 q1”。写“导出状态 inside”则公开为“主函数.inside”，用于补写规则或选择入口。示例菜单的“函数教程”分组提供 8 课；“返回外部状态”可比较保留和删除 ret 的不同结果。</p>
           </details>
           <div id="functionStatus" class="hint" role="status"></div>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
@@ -443,7 +443,7 @@ function renderRuleTable(): void {
   byId<HTMLButtonElement>("addRule").disabled = Boolean(parsed.hasFunctions);
   byId("functionStatus").textContent = parsed.hasFunctions
     ? parsed.errors.length ? parsed.errors[0]
-      : `已识别 ${parsed.functionEntries?.length ?? 0} 个函数，展开为 ${parsed.transitions.length} 条普通规则。${parsed.initialState ? "按源码顺序执行调用及其后的表达式，函数结束后继续调用行下面。" : "初始状态可填写函数名或公开状态。"}${parsed.stateExports?.length ? ` 已导出：${parsed.stateExports.slice(0, 10).map(item => item.name).join("、")}（共 ${parsed.stateExports.length} 个）。` : ""} 下方展开表只读，请在上方文本编辑函数。`
+      : `已识别 ${parsed.functionEntries?.length ?? 0} 个函数，展开为 ${parsed.transitions.length} 条普通规则。${value("initialState").trim() ? "从填写的初始状态或函数开始。" : parsed.initialState ? "初始状态留空，从第一个调用开始。" : "请填写初始状态、函数名或公开状态。"} 函数结束后续行，ret 才跳到对应外部状态。${parsed.stateExports?.length ? ` 已导出：${parsed.stateExports.slice(0, 10).map(item => item.name).join("、")}（共 ${parsed.stateExports.length} 个）。` : ""} 下方展开表只读，请在上方文本编辑函数。`
     : "";
   if (parsed.errors.length) {
     host.innerHTML = `<div class="empty">修正文本规则后即可同步结构化表格</div>`;

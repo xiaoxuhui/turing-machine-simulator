@@ -5,7 +5,7 @@ const append = `追加(q0):
     q0,1 -> q0,1,R
     q0,□ -> HALT,1,R`;
 
-function execute(source: string, input = "111", initial = "q0", options: ParseOptions = {}) {
+function execute(source: string, input = "111", initial = "", options: ParseOptions = {}) {
   const parsed = parseTransitions(source, options);
   expect(parsed.errors).toEqual([]);
   const machine = new TuringMachine({
@@ -22,6 +22,19 @@ function execute(source: string, input = "111", initial = "q0", options: ParseOp
 }
 
 describe("indented rule functions", () => {
+  it("honors the requested state or function and only defaults to the first call for an empty field", () => {
+    const source = `甲(q,out):\n    q,□ -> out,1,R\n乙(q,out):\n    q,□ -> out,2,R\nstart,□ -> HALT,9,N\n甲\n乙`;
+    expect(execute(source, "", "").output).toBe("12");
+    expect(execute(source, "", "甲").output).toBe("12");
+    expect(execute(source, "", "乙").output).toBe("2");
+    expect(execute(source, "", "start").output).toBe("9");
+    expect(execute(source, "", "unknown").result?.reason).toBe("missing-transition");
+  });
+  it.each(["ret", "返回状态"])("only jumps to the outer state when %s is declared inside the function", keyword => {
+    const source = `写(q,out):\n    q,□ -> out,1,R\n    ${keyword} out\nstart,□ -> 写,□,N\nnext,□ -> HALT,9,N\nout,□ -> HALT,2,N`;
+    expect(execute(source, "", "start").output).toBe("12");
+    expect(execute(source.replace(`    ${keyword} out\n`, ""), "", "start").output).toBe("19");
+  });
   it("resumes after an expression's function call and supports repeated sequential states", () => {
     const source = `写(q,out):\n    q,□ -> out,1,R\n子(q,back):\n    q,□ -> back,2,R\n写\nout,□ -> 子,□,N\nback,□ -> back,3,R\nback,□ -> HALT,4,N`;
     const { output, machine } = execute(source, "");
@@ -43,7 +56,7 @@ describe("indented rule functions", () => {
     expect(result?.reason).toBe("missing-transition");
   });
   it("runs expressions and function calls in source order and resumes after the calling expression", () => {
-    const source = `r(q0,q1):\n    q0,0 -> q1,0,R\n    q0,1 -> q1,1,R\n    返回状态 q1\nf(q0,q1):\n    q0,0 -> q1,1,L\n    q0,1 -> q1,0,L\nr\nq1,0 -> q2,1,N\nq1,1 -> q2,1,N\nq2,0 -> r,0,N\nq2,1 -> r,1,N\nr`;
+    const source = `r(q0,q1):\n    q0,0 -> q1,0,R\n    q0,1 -> q1,1,R\nf(q0,q1):\n    q0,0 -> q1,1,L\n    q0,1 -> q1,0,L\nr\nq1,0 -> q2,1,N\nq1,1 -> q2,1,N\nq2,0 -> r,0,N\nq2,1 -> r,1,N\nr`;
     const parsed = parseTransitions(source, { haltStates: ["H"] });
     expect(parsed.errors).toEqual([]);
     const machine = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, "r"), acceptStates: [], rejectStates: [], haltStates: ["H"], transitions: parsed.transitions }, inputToTape("", "0"));
@@ -62,7 +75,7 @@ describe("indented rule functions", () => {
     expect(machine.tape.read(2)).toBe("0");
   });
   it("preserves exported exit extensions before the next bare call", () => {
-    const source = `r(q0,done):\n    q0,□ -> done,1,R\n    返回状态 done\nr\nr.done,□ -> HALT,2,N\nr`;
+    const source = `r(q0,done):\n    q0,□ -> done,1,R\n    导出状态 done\nr\nr.done,□ -> HALT,2,N\nr`;
     const { output, machine } = execute(source, "");
     expect(output).toBe("12");
     expect(machine.stepCount).toBe(2);
@@ -78,7 +91,7 @@ describe("indented rule functions", () => {
     expect(execute(source, "").output).toBe("112");
   });
   it("exports identical local names without colliding with each other or outer states", () => {
-    const source = `甲(s,done):\n    s,□ -> q,□,N\n    q,□ -> done,1,R\n    返回状态 q\n乙(s,done):\n    s,□ -> q,□,N\n    q,□ -> done,2,R\n    返回状态: q\nq,□ -> HALT,9,N\ndone,□ -> HALT,3,N`;
+    const source = `甲(s,done):\n    s,□ -> q,□,N\n    q,□ -> done,1,R\n    导出状态 q\n    ret done\n乙(s,done):\n    s,□ -> q,□,N\n    q,□ -> done,2,R\n    导出状态: q\n    ret done\nq,□ -> HALT,9,N\ndone,□ -> HALT,3,N`;
     const a = execute(source, "", "甲.q"), b = execute(source, "", "乙.q");
     expect(a.output).toBe("13");
     expect(b.output).toBe("23");
@@ -90,7 +103,7 @@ describe("indented rule functions", () => {
     expect(execute(`${source}\nstart,□ -> 甲.q,□,N`, "", "start").output).toBe("13");
   });
   it("extends exported state rules for every repeated invocation, not just one copy", () => {
-    const source = `写(s,done):\n    s,□ -> private,□,N\n    返回状态 private\n写.private,□ -> done,1,R\n写\n写`;
+    const source = `写(s,done):\n    s,□ -> private,□,N\n    导出状态 private\n写.private,□ -> done,1,R\n写\n写`;
     const { output, machine } = execute(source, "");
     expect(output).toBe("11");
     expect(machine.stepCount).toBe(4);
@@ -100,22 +113,22 @@ describe("indented rule functions", () => {
     }
   });
   it("continues qualified local exports within their own invocation", () => {
-    const source = `写(s,done):\n    s,□ -> a,□,N\n    返回状态 a,b\n写.a,□ -> 写.b,1,R\n写.b,□ -> done,2,R\n写\n写`;
+    const source = `写(s,done):\n    s,□ -> a,□,N\n    导出状态 a,b\n写.a,□ -> 写.b,1,R\n写.b,□ -> done,2,R\n写\n写`;
     expect(execute(source, "").output).toBe("1212");
   });
   it("exposes composite entries and exit aliases without changing their contexts", () => {
-    const source = `写(s,after):\n    s,□ -> after,1,R\n组合(入,done,写):\n    写\n    返回状态 入\nstart,□ -> 组合.入,□,N\ndone,□ -> HALT,2,N`;
+    const source = `写(s,after):\n    s,□ -> after,1,R\n组合(入,done,写):\n    写\n    导出状态 入\n    ret done\nstart,□ -> 组合.入,□,N\ndone,□ -> HALT,2,N`;
     expect(execute(source, "", "start").output).toBe("12");
-    const exit = `写(s,done):\n    s,□ -> done,1,R\n    返回状态 done\n写.done,□ -> HALT,2,N\n写`;
+    const exit = `写(s,done):\n    s,□ -> done,1,R\n    导出状态 done\n    ret done\n写.done,□ -> HALT,2,N\n写`;
     expect(execute(exit, "").output).toBe("12");
   });
   it("avoids exported names that resemble the generated namespace", () => {
-    const source = `__fn(s,done):\n    s,□ -> q,□,N\n    返回状态 q\n__fn.q,□ -> done,1,R\nstart,□ -> __fn,□,N\ndone,□ -> HALT,2,N`;
+    const source = `__fn(s,done):\n    s,□ -> q,□,N\n    导出状态 q\n__fn.q,□ -> done,1,R\nstart,□ -> __fn,□,N\ndone,□ -> HALT,2,N`;
     expect(execute(source, "", "start").output).toBe("12");
   });
   it("isolates repeated exported-state invocations for several namespace-like names", () => {
     for (const name of ["写", "__fn", "__proto__", "constructor"]) for (let count = 1; count <= 4; count++) {
-      const source = `${name}(s,done):\n    s,□ -> q,□,N\n    返回状态 q\n${name}.q,□ -> done,1,R\n${Array(count).fill(name).join("\n")}`;
+      const source = `${name}(s,done):\n    s,□ -> q,□,N\n    导出状态 q\n${name}.q,□ -> done,1,R\n${Array(count).fill(name).join("\n")}`;
       const { output, machine } = execute(source, "");
       expect(output).toBe("1".repeat(count));
       expect(machine.stepCount).toBe(count * 2);
@@ -123,12 +136,12 @@ describe("indented rule functions", () => {
   });
   it("returns from a rule call to the declared outer state instead of halting", () => {
     const source = `写(q0,q1):\n    q0,□ -> q1,1,R\nq0,□ -> 写,□,N\nq1,□ -> HALT,2,N`;
-    const { output, machine } = execute(source, "");
+    const { output, machine } = execute(source, "", "q0");
     expect(output).toBe("12");
     expect(machine.stepCount).toBe(3);
   });
   it("continues outer exit rules after a bare call or selected function entry", () => {
-    const source = `写(q0,q1):\n    q0,□ -> q1,1,R\nq1,□ -> HALT,2,N`;
+    const source = `写(q0,q1):\n    q0,□ -> q1,1,R\n    ret q1\nq1,□ -> HALT,2,N`;
     expect(execute(`${source}\n写`, "").output).toBe("12");
     expect(execute(source, "", "写").output).toBe("12");
   });
@@ -153,13 +166,13 @@ describe("indented rule functions", () => {
   });
   it("preserves acceptance precedence in legacy functions when terminal lists overlap", () => {
     const source = `接受(q):\n    q,□ -> ACCEPT,1,R\n${append}\n接受\n追加`;
-    const { machine, result } = execute(source, "", "q", { haltStates: ["HALT", "ACCEPT"] });
+    const { machine, result } = execute(source, "", "", { haltStates: ["HALT", "ACCEPT"] });
     expect(machine.stepCount).toBe(1);
     expect(result?.reason).toBe("accept");
   });
   it("supports explicit exits in nested composition with custom final halt states", () => {
     const source = `写(q, 出):\n    q,□ -> 出,1,R\n两次(入, 出):\n    写\n    写\n两次\n两次`;
-    const { output, machine } = execute(source, "", "q", { haltStates: ["完成"] });
+    const { output, machine } = execute(source, "", "", { haltStates: ["完成"] });
     expect(output).toBe("1111");
     expect(machine.currentState).toBe("完成");
   });
@@ -193,7 +206,7 @@ describe("indented rule functions", () => {
     expect(execute(source, "").output).toBe("1111");
   });
   it("uses configured halt states, and accept/reject still terminate the program", () => {
-    expect(execute(`写(q):\n    q,□ -> 完成,1,R\n写\n写`, "", "q", { haltStates: ["完成"] }).output).toBe("11");
+    expect(execute(`写(q):\n    q,□ -> 完成,1,R\n写\n写`, "", "", { haltStates: ["完成"] }).output).toBe("11");
     for (const state of ["ACCEPT", "REJECT"]) {
       const { machine } = execute(`停止(q):\n    q,□ -> ${state},1,R\n${append}\n停止\n追加`, "");
       expect(machine.currentState).toBe(state);
@@ -217,9 +230,9 @@ describe("indented rule functions", () => {
     ["甲(q,out,q=甲):\n    q,□ -> out,1,N", "与状态冲突"],
     ["甲(q,out,x=甲):\n    q,□ -> x,1,N", "不支持递归"],
     ["甲(q,out):\n    q,□ -> out,1,N\n    返回状态 不存在", "未在函数内使用"],
-    ["甲(q,out):\n    q,□ -> out,1,N\n    返回状态 q,q", "重复导出"],
+    ["甲(q,out):\n    q,□ -> out,1,N\n    导出状态 q,q", "重复导出"],
     ["甲(q,out):\n    q,□ -> out,1,N\nstart,□ -> 甲.q,□,N", "未导出"],
-    ["甲(q,out):\n    q,□ -> out,1,N\n    返回状态 q\n甲.q,□ -> HALT,2,N", "合并后与已有规则重复"],
+    ["甲(q,out):\n    q,□ -> out,1,N\n    导出状态 q\n甲.q,□ -> HALT,2,N", "合并后与已有规则重复"],
     ["坏(q,q):\n    q,□ -> q,1,N", "不能相同"],
     ["坏(q,出):\n    q,□ -> 出,1,N\n    出,□ -> q,1,N", "退出状态不能再定义"],
     ["坏(q,ACCEPT):\n    q,□ -> ACCEPT,1,N", "接受或拒绝"],
