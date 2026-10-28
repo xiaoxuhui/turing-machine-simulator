@@ -421,6 +421,16 @@ export function emptyCampaignProgress(): CampaignProgress {
   return { version: 1, completedLevelIds: [], drafts: {} };
 }
 
+export function normalizeCampaignDraft(levelId: string, source: string): string {
+  const compact = compactRuleArrows(source);
+  const previous = levelId === "function-ret" ? "next" : levelId === "function-conditional" ? "after" : null;
+  if (!previous || /^done,/m.test(compact)) return compact;
+  return compact.replace(/^([^\s,]+),([^,\r\n]+)->([^,\r\n]+),([^\r\n]+)$/gm, (line, from: string, read: string, to: string, tail: string) => {
+    if (from !== previous && to !== previous) return line;
+    return `${from === previous ? "done" : from},${read}->${to === previous ? "done" : to},${tail}`;
+  });
+}
+
 export function normalizeCampaignProgress(value: unknown): CampaignProgress {
   if (typeof value !== "object" || value === null) return emptyCampaignProgress();
   const candidate = value as { version?: unknown; completedLevelIds?: unknown; drafts?: unknown };
@@ -428,7 +438,7 @@ export function normalizeCampaignProgress(value: unknown): CampaignProgress {
   const known = new Set(campaignLevels.map((level) => level.id));
   const completedLevelIds = [...new Set(candidate.completedLevelIds.filter((id): id is string => typeof id === "string" && known.has(id)))];
   const drafts = typeof candidate.drafts === "object" && candidate.drafts !== null
-    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= 100_000).map(([id, draft]) => [id, compactRuleArrows(draft as string)]))
+    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= 100_000).map(([id, draft]) => [id, normalizeCampaignDraft(id, draft as string)]))
     : {};
   return { version: 1, completedLevelIds, drafts };
 }

@@ -38,11 +38,11 @@ export const advancedCampaignLevels: CampaignLevel[] = [
     concept: "条件规则调用普通函数，完成后回到调用位置续行。",
     lesson: {
       explanation: "把函数名写在下一状态位置同样可以调用，不要求函数带 ret。条件规则先完成本次读写，再进入函数；函数正常完成后执行调用位置下面的阶段。",
-      steps: ["flip 的 0 分支已写好。", "补上读取 1 时写 0、右移并完成的分支。", "检查外部 after 能在函数完成后写出末尾 1。"],
+      steps: ["flip 的 0 分支已写好。", "补上读取 1 时写 0、右移并进入 done 的分支。", "外部同样使用 done，完成后在右侧空白格写出末尾 1。"],
       syntax: ["start,1 -> flip,1,N", "普通函数可以出现在下一状态列"],
-      workedExample: { title: "输入 1", stages: ["start 调用 flip", "flip 把 1 改成 0，并向右移动", "回到调用后面的 after → 写 1 → 输出 01"] },
+      workedExample: { title: "输入 1", stages: ["start 调用 flip", "flip 把 1 改成 0、右移并正常完成", "回到调用后面的 done → 写 1 → 输出 01"] },
     },
-    starter: starter("条件调用", "1", "start", "flip(q0,done):\n    q0,0 -> done,1,R\n\nstart,0 -> flip,0,N\nstart,1 -> flip,1,N\nafter,□ -> HALT,1,N"),
+    starter: starter("条件调用", "1", "start", "flip(q0,done):\n    q0,0 -> done,1,R\n\nstart,0 -> flip,0,N\nstart,1 -> flip,1,N\ndone,□ -> HALT,1,N"),
     cases: [{ input: "0", expectedOutput: "11" }, { input: "1", expectedOutput: "01" }], maxSteps: 10,
   },
   {
@@ -50,12 +50,12 @@ export const advancedCampaignLevels: CampaignLevel[] = [
     objective: "输入 0 输出 00，输入 1 输出 11；只让 0 分支跳到外部 outside。",
     concept: "函数内部声明 ret，达到该状态才返回。",
     lesson: {
-      explanation: "ret outside 声明一个显式返回点。只有执行到 outside 的路径才跳到外部同名状态；另一条路径到 done 正常完成，继续调用位置下面。",
+      explanation: "ret outside 声明一个显式返回点。0 分支到 outside，跳到外部 outside；1 分支到 done 正常完成，继续调用位置下面的 done 规则。内外普通完成态都叫 done，不需要另写 done 到 next 的转移。",
       steps: ["观察函数两个分支的下一状态：outside 与 done。", "在函数体内加入 ret outside。", "分别验证两组输入，确保普通完成没有被误当成返回。"],
       syntax: ["ret outside 必须缩进在函数内", "ret 控制返回；导出状态用于公开名称"],
-      workedExample: { title: "两条路径", stages: ["0 → outside → 外部 outside 写 0 → 00", "1 → done → 调用后面的 next 写 1 → 11"] },
+      workedExample: { title: "两条路径", stages: ["0 → outside → ret 指定的外部 outside 写 0 → 00", "1 → done（正常完成）→ 调用后面的 done 写 1 → 11"] },
     },
-    starter: starter("显式返回", "0", "start", "选择(q0,done):\n    q0,0 -> outside,0,R\n    q0,1 -> done,1,R\n\nstart,0 -> 选择,0,N\nstart,1 -> 选择,1,N\nnext,□ -> HALT,1,N\noutside,□ -> HALT,0,N"),
+    starter: starter("显式返回", "0", "start", "选择(q0,done):\n    q0,0 -> outside,0,R\n    q0,1 -> done,1,R\n\nstart,0 -> 选择,0,N\nstart,1 -> 选择,1,N\ndone,□ -> HALT,1,N\noutside,□ -> HALT,0,N"),
     cases: [{ input: "0", expectedOutput: "00" }, { input: "1", expectedOutput: "11" }], maxSteps: 10,
   },
   {
