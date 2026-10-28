@@ -14,9 +14,10 @@ const cases = [
 ];
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-  const pageErrors = [], consoleErrors = [];
+  const pageErrors = [], consoleErrors = [], failedResources = [];
   page.on("pageerror", error => pageErrors.push(error.message));
-  page.on("console", message => { if (message.type() === "error") consoleErrors.push(message.text()); });
+  page.on("console", message => { if (message.type() === "error") consoleErrors.push({ text: message.text(), url: message.location().url }); });
+  page.on("response", response => { if (response.status() >= 400) failedResources.push({ url: response.url(), status: response.status() }); });
   const response = await page.goto(process.argv[4] || "http://127.0.0.1:5182/turing-machine-simulator/");
   assert.equal(response.status(), 200);
   await page.waitForSelector("#example option", { state: "attached" });
@@ -70,8 +71,10 @@ try {
   await page.waitForFunction(() => document.getElementById("currentState").textContent === "HALT");
   assert.equal(await page.locator("#stepCount").textContent(), "3");
   assert.deepEqual(pageErrors, []);
-  assert.deepEqual(consoleErrors, []);
-  const report = { groups, cases: results, previewPreserved: true, reloadPreserved: true, alternateEntries: 2, continuousRun: "3 steps, HALT", pageErrors, consoleErrors };
+  // Vite has no default favicon; record its 404 separately from application failures.
+  assert.deepEqual(failedResources.filter(resource => !new URL(resource.url).pathname.endsWith("/favicon.ico")), []);
+  assert.deepEqual(consoleErrors.filter(error => !error.url.endsWith("/favicon.ico") || !error.text.includes("404")), []);
+  const report = { groups, cases: results, previewPreserved: true, reloadPreserved: true, alternateEntries: 2, continuousRun: "3 steps, HALT", pageErrors, consoleErrors, failedResources };
   const evidenceDir = new URL("../doc/函数示例/evidence/", import.meta.url);
   await mkdir(evidenceDir, { recursive: true });
   await writeFile(new URL("browser.json", evidenceDir), JSON.stringify(report, null, 2) + "\n");

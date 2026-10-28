@@ -1,0 +1,86 @@
+{
+  "groups": [
+    {
+      "name": "一进制运算",
+      "count": 10
+    },
+    {
+      "name": "函数教程",
+      "count": 8
+    },
+    {
+      "name": "基础示例",
+      "count": 2
+    },
+    {
+      "name": "忙碌海狸",
+      "count": 6
+    },
+    {
+      "name": "猜想验证",
+      "count": 2
+    }
+  ],
+  "cases": [
+    {
+      "key": "functionBasics",
+      "output": "1",
+      "steps": 1,
+      "state": "HALT"
+    },
+    {
+      "key": "functions",
+      "output": "11111",
+      "steps": 5,
+      "state": "HALT"
+    },
+    {
+      "key": "functionReturn",
+      "output": "12",
+      "steps": 3,
+      "state": "HALT"
+    },
+    {
+      "key": "functionComposition",
+      "output": "123",
+      "steps": 3,
+      "state": "HALT"
+    },
+    {
+      "key": "functionParentReturn",
+      "output": "123",
+      "steps": 4,
+      "state": "HALT"
+    },
+    {
+      "key": "functionExportEntry",
+      "output": "23",
+      "steps": 2,
+      "state": "HALT"
+    },
+    {
+      "key": "functionExportRepeat",
+      "output": "1212",
+      "steps": 4,
+      "state": "HALT"
+    },
+    {
+      "key": "functionExports",
+      "output": "1234",
+      "steps": 5,
+      "state": "HALT"
+    }
+  ],
+  "previewPreserved": true,
+  "reloadPreserved": true,
+  "alternateEntries": 2,
+  "continuousRun": "3 steps, HALT",
+  "pageErrors": [],
+  "consoleErrors": [
+    {
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+      "url": "http://127.0.0.1:5182/favicon.ico"
+    }
+  ],
+  "failedResources": []
+}
