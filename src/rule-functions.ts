@@ -405,7 +405,25 @@ export function parseRuleFunctions(
       const name = statement.kind === "call" ? statement.call.name : statement.state;
       if (!globalStates.has(name) && !sourceEntries.some(item => item.name === name)) sourceEntries.push({ name, state: resolve(scriptEntries.get(index)!) });
     }
-    return { transitions: expanded, errors, hasFunctions: true, initialState: initialState ? resolve(initialState) : undefined, functionEntries: functionEntries.map(fn => ({ ...fn, state: resolve(fn.state) })), stateExports, sourceEntries };
+    const internalNames: NonNullable<ParseResult["internalNames"]> = [];
+    const seenNames = new Set<string>();
+    const recordName = (source: string, actual: string, context: string) => {
+      const item = { source, actual: resolve(actual), context };
+      const key = JSON.stringify(item);
+      if (!seenNames.has(key)) { seenNames.add(key); internalNames.push(item); }
+    };
+    for (const ctx of contexts.values()) {
+      recordName(ctx.fn.name, ctx.entry, `实例入口 ${resolve(ctx.entry)}`);
+      const locals = new Set([ctx.fn.initial, ...(ctx.fn.exit ? [ctx.fn.exit] : []), ...ctx.fn.exports.keys(), ...ctx.fn.returns, ...ctx.fn.rules.flatMap(({ rule }) => [rule.fromState, rule.toState])]);
+      for (const state of locals) if (!callee(ctx.fn, state)) recordName(`${ctx.fn.name}.${state}`, localState(ctx, state), `实例入口 ${resolve(ctx.entry)}`);
+    }
+    for (const [index, statement] of statements.entries()) {
+      const source = statement.kind === "call" ? statement.call.name : statement.state;
+      const line = statement.kind === "call" ? statement.call.line : statement.rules[0].line;
+      recordName(source, scriptEntries.get(index)!, `源码第 ${line} 行`);
+    }
+    for (const { rule, line } of declarations) recordName(rule.fromState, rule.fromState, `源码第 ${line} 行`);
+    return { transitions: expanded, errors, hasFunctions: true, initialState: initialState ? resolve(initialState) : undefined, functionEntries: functionEntries.map(fn => ({ ...fn, state: resolve(fn.state) })), stateExports, sourceEntries, internalNames };
   } catch (error) {
     return { transitions: [], errors: [error instanceof Error ? error.message : "函数展开失败"], hasFunctions: true };
   }

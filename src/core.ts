@@ -140,6 +140,7 @@ export interface ParseResult {
   functionEntries?: Array<{ name: string; state: string }>;
   stateExports?: Array<{ name: string; state: string }>;
   sourceEntries?: Array<{ name: string; state: string }>;
+  internalNames?: Array<{ source: string; actual: string; context: string }>;
 }
 
 export interface ParseOptions {

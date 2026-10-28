@@ -124,6 +124,12 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <p>正常执行完函数就继续下一行。函数内写“ret q1”，执行到 q1 才跳到外面对应的状态；兼容中文“返回状态 q1”。写“导出状态 inside”则公开为“主函数.inside”，用于补写规则或选择入口。示例菜单的“函数教程”分组提供 8 课；“返回外部状态”可比较保留和删除 ret 的不同结果。</p>
           </details>
           <div id="functionStatus" class="hint" role="status"></div>
+          <details id="compiledProgram" class="compiled-program">
+            <summary>实际内部名称与规则</summary>
+            <p id="compiledEntry" class="hint" role="status"></p>
+            <label>原名称 → 实际内部名称<textarea id="internalNameMap" readonly rows="7" spellcheck="false"></textarea></label>
+            <label>转换后的实际转移规则<textarea id="compiledRuleSource" readonly rows="10" spellcheck="false"></textarea></label>
+          </details>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
           <div class="rule-pagination"><span id="rulePageInfo"></span><button id="rulePrev" class="btn">上一页</button><button id="ruleNext" class="btn">下一页</button></div>
@@ -437,9 +443,23 @@ function renderLog(): void {
   renderExecutionLog(byId("log"), records);
 }
 
+function renderCompiledProgram(parsed: ReturnType<typeof parseTransitions>): void {
+  const entry = resolveInitialState(parsed, value("initialState"));
+  byId("compiledEntry").textContent = parsed.errors.length ? `无法转换：${parsed.errors[0]}` : `实际初始入口：${entry || "未指定"} · ${parsed.transitions.length} 条实际规则`;
+  if (!byId<HTMLDetailsElement>("compiledProgram").open) return;
+  const mapping = byId<HTMLTextAreaElement>("internalNameMap");
+  const source = byId<HTMLTextAreaElement>("compiledRuleSource");
+  if (parsed.errors.length) { mapping.value = ""; source.value = ""; return; }
+  mapping.value = parsed.internalNames?.length
+    ? parsed.internalNames.map(item => `${item.source} → ${item.actual}  [${item.context}]`).join("\n")
+    : [...new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]))].map(state => `${state} → ${state}`).join("\n");
+  source.value = parsed.transitions.map(rule => `${rule.fromState},${rule.readSymbol} -> ${rule.toState},${rule.writeSymbol},${rule.direction}`).join("\n");
+}
+
 function renderRuleTable(): void {
   const host = byId("ruleTable");
   const parsed = parseTransitions(value("rules"), { acceptStates: splitStates(value("acceptStates")), rejectStates: splitStates(value("rejectStates")), haltStates: splitStates(value("haltStates")) });
+  renderCompiledProgram(parsed);
   byId<HTMLButtonElement>("addRule").disabled = Boolean(parsed.hasFunctions);
   byId("functionStatus").textContent = parsed.hasFunctions
     ? parsed.errors.length ? parsed.errors[0]
@@ -683,7 +703,8 @@ byId("addRule").addEventListener("click", () => {
 });
 for (const field of editorFields) byId(field).addEventListener("input", persistEditorDraft);
 byId("rules").addEventListener("input", () => { ruleTablePage = 0; renderRuleTable(); });
-for (const field of ["acceptStates", "rejectStates", "haltStates"]) byId(field).addEventListener("input", renderRuleTable);
+for (const field of ["initialState", "acceptStates", "rejectStates", "haltStates"]) byId(field).addEventListener("input", renderRuleTable);
+byId("compiledProgram").addEventListener("toggle", renderRuleTable);
 attachSpaceIndentation(byId<HTMLTextAreaElement>("rules"));
 byId("unlimitedSteps").addEventListener("change", () => {
   byId<HTMLInputElement>("maxSteps").disabled = byId<HTMLInputElement>("unlimitedSteps").checked;

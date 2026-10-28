@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import mixedCallProgram from "./fixtures/function-calls-no-ret.tm?raw";
 import { inputToTape, parseTransitions, resolveInitialState, TuringMachine, type ParseOptions } from "../src/core";
 
 const append = `追加(q0):
@@ -23,8 +23,20 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("exposes actual names for each call context and written source label", () => {
+    const source = mixedCallProgram;
+    const parsed = parseTransitions(source, { haltStates: ["H"] });
+    expect(parsed.errors).toEqual([]);
+    const mapping = parsed.internalNames!;
+    expect(mapping.some(item => item.source === "d1" && item.actual.endsWith(".d1"))).toBe(true);
+    const rEntries = new Set(mapping.filter(item => item.source === "r.q0").map(item => item.actual));
+    expect(rEntries.size).toBeGreaterThan(1);
+    const actualStates = new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]));
+    for (const item of mapping) expect(actualStates.has(item.actual), `${item.source}: ${item.actual}`).toBe(true);
+    expect(resolveInitialState(parsed, "a1")).toBe("a1");
+  });
   it("runs the user's complete no-ret program from a1 through later labels and resumes after each call", () => {
-    const source = readFileSync(new URL("./fixtures/function-calls-no-ret.tm", import.meta.url), "utf8");
+    const source = mixedCallProgram;
     const parsed = parseTransitions(source, { haltStates: ["H"] });
     expect(parsed.errors).toEqual([]);
     const machine = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, "a1"), acceptStates: [], rejectStates: [], haltStates: ["H"], transitions: parsed.transitions }, []);
@@ -47,7 +59,7 @@ describe("indented rule functions", () => {
     expect(machine.tape.entries()).toEqual([[2, "1"]]);
   });
   it("never loses a written label in 279 entry/input combinations of the user's program", () => {
-    const source = readFileSync(new URL("./fixtures/function-calls-no-ret.tm", import.meta.url), "utf8");
+    const source = mixedCallProgram;
     const parsed = parseTransitions(source, { haltStates: ["H"] });
     expect(parsed.errors).toEqual([]);
     const inputs = [""];
