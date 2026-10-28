@@ -13,7 +13,7 @@ button { cursor: pointer; }
 .course-progress progress { width: 100%; height: 8px; accent-color: #4bd1a0; }
 .course-layout { max-width: 1500px; margin: auto; padding: 22px 28px 36px; display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 18px; }
 .level-sidebar, .save-card, .lesson-card, .editor-card, .test-card { border: 1px solid #dbe4ec; border-radius: 15px; background: white; box-shadow: 0 6px 24px #20364d0c; }
-.level-sidebar { min-width: 0; padding: 15px; align-self: start; position: sticky; top: 18px; }
+.level-sidebar { min-width: 0; padding: 15px; align-self: start; position: sticky; top: 18px; max-height: calc(100vh - 36px); overflow-y: auto; }
 .sidebar-heading { display: grid; gap: 2px; padding: 3px 5px 12px; }
 .sidebar-heading small { color: #8290a2; }
 .level-group + .level-group { margin-top: 15px; padding-top: 13px; border-top: 1px solid #e5ebf0; }
@@ -31,7 +31,8 @@ button { cursor: pointer; }
 .level-button small { color: #8792a0; }
 .level-button:hover:not(.locked), .level-button.active { background: #edf9f4; border-color: #9edbc4; }
 .level-button.completed > span { background: #168963; color: white; }
-.level-button.locked { color: #9ca5b1; cursor: not-allowed; opacity: .72; }
+.level-button.locked { color: #758294; cursor: pointer; }
+.level-button.locked:hover { background: #f4f7fb; border-color: #d4dde8; }
 .lesson-workspace { min-width: 0; display: grid; gap: 16px; }
 .save-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 9px 16px; padding: 14px 20px; }
 .save-card strong { font-size: 14px; }
@@ -51,6 +52,13 @@ button { cursor: pointer; }
 .level-state { padding: 5px 9px; border-radius: 999px; background: #eef2f5; color: #657184; font-size: 11px; font-weight: 800; }
 .level-state.done { background: #168963; color: white; }
 .objective { margin: 10px 0 15px; color: #4d596b; }
+.lesson-lock-note { padding: 10px 13px; border: 1px solid #ead29f; border-radius: 8px; background: #fff8e8; color: #82611c; font-size: 13px; }
+.worked-example { margin-top: 16px; padding: 14px 16px; border: 1px solid #c7dcec; border-radius: 10px; background: #f1f8fd; }
+.worked-example h3 { margin: 0 0 8px; font-size: 14px; color: #28597c; }
+.worked-example strong { font-size: 13px; }
+.worked-example ol { margin: 7px 0 0; padding-left: 22px; color: #415a70; line-height: 1.9; font-size: 13px; }
+textarea[readonly] { background: #f3f5f8; color: #718093; }
+.button:disabled { cursor: default; opacity: .55; }
 .concept-box { padding: 13px 15px; border-left: 4px solid #29aa7e; border-radius: 8px; background: #edf9f4; }
 .concept-box strong { color: #126b4b; }
 .concept-box p { margin: 5px 0 0; color: #466359; font-size: 13px; line-height: 1.6; }

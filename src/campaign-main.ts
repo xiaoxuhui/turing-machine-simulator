@@ -6,7 +6,8 @@ import { encodeCampaignBackup, MAX_CAMPAIGN_BACKUP_BYTES, parseCampaignBackup } 
 
 const STORAGE_KEY = "turing-machine-simulator.campaign.v1";
 let progress = loadProgress();
-let activeLevelId = firstAvailableLevel().id;
+const requestedLevelId = new URLSearchParams(location.search).get("level");
+let activeLevelId = campaignLevels.some(level => level.id === requestedLevelId) ? requestedLevelId! : firstAvailableLevel().id;
 
 document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
   <div class="course-app">
@@ -17,7 +18,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
     </header>
     <main class="course-layout">
       <nav class="level-sidebar" aria-label="教学关卡">
-        <div class="sidebar-heading"><strong>学习路线</strong><small>一次只学一个概念</small></div>
+        <div class="sidebar-heading"><strong>学习路线 · ${campaignLevels.length} 关</strong><small>新增函数与幂运算原理；锁定课程可预习</small></div>
         <div id="levelList"></div>
       </nav>
       <section class="lesson-workspace">
@@ -34,11 +35,13 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
         <article class="lesson-card">
           <div class="lesson-heading"><div><div class="lesson-badges"><span id="sectionBadge"></span><span id="levelBadge"></span></div><h2 id="levelTitle"></h2></div><div class="lesson-heading-actions"><span id="levelState" class="level-state"></span><button type="button" id="undoComplete" class="button ghost" hidden>撤销通关</button></div></div>
           <p id="levelObjective" class="objective"></p>
+          <p id="lessonLockNote" class="lesson-lock-note" role="status" hidden>当前是原理预览。完成前面的关卡后，即可编写、试跑和提交本关。</p>
           <div class="concept-box"><strong id="levelConcept"></strong><p id="levelExplanation"></p></div>
           <div class="lesson-grid">
             <section><h3>跟着做</h3><ol id="lessonSteps"></ol></section>
             <section><h3>本关语法</h3><ul id="lessonSyntax" class="syntax-list"></ul></section>
           </div>
+          <section id="workedExample" class="worked-example" hidden><h3>原理推演</h3><strong id="workedExampleTitle"></strong><ol id="workedExampleStages"></ol></section>
         </article>
 
         <div class="practice-grid">
@@ -57,7 +60,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
               <button type="button" class="blank-key" data-insert-symbol="□" aria-label="插入空白符方框">□ <small>空白符</small></button>
               ${[["->", "箭头"], [",", "逗号"], ["L", "左"], ["R", "右"], ["N", "不动"]].map(([symbol, label]) => `<button type="button" data-insert-symbol="${symbol}" aria-label="插入${label}">${symbol}</button>`).join("")}
             </div>
-            <p id="editorHelp" class="editor-help">格式：当前状态,读取符号 -&gt; 下一状态,写入符号,方向</p>
+            <p id="editorHelp" class="editor-help">格式：当前状态,读取符号-&gt;下一状态,写入符号,方向</p>
             <p id="ruleRecognition" class="rule-recognition" aria-live="polite"></p>
             <div id="editorError" class="editor-error" aria-live="polite"></div>
           </section>
@@ -91,7 +94,10 @@ const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) 
 function loadProgress(): CampaignProgress {
   try {
     const source = localStorage.getItem(STORAGE_KEY);
-    return source ? normalizeCampaignProgress(JSON.parse(source)) : emptyCampaignProgress();
+    if (!source) return emptyCampaignProgress();
+    const loaded = normalizeCampaignProgress(JSON.parse(source));
+    try { if (JSON.stringify(loaded) !== source) localStorage.setItem(STORAGE_KEY, JSON.stringify(loaded)); } catch { /* Keep the restored text even if persistence is unavailable. */ }
+    return loaded;
   } catch {
     return emptyCampaignProgress();
   }
@@ -118,6 +124,10 @@ function activeLevel(): CampaignLevel {
 
 function definitionFromEditor(): MachineDefinition | null {
   const level = activeLevel();
+  if (!isLevelUnlocked(progress, level.id)) {
+    byId("editorError").textContent = "当前可预习原理；完成前面的关卡后解锁练习。";
+    return null;
+  }
   const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value, { haltStates: ["HALT"], acceptStates: [], rejectStates: [] });
   if (parsed.errors.length) {
     byId("editorError").textContent = parsed.errors.slice(0, 4).join("；");
@@ -178,7 +188,7 @@ function render(): void {
       button.type = "button";
       button.dataset.levelId = item.id;
       button.className = `level-button${item.id === level.id ? " active" : ""}${completed ? " completed" : ""}${unlocked ? "" : " locked"}`;
-      button.setAttribute("aria-disabled", String(!unlocked));
+      button.setAttribute("aria-label", `${item.title.replace(/^第 \d+ 关 · /, "")}，${unlocked ? "进入练习" : "预览原理，练习未解锁"}`);
       const number = document.createElement("span");
       const text = document.createElement("div");
       number.textContent = completed ? "✓" : unlocked ? String(itemIndex + 1) : "锁";
@@ -193,10 +203,12 @@ function render(): void {
     list.append(group);
   });
   const section = campaignSections.find((item) => item.id === level.section)!;
+  const unlocked = isLevelUnlocked(progress, level.id);
   byId("sectionBadge").textContent = section.title;
   byId("levelBadge").textContent = `第 ${index + 1} / ${campaignLevels.length} 关`;
   byId("levelTitle").textContent = level.title.replace(/^第 \d+ 关 · /, "");
-  byId("levelState").textContent = progress.completedLevelIds.includes(level.id) ? "已完成" : "学习中";
+  byId("levelState").textContent = progress.completedLevelIds.includes(level.id) ? "已完成" : unlocked ? "学习中" : "原理预览";
+  byId("lessonLockNote").hidden = unlocked;
   byId("levelState").classList.toggle("done", progress.completedLevelIds.includes(level.id));
   const isComplete = progress.completedLevelIds.includes(level.id);
   byId<HTMLButtonElement>("undoComplete").hidden = !isComplete;
@@ -206,10 +218,16 @@ function render(): void {
   byId("levelExplanation").textContent = level.lesson.explanation;
   renderTextList("lessonSteps", level.lesson.steps, "li");
   renderTextList("lessonSyntax", level.lesson.syntax, "li");
+  byId("workedExample").hidden = !level.lesson.workedExample;
+  byId("workedExampleTitle").textContent = level.lesson.workedExample?.title ?? "";
+  renderTextList("workedExampleStages", level.lesson.workedExample?.stages ?? [], "li");
   byId("starterInput").textContent = level.starter.input || "（空纸带）";
   byId("starterState").textContent = level.starter.initialState;
   byId("starterBlank").textContent = level.starter.blankSymbol;
   byId<HTMLTextAreaElement>("rulesEditor").value = progress.drafts[level.id] ?? level.starter.rules;
+  byId<HTMLTextAreaElement>("rulesEditor").readOnly = !unlocked;
+  for (const id of ["tryExample", "verifyLevel", "resetDraft"]) byId<HTMLButtonElement>(id).disabled = !unlocked;
+  document.querySelectorAll<HTMLButtonElement>("[data-insert-symbol]").forEach(button => { button.disabled = !unlocked; });
   updateRuleRecognition();
   const cases = byId("publicCases");
   cases.replaceChildren();
@@ -222,7 +240,7 @@ function render(): void {
   byId("progressText").textContent = `${completeCount} / ${campaignLevels.length} 完成`;
   byId<HTMLProgressElement>("progressBar").value = completeCount;
   byId("tryResult").textContent = "试跑结果会显示在这里。";
-  byId("verifyResult").textContent = "完成规则后再提交。";
+  byId("verifyResult").textContent = unlocked ? "完成规则后再提交。" : "可先阅读原理，顺序解锁后再练习。";
   renderTape("");
 }
 
@@ -256,16 +274,16 @@ byId("levelList").addEventListener("click", (event) => {
   const button = (event.target as HTMLElement).closest<HTMLElement>("[data-level-id]");
   const levelId = button?.dataset.levelId;
   if (!levelId) return;
-  if (!isLevelUnlocked(progress, levelId)) {
-    byId("verifyResult").textContent = "先完成前面的关卡，教程会一步步带你到这里。";
-    return;
-  }
   activeLevelId = levelId;
+  const url = new URL(location.href);
+  url.searchParams.set("level", levelId);
+  history.replaceState(null, "", url);
   render();
 });
 
 attachSpaceIndentation(byId<HTMLTextAreaElement>("rulesEditor"));
 byId("rulesEditor").addEventListener("input", () => {
+  if (!isLevelUnlocked(progress, activeLevelId)) return;
   progress = { ...progress, drafts: { ...progress.drafts, [activeLevelId]: byId<HTMLTextAreaElement>("rulesEditor").value } };
   const warning = saveProgress();
   byId("editorError").textContent = warning ?? "";
@@ -321,9 +339,9 @@ byId("verifyLevel").addEventListener("click", () => {
     progress = completeLevel(progress, level.id);
     const warning = saveProgress();
     const next = campaignLevels[campaignLevels.indexOf(level) + 1];
-    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : "全部 16 关完成！"}${warning ? ` ${warning}` : ""}`;
+    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : `全部 ${campaignLevels.length} 关完成！`}${warning ? ` ${warning}` : ""}`;
     render();
-    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : "全部 16 关完成！"}${warning ? ` ${warning}` : ""}`;
+    byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${next ? `已解锁“${next.title}”。` : `全部 ${campaignLevels.length} 关完成！`}${warning ? ` ${warning}` : ""}`;
   } catch (error) {
     byId("editorError").textContent = error instanceof Error ? error.message : "无法验证当前规则";
   }
@@ -407,7 +425,7 @@ byId<HTMLInputElement>("importCampaignFile").addEventListener("change", async ()
   if (!file) return;
   try {
     if (file.size > MAX_CAMPAIGN_BACKUP_BYTES) throw new Error("存档文件超过 1 MiB。");
-    const imported = parseCampaignBackup(await file.text());
+    const imported = normalizeCampaignProgress(parseCampaignBackup(await file.text()));
     askConfirm(`导入会替换此设备当前的关卡进度和规则草稿。备份包含 ${imported.completedLevelIds.length} 关已通关记录，确认导入吗？`, "确认导入", () => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(imported));
