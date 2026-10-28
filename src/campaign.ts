@@ -1,5 +1,7 @@
 import { inputToTape, TuringMachine, type MachineDefinition, type StopReason, type Tape } from "./core";
 import type { ExampleProject } from "./examples";
+import { advancedCampaignLevels } from "./campaign-advanced";
+import { compactRuleArrows } from "./rule-format";
 
 export interface CampaignCase {
   input: string;
@@ -17,6 +19,7 @@ export interface CampaignLevel {
     explanation: string;
     steps: string[];
     syntax: string[];
+    workedExample?: { title: string; stages: string[] };
   };
   starter: ExampleProject;
   cases: CampaignCase[];
@@ -32,9 +35,9 @@ export interface CampaignSection {
 }
 
 export const campaignSections: CampaignSection[] = [
-  { id: "tutorial", title: "教程", description: "小步学习规则、扫描、分支与状态切换" },
-  { id: "challenge", title: "闯关", description: "组合已学套路，只给策略提示" },
-  { id: "hard", title: "高难", description: "多阶段算法、临时标记与边界处理" },
+  { id: "tutorial", title: "教程", description: "规则、函数、ret 与重复相加；锁定关卡也可预习原理" },
+  { id: "challenge", title: "闯关", description: "组合状态与函数，过渡到减法、乘法和平方" },
+  { id: "hard", title: "高难", description: "多阶段算法，以及乘方、超幂、超超幂的递推原理" },
 ];
 
 export interface CampaignCaseResult extends CampaignCase {
@@ -66,7 +69,7 @@ const base = {
   haltStates: "HALT",
 };
 
-export const campaignLevels: CampaignLevel[] = [
+const originalCampaignLevels: CampaignLevel[] = [
   {
     id: "write-one",
     section: "tutorial",
@@ -373,6 +376,11 @@ export const campaignLevels: CampaignLevel[] = [
   },
 ];
 
+export const campaignLevels: CampaignLevel[] = campaignSections.flatMap(section => [
+  ...originalCampaignLevels.filter(level => level.section === section.id),
+  ...advancedCampaignLevels.filter(level => level.section === section.id),
+]).map((level, index) => ({ ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}`, starter: { ...level.starter, rules: compactRuleArrows(level.starter.rules) } }));
+
 export function tapeOutput(tape: Tape): string {
   const entries = tape.entries();
   if (!entries.length) return "";
@@ -420,7 +428,7 @@ export function normalizeCampaignProgress(value: unknown): CampaignProgress {
   const known = new Set(campaignLevels.map((level) => level.id));
   const completedLevelIds = [...new Set(candidate.completedLevelIds.filter((id): id is string => typeof id === "string" && known.has(id)))];
   const drafts = typeof candidate.drafts === "object" && candidate.drafts !== null
-    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= 100_000))
+    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= 100_000).map(([id, draft]) => [id, compactRuleArrows(draft as string)]))
     : {};
   return { version: 1, completedLevelIds, drafts };
 }

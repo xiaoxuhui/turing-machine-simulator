@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, resetDraft, tapeOutput, uncompleteLevel, verifyLevel, type CampaignProgress } from "../src/campaign";
-import { parseTransitions, Tape, type MachineDefinition } from "../src/core";
+import { parseTransitions, resolveInitialState, Tape, type MachineDefinition } from "../src/core";
+import { advancedSolutions } from "./campaign-advanced-solutions";
 
 const solutionRules: Record<string, string> = {
+  ...advancedSolutions,
   "write-one": "q0,□ -> HALT,1,N",
   "move-right-write": "q0,1 -> write,1,R\nwrite,□ -> HALT,1,N",
   "unary-increment": "q0,1 -> q0,1,R\nq0,□ -> HALT,1,N",
@@ -24,22 +26,40 @@ const solutionRules: Record<string, string> = {
 function definitionFor(levelIndex: number): MachineDefinition {
   const level = campaignLevels[levelIndex];
   const project = level.starter;
+  const parsed = parseTransitions(solutionRules[level.id], { haltStates: ["HALT"], acceptStates: [], rejectStates: [] });
+  expect(parsed.errors).toEqual([]);
   return {
     blankSymbol: project.blankSymbol,
-    initialState: project.initialState,
+    initialState: resolveInitialState(parsed, project.initialState),
     acceptStates: [],
     rejectStates: [],
     haltStates: project.haltStates.split(",").filter(Boolean),
-    transitions: parseTransitions(solutionRules[level.id]).transitions,
+    transitions: parsed.transitions,
   };
 }
 
 describe("campaign verification", () => {
-  it("provides a 10/4/2 three-part curriculum", () => {
+  it("provides a 16/7/5 three-part curriculum with function and arithmetic principles", () => {
     expect(campaignSections.map((section) => section.id)).toEqual(["tutorial", "challenge", "hard"]);
-    expect(campaignLevels).toHaveLength(16);
-    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([10, 4, 2]);
+    expect(campaignLevels).toHaveLength(28);
+    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([16, 7, 5]);
     expect(campaignLevels.map((level) => level.id).every((id, index, ids) => ids.indexOf(id) === index)).toBe(true);
+  });
+  it("keeps every original level id and its saved completion/draft", () => {
+    const ids = ["write-one", "move-right-write", "unary-increment", "erase-one", "erase-unary", "unary-decrement", "zeros-to-ones", "binary-complement", "turn-back", "binary-increment", "copy-first-bit", "alternating-unary", "binary-decrement", "unary-parity", "twos-complement", "unary-double"];
+    const restored = normalizeCampaignProgress({ version: 1, completedLevelIds: ids, drafts: { "unary-double": "saved source" } });
+    expect(restored.completedLevelIds).toEqual(ids);
+    expect(restored.drafts["unary-double"]).toBe("saved source");
+    expect(isLevelUnlocked(restored, "unary-power")).toBe(true);
+  });
+  it("gives each new lesson a worked derivation and separates high operation recurrences", () => {
+    for (const id of Object.keys(advancedSolutions)) {
+      const level = campaignLevels.find(item => item.id === id)!;
+      expect(level.lesson.workedExample!.stages.length).toBeGreaterThanOrEqual(2);
+      expect(level.lesson.explanation.length).toBeGreaterThan(30);
+    }
+    expect(campaignLevels.find(item => item.id === "unary-tetration")!.concept).toContain("a^T");
+    expect(campaignLevels.find(item => item.id === "unary-pentation")!.concept).toContain("a↑↑G");
   });
 
   it.each(campaignLevels.map((level, index) => [level.title, index] as const))("accepts the supplied solution for %s", (_title, index) => {
@@ -119,7 +139,7 @@ describe("campaign progress", () => {
       version: 1,
       completedLevelIds: [],
       drafts: { "write-one": "q0,□ -> HALT,1,N", unknown: "answer", "erase-one": 42 },
-    }).drafts).toEqual({ "write-one": "q0,□ -> HALT,1,N" });
+    }).drafts).toEqual({ "write-one": "q0,□->HALT,1,N" });
   });
 });
 
