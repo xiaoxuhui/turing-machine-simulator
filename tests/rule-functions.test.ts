@@ -22,6 +22,51 @@ function execute(source: string, input = "111", initial = "q0", options: ParseOp
 }
 
 describe("indented rule functions", () => {
+  it("resumes after an expression's function call and supports repeated sequential states", () => {
+    const source = `写(q,out):\n    q,□ -> out,1,R\n子(q,back):\n    q,□ -> back,2,R\n写\nout,□ -> 子,□,N\nback,□ -> back,3,R\nback,□ -> HALT,4,N`;
+    const { output, machine } = execute(source, "");
+    expect(output).toBe("1234");
+    expect(machine.stepCount).toBe(5);
+  });
+  it("does not let a later bare call skip an explicitly defined outer return path", () => {
+    const source = `r(q0,q1):\n    q0,□ -> q1,1,R\nr\nq1,□ -> HALT,2,N\nr`;
+    const { output, machine } = execute(source, "");
+    expect(output).toBe("12");
+    expect(machine.stepCount).toBe(2);
+  });
+  it("reports a missing return transition instead of jumping into a later bare call", () => {
+    const source = `r(q0,q1):\n    q0,□ -> q1,1,R\nr\nq1,1 -> HALT,2,N\nr`;
+    const { output, machine, result } = execute(source, "");
+    expect(machine.currentState).toMatch(/\.q1$/);
+    expect(machine.stepCount).toBe(1);
+    expect(output).toBe("1");
+    expect(result?.reason).toBe("missing-transition");
+  });
+  it("runs expressions and function calls in source order and resumes after the calling expression", () => {
+    const source = `r(q0,q1):\n    q0,0 -> q1,0,R\n    q0,1 -> q1,1,R\n    返回状态 q1\nf(q0,q1):\n    q0,0 -> q1,1,L\n    q0,1 -> q1,0,L\nr\nq1,0 -> q2,1,N\nq1,1 -> q2,1,N\nq2,0 -> r,0,N\nq2,1 -> r,1,N\nr`;
+    const parsed = parseTransitions(source, { haltStates: ["H"] });
+    expect(parsed.errors).toEqual([]);
+    const machine = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, "r"), acceptStates: [], rejectStates: [], haltStates: ["H"], transitions: parsed.transitions }, inputToTape("", "0"));
+    const trace: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      expect(machine.step().stopped).toBe(i === 4);
+      trace.push(machine.currentState);
+    }
+    expect(trace[0]).toMatch(/\.q1$/);
+    expect(trace[1]).toMatch(/\.q2$/);
+    expect(trace[2]).toMatch(/\.r\.q0$/);
+    expect(trace[3]).toMatch(/\.r\.q0$/);
+    expect(trace[4]).toBe("H");
+    expect(machine.headPosition).toBe(3);
+    expect(machine.tape.read(1)).toBe("1");
+    expect(machine.tape.read(2)).toBe("0");
+  });
+  it("preserves exported exit extensions before the next bare call", () => {
+    const source = `r(q0,done):\n    q0,□ -> done,1,R\n    返回状态 done\nr\nr.done,□ -> HALT,2,N\nr`;
+    const { output, machine } = execute(source, "");
+    expect(output).toBe("12");
+    expect(machine.stepCount).toBe(2);
+  });
   it("binds a local child-function alias and returns into the parent scope", () => {
     const source = `写一(s,after):\n    s,□ -> after,1,R\n父(q0,out, 写=写一):\n    q0,□ -> 写,□,N\n    after,□ -> out,2,R\nstart,□ -> 父,□,N\nout,□ -> HALT,3,N`;
     const { output, machine } = execute(source, "", "start");

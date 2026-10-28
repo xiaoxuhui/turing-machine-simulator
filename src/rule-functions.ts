@@ -91,6 +91,9 @@ export function parseRuleFunctions(
   const callee = (owner: RuleFunction | undefined, name: string) => functions.get(owner?.bindings.get(name) ?? name);
   if (functions.size && halt.size === 0) fail(1, "函数需要至少一个普通停机态，例如 HALT，作为自动结束点");
   const references = new Map<string, Call[]>();
+  const firstCallLine = calls[0]?.line ?? Infinity;
+  const declarations = rules.filter(item => item.line < firstCallLine);
+  const scriptRules = rules.filter(item => item.line > firstCallLine);
   const checkDuplicates = (items: SourceRule[]) => {
     const keys = new Set<string>();
     for (const { rule, line } of items) {
@@ -99,7 +102,7 @@ export function parseRuleFunctions(
       keys.add(key);
     }
   };
-  checkDuplicates(rules);
+  checkDuplicates(declarations);
   for (const { rule, line } of rules) {
     if (functions.has(rule.fromState)) fail(line, "顶格状态不能与函数名重名，请直接调用函数名");
   }
@@ -152,7 +155,7 @@ export function parseRuleFunctions(
     return { fn, local, alias: `${fn.name}.${local}` };
   };
   const extensions = new Map<string, Array<{ local: string; source: SourceRule }>>();
-  for (const item of rules) {
+  for (const item of declarations) {
     const from = publicRef(item.rule.fromState, undefined, item.line);
     publicRef(item.rule.toState, from?.fn, item.line);
     if (from) {
@@ -163,6 +166,22 @@ export function parseRuleFunctions(
       if (called) references.get(from.fn.name)!.push({ name: called.name, line: item.line });
     }
   }
+  for (const { rule, line } of scriptRules) {
+    publicRef(rule.fromState, undefined, line);
+    publicRef(rule.toState, undefined, line);
+  }
+  type Statement = { kind: "call"; call: Call } | { kind: "rules"; state: string; rules: SourceRule[] };
+  const statements: Statement[] = [];
+  const events = [...calls.map(call => ({ line: call.line, call })), ...scriptRules.map(source => ({ line: source.line, source }))].sort((a, b) => a.line - b.line);
+  for (const event of events) {
+    if ("call" in event) statements.push({ kind: "call", call: event.call });
+    else {
+      const previous = statements.at(-1);
+      if (previous?.kind === "rules" && previous.state === event.source.rule.fromState && !previous.rules.some(item => item.rule.readSymbol === event.source.rule.readSymbol)) previous.rules.push(event.source);
+      else statements.push({ kind: "rules", state: event.source.rule.fromState, rules: [event.source] });
+    }
+  }
+  for (const statement of statements) if (statement.kind === "rules") checkDuplicates(statement.rules);
   for (const fn of functions.values()) {
     publicRef(fn.initial, fn, fn.line);
     if (fn.exit) publicRef(fn.exit, fn, fn.line);
@@ -202,7 +221,7 @@ export function parseRuleFunctions(
   const contexts = new Map<string, Context>();
   let instances = 0;
   const finalState = [...halt][0] ?? "HALT";
-  const globalStates = new Set(rules.map(({ rule }) => rule.fromState));
+  const globalStates = new Set(declarations.map(({ rule }) => rule.fromState));
   for (const [name, items] of extensions) {
     const fn = functions.get(name)!;
     if (fn.exit && items.some(item => item.local === fn.exit)) globalStates.add(fn.exit);
@@ -259,13 +278,50 @@ export function parseRuleFunctions(
     }
     return entry;
   };
+  const scriptEntries = new Map<number, string>();
+  const scriptEntry = (index: number, state: string | undefined, fallback: string): string => {
+    // Scan forward through source statements; a return never restarts an earlier block.
+    while (index < statements.length) {
+      const statement = statements[index];
+      if (statement.kind === "call") return scriptEntries.get(index)!;
+      const ref = publicRef(statement.state);
+      const matches = !state || statement.state === state || (ref?.local === ref?.fn.exit && state === ref?.local);
+      if (!matches) { index++; continue; }
+      return scriptEntries.get(index)!;
+    }
+    return fallback;
+  };
+  const afterCall = (index: number, fn: RuleFunction): string => {
+    const fallback = fn.exit && (globalStates.has(fn.exit) || publicRef(fn.exit)) ? fn.exit : finalState;
+    return scriptEntry(index, fn.exit, fallback);
+  };
+  const compileScript = (): string => {
+    // Build continuations backwards so long straight-line scripts do not recurse in JS.
+    for (let index = statements.length - 1; index >= 0; index--) {
+      const statement = statements[index];
+      if (statement.kind === "call") {
+        const fn = functions.get(statement.call.name)!;
+        scriptEntries.set(index, compile(fn.name, afterCall(index + 1, fn)));
+        continue;
+      }
+      const entry = `${prefix}script.${index}.${statement.state}`;
+      scriptEntries.set(index, entry);
+      for (const { rule, line } of statement.rules) {
+        const called = functions.get(rule.toState);
+        const target = terminal.has(rule.toState) ? rule.toState
+          : called ? compile(called.name, afterCall(index + 1, called))
+          : scriptEntry(index + 1, rule.toState, rule.toState);
+        append({ ...rule, fromState: entry, toState: target }, line);
+      }
+    }
+    return scriptEntry(0, undefined, finalState);
+  };
   try {
-    for (const { rule, line } of rules) {
+    for (const { rule, line } of declarations) {
       if (publicRef(rule.fromState)) continue;
       append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, defaultReturn(rule.toState)) : rule.toState }, line);
     }
-    const lastExit = calls.length ? functions.get(calls[calls.length - 1].name)!.exit : undefined;
-    const initialState = calls.length ? sequence(calls, lastExit && (globalStates.has(lastExit) || publicRef(lastExit)) ? lastExit : finalState) : undefined;
+    const initialState = calls.length ? compileScript() : undefined;
     const functionEntries = [...functions.keys()].map(name => ({ name, state: compile(name, defaultReturn(name)) }));
     // Extend each isolated invocation, not just one copy of an exported state.
     for (const ctx of contexts.values()) for (const { local, source } of extensions.get(ctx.fn.name) ?? []) {
