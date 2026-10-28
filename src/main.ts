@@ -1,5 +1,6 @@
 import "./styles.css";
 import { compactRuleArrows } from "./rule-format";
+import { exampleSource, type ExampleSourceStyle } from "./example-source";
 import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, resolveInitialState, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
@@ -143,6 +144,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <select id="example" style="width:100%">
               ${["一进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
+            <label style="margin-top:10px">示例源码<select id="exampleSourceStyle"><option value="plain">无注释</option><option value="commented">有注释</option></select></label>
             <p id="exampleNote" class="example-note"></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
           </section>
@@ -721,7 +723,7 @@ byId("example").addEventListener("change", () => {
 });
 byId("loadExample").addEventListener("click", () => {
   const example = examples[value("example")];
-  fillProject(example);
+  fillProject({ ...example, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
   createMachine();
   byId("exampleNote").textContent = example.description;
 });

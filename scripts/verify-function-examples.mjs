@@ -24,6 +24,7 @@ try {
   const groups = await page.locator("#example optgroup").evaluateAll(items => items.map(group => ({ name: group.label, count: group.children.length })));
   assert.equal(await page.locator("#example option").count(), 28);
   assert.equal(groups.find(group => group.name === "函数教程")?.count, 8);
+  assert.equal(await page.inputValue("#exampleSourceStyle"), "plain");
 
   const results = [];
   for (const [key, expected, steps] of cases) {
@@ -43,6 +44,20 @@ try {
     results.push({ key, output, steps, state: "HALT" });
   }
 
+  const beforeStyleChange = await page.inputValue("#rules");
+  await page.selectOption("#exampleSourceStyle", "commented");
+  assert.equal(await page.inputValue("#rules"), beforeStyleChange);
+  await page.click("#loadExample");
+  assert.match(await page.inputValue("#rules"), /^# /);
+  for (let i = 0; i < 5; i++) await page.click("#step");
+  assert.equal(await page.locator("#currentState").textContent(), "HALT");
+  const commentedSymbols = await page.locator("#tape .cell > span:last-child").allTextContents();
+  assert.equal(commentedSymbols.filter(symbol => symbol !== "□").join(""), "1234");
+  const commentedSource = await page.inputValue("#rules");
+  await page.selectOption("#exampleSourceStyle", "plain");
+  assert.equal(await page.inputValue("#rules"), commentedSource);
+  await page.click("#loadExample");
+  assert.doesNotMatch(await page.inputValue("#rules"), /^\s*#/m);
   const source = await page.inputValue("#rules");
   await page.selectOption("#example", "functionBasics");
   assert.equal(await page.inputValue("#rules"), source, "preview must preserve the draft");
@@ -129,7 +144,7 @@ try {
   // Vite has no default favicon; record its 404 separately from application failures.
   assert.deepEqual(failedResources.filter(resource => !new URL(resource.url).pathname.endsWith("/favicon.ico")), []);
   assert.deepEqual(consoleErrors.filter(error => !error.url.endsWith("/favicon.ico") || !error.text.includes("404")), []);
-  const report = { groups, cases: results, previewPreserved: true, reloadPreserved: true, alternateEntries: 2, continuousRun: "3 steps, HALT", retComparison: { explicit: "12", normal: "19" }, initialChoices, userProgram: { steps: 8, head: 2, state: "H", trace: userTrace }, internalNameRows: nameMap.split("\n").length, pureActualRules: true, arrowDraftMigrated: true, pageErrors, consoleErrors, failedResources };
+  const report = { groups, cases: results, exampleStyles: { default: "plain", switchPreservesDraft: true, commentedOutput: "1234", plainReloadRemovesComments: true }, previewPreserved: true, reloadPreserved: true, alternateEntries: 2, continuousRun: "3 steps, HALT", retComparison: { explicit: "12", normal: "19" }, initialChoices, userProgram: { steps: 8, head: 2, state: "H", trace: userTrace }, internalNameRows: nameMap.split("\n").length, pureActualRules: true, arrowDraftMigrated: true, pageErrors, consoleErrors, failedResources };
   const evidenceDir = new URL("../doc/调用返回顺序/evidence/", import.meta.url);
   await mkdir(evidenceDir, { recursive: true });
   await writeFile(new URL("browser.json", evidenceDir), JSON.stringify(report, null, 2) + "\n");

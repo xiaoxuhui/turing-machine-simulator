@@ -1,0 +1,17 @@
+import { expect, it } from "vitest";
+import { examples } from "../src/examples";
+import { exampleSource } from "../src/example-source";
+import { parseTransitions, resolveInitialState } from "../src/core";
+
+it.each(Object.entries(examples))("keeps the actual program identical for both comment styles: %s", (_id, project) => {
+  const options = { haltStates: project.haltStates.split(",").filter(Boolean), acceptStates: project.acceptStates.split(",").filter(Boolean), rejectStates: project.rejectStates.split(",").filter(Boolean) };
+  const plain = exampleSource(project, "plain"), commented = exampleSource(project, "commented");
+  const a = parseTransitions(plain, options), b = parseTransitions(commented, options);
+  expect(a.errors).toEqual([]);
+  expect(b.errors).toEqual([]);
+  expect(b.transitions).toEqual(a.transitions);
+  expect(resolveInitialState(b, project.initialState)).toBe(resolveInitialState(a, project.initialState));
+  expect(plain).not.toMatch(/^\s*#/m);
+  expect(commented).toMatch(/^# /);
+  expect(exampleSource({ ...project, rules: commented }, "plain")).toBe(plain);
+});
