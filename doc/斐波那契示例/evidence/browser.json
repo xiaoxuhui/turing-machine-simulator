@@ -1,0 +1,14 @@
+{
+  "example": "fibonacci",
+  "examples": 29,
+  "initialState": "fib.seedFirst",
+  "blankSymbol": "0",
+  "input": "",
+  "unlimited": true,
+  "rules": 54,
+  "phaseNotes": 9,
+  "manualSteps": 3,
+  "route": "已显示 2001 个时刻，纸带位置 -2…145，结束原因：达到步数上限",
+  "preservedAfterReload": true,
+  "pageErrors": []
+}

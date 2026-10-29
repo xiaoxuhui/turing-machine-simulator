@@ -1,10 +1,10 @@
-import { readFileSync } from "node:fs";
+import originalSource from "./fixtures/fibonacci-original.tm?raw";
 import { expect, it } from "vitest";
 import { examples } from "../src/examples";
 import { exampleSource } from "../src/example-source";
 import { parseTransitions, TuringMachine, type MachineDefinition } from "../src/core";
 
-const original = parseTransitions(readFileSync(new URL("./fixtures/fibonacci-original.tm", import.meta.url), "utf8"));
+const original = parseTransitions(originalSource);
 const renamed = parseTransitions(examples.fibonacci.rules);
 const names = new Map(original.transitions.map((rule, index) => [rule.fromState, renamed.transitions[index].fromState]));
 const definition = (initialState: string, transitions: MachineDefinition["transitions"]): MachineDefinition => ({
