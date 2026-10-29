@@ -4,6 +4,7 @@ import { conjectureExamples } from "./conjecture-examples";
 import { hyperoperationExamples } from "./hyperoperation-examples";
 import { functionExamples } from "./function-examples";
 import { compactRuleArrows } from "./rule-format";
+import { fibonacciExample } from "./fibonacci-example";
 
 export interface ExampleProject {
   category?: "基础示例" | "函数教程" | "一进制运算" | "忙碌海狸" | "猜想验证";
@@ -70,6 +71,7 @@ const exampleDefinitions: Record<string, ExampleProject> = {
     rules: `A,0 -> B,1,R\nA,1 -> B,1,L\nB,0 -> A,1,L\nB,1 -> HALT,1,R`,
   },
   ...unaryExamples,
+  fibonacci: fibonacciExample,
   ...hyperoperationExamples,
   ...busyBeaverExamples,
   ...conjectureExamples,

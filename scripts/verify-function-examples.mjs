@@ -22,7 +22,7 @@ try {
   assert.equal(response.status(), 200);
   await page.waitForSelector("#example option", { state: "attached" });
   const groups = await page.locator("#example optgroup").evaluateAll(items => items.map(group => ({ name: group.label, count: group.children.length })));
-  assert.equal(await page.locator("#example option").count(), 28);
+  assert.equal(await page.locator("#example option").count(), 29);
   assert.equal(groups.find(group => group.name === "函数教程")?.count, 8);
   assert.equal(await page.inputValue("#exampleSourceStyle"), "plain");
 
