@@ -6,7 +6,7 @@
     },
     {
       "name": "函数教程",
-      "count": 8
+      "count": 10
     },
     {
       "name": "基础示例",
@@ -68,6 +68,18 @@
       "key": "functionExports",
       "output": "1234",
       "steps": 5,
+      "state": "HALT"
+    },
+    {
+      "key": "functionMixed",
+      "output": "11",
+      "steps": 6,
+      "state": "HALT"
+    },
+    {
+      "key": "functionMixedContinue",
+      "output": "123",
+      "steps": 6,
       "state": "HALT"
     }
   ],

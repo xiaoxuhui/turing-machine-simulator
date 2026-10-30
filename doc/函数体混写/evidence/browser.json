@@ -1,0 +1,42 @@
+{
+  "examples": 31,
+  "functionTutorials": 10,
+  "cases": [
+    {
+      "key": "functionMixed",
+      "style": "plain",
+      "output": "11",
+      "steps": 6
+    },
+    {
+      "key": "functionMixed",
+      "style": "commented",
+      "output": "11",
+      "steps": 6
+    },
+    {
+      "key": "functionMixedContinue",
+      "style": "plain",
+      "output": "123",
+      "steps": 6
+    },
+    {
+      "key": "functionMixedContinue",
+      "style": "commented",
+      "output": "123",
+      "steps": 6
+    }
+  ],
+  "lBranch": {
+    "steps": 1,
+    "output": "l",
+    "head": -1
+  },
+  "internalCallLocations": true,
+  "continuousRun": {
+    "steps": 6,
+    "state": "HALT"
+  },
+  "reloadPreservesDraft": true,
+  "pageErrors": []
+}
