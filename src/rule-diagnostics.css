@@ -1,0 +1,9 @@
+.rule-editor-frame { position: relative; min-width: 0; }
+.rule-editor-frame > textarea { display: block; margin: 0; white-space: pre; overflow: auto; }
+.rule-error-layer { position: absolute; pointer-events: none; overflow: hidden; border-radius: 7px; }
+.rule-error-line { position: absolute; left: 0; right: 0; background: rgb(239 68 68 / 16%); box-shadow: inset 3px 0 #dc2626; }
+.rule-diagnostics { max-height: 150px; overflow: auto; display: grid; gap: 4px; margin-block: 6px; }
+.rule-diagnostics[hidden] { display: none; }
+.rule-diagnostics button, .rule-diagnostics p { margin: 0; border: 1px solid #f5c2c0; border-radius: 6px; padding: 6px 9px; background: #fff1f0; color: #a32119; font: inherit; font-size: 12px; text-align: left; overflow-wrap: anywhere; }
+.rule-diagnostics button:hover { background: #ffe1df; }
+.rule-diagnostics button:focus-visible { outline: 2px solid #b42318; }

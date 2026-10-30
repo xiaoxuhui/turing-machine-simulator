@@ -1,3 +1,5 @@
+import { transitionFormatError } from "./rule-error";
+
 export type Direction = "L" | "R" | "N";
 
 export interface Transition {
@@ -168,7 +170,7 @@ export function parseTransitions(source: string, options: ParseOptions = {}): Pa
     if (!line || line.startsWith("#")) return;
     const match = line.match(/^([^,]+),(.+?)\s*->\s*([^,]+),(.+?),([LRNlrn])$/);
     if (!match) {
-      errors.push(`第 ${index + 1} 行格式错误`);
+      errors.push(`第 ${index + 1} 行：${transitionFormatError(line)}`);
       return;
     }
     const [, fromState, readSymbol, toState, writeSymbol, direction] = match.map((value) => value.trim());

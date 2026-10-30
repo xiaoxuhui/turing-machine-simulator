@@ -2,6 +2,7 @@ import "./campaign-styles.css";
 import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, resetDraft, uncompleteLevel, verifyLevel, type CampaignLevel, type CampaignProgress } from "./campaign";
 import { parseTransitions, resolveInitialState, type MachineDefinition } from "./core";
 import { attachSpaceIndentation, insertAtSelection } from "./text-insertion";
+import { attachRuleDiagnostics } from "./rule-diagnostics";
 import { encodeCampaignBackup, MAX_CAMPAIGN_BACKUP_BYTES, parseCampaignBackup } from "./campaign-backup";
 
 const STORAGE_KEY = "turing-machine-simulator.campaign.v1";
@@ -90,6 +91,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
   </div>`;
 
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const ruleDiagnosticView = attachRuleDiagnostics(byId<HTMLTextAreaElement>("rulesEditor"));
 
 function loadProgress(): CampaignProgress {
   try {
@@ -129,6 +131,7 @@ function definitionFromEditor(): MachineDefinition | null {
     return null;
   }
   const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value, { haltStates: ["HALT"], acceptStates: [], rejectStates: [] });
+  ruleDiagnosticView.update(parsed.errors);
   if (parsed.errors.length) {
     byId("editorError").textContent = parsed.errors.slice(0, 4).join("；");
     return null;
@@ -147,6 +150,8 @@ function definitionFromEditor(): MachineDefinition | null {
 function updateRuleRecognition(): void {
   const level = activeLevel();
   const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value, { haltStates: ["HALT"], acceptStates: [], rejectStates: [] });
+  ruleDiagnosticView.update(parsed.errors);
+  byId("editorError").textContent = parsed.errors.slice(0, 4).join("；");
   const blankRules = parsed.transitions.filter((rule) => rule.readSymbol === level.starter.blankSymbol);
   const status = byId("ruleRecognition");
   if (parsed.errors.length) {

@@ -1,4 +1,5 @@
 import type { ParseOptions, ParseResult, Transition } from "./core";
+import { transitionFormatError } from "./rule-error";
 
 interface SourceRule { rule: Transition; line: number }
 interface Call { name: string; line: number }
@@ -87,7 +88,7 @@ export function parseRuleFunctions(
     else {
       const direct = line.match(/^([^,]+),(.+?)\s*->\s*([^,]+)$/);
       const parsed = parseFlat(direct ? `${direct[1]},${direct[2]}->${direct[3]},${direct[2]},N` : line);
-      if (parsed.errors.length || parsed.transitions.length !== 1) fail(number, "格式错误；使用转移规则或单独的函数名");
+      if (parsed.errors.length || parsed.transitions.length !== 1) fail(number, transitionFormatError(line));
       else {
         (current?.rules ?? rules).push({ rule: parsed.transitions[0], line: number });
         if (direct) directCalls.push({ name: parsed.transitions[0].toState, line: number, owner: current ?? undefined });

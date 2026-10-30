@@ -19,6 +19,7 @@ import { attachDirectGijswijt } from "./gijswijt-direct";
 import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
 import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
 import { attachSpaceIndentation } from "./text-insertion";
+import { attachRuleDiagnostics } from "./rule-diagnostics";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -181,6 +182,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const value = (id: string) => byId<HTMLInputElement | HTMLTextAreaElement>(id).value;
 const splitStates = (raw: string) => raw.split(",").map((item) => item.trim()).filter(Boolean);
+const ruleDiagnosticView = attachRuleDiagnostics(byId<HTMLTextAreaElement>("rules"));
 
 attachDirectGijswijt(byId("directSequenceMode"));
 byId("sequenceMode").addEventListener("change", () => {
@@ -233,6 +235,7 @@ function createMachine(): boolean {
   persistEditorDraft();
   const terminalStates = { acceptStates: splitStates(project.acceptStates), rejectStates: splitStates(project.rejectStates), haltStates: splitStates(project.haltStates) };
   const parsed = parseTransitions(project.rules, terminalStates);
+  ruleDiagnosticView.update(parsed.errors);
   const errors = [...parsed.errors];
   const initialState = resolveInitialState(parsed, project.initialState);
   if (!initialState) errors.unshift("初始状态不能为空");
@@ -463,6 +466,8 @@ function renderCompiledProgram(parsed: ReturnType<typeof parseTransitions>): voi
 function renderRuleTable(): void {
   const host = byId("ruleTable");
   const parsed = parseTransitions(value("rules"), { acceptStates: splitStates(value("acceptStates")), rejectStates: splitStates(value("rejectStates")), haltStates: splitStates(value("haltStates")) });
+  ruleDiagnosticView.update(parsed.errors);
+  byId("errors").textContent = parsed.errors.slice(0, 4).join("；");
   renderCompiledProgram(parsed);
   byId<HTMLButtonElement>("addRule").disabled = Boolean(parsed.hasFunctions);
   byId("functionStatus").textContent = parsed.hasFunctions
