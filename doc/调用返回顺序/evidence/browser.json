@@ -130,21 +130,18 @@
     }
   ],
   "userProgram": {
-    "steps": 8,
+    "steps": 5,
     "head": 2,
     "state": "H",
     "trace": [
       "__fn.script.8.d1",
-      "__fn.6.r.q0",
-      "__fn.script.9.a3",
-      "__fn.script.11.d3",
       "__fn.3.r.q0",
-      "__fn.2.f.q0",
+      "__fn.script.11.d3",
       "__fn.1.r.q0",
       "H"
     ]
   },
-  "internalNameRows": 69,
+  "internalNameRows": 51,
   "pureActualRules": true,
   "arrowDraftMigrated": true,
   "pageErrors": [],
