@@ -23,6 +23,39 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it.each([
+    [`f(s,end):\n    s,1->end,2,R\nstart,1->f\nafter,□->HALT,3,N`, "1", "start", "23"],
+    [`start,□->f\nafter,□->HALT,3,N\nf(s,end):\n    s,□->end,2,R`, "", "start", "23"],
+    [`child(s,end):\n    s,□->end,1,R\nparent(s,end,c=child):\n    s,□->c\n    after,□->end,2,N\nparent`, "", "", "12"],
+    [`f(s,out):\n    s,□->out,1,R\n    ret out\nstart,□->f\nout,□->HALT,4,N`, "", "start", "14"],
+  ])("compiles direct calls exactly like preserving the read symbol and staying put", (source, input, initial, expected) => {
+    const full = source.replace(/^([ \t]*[^,\n]+),([^,\n]+?)->([^,\n]+)$/gm, "$1,$2->$3,$2,N");
+    expect(parseTransitions(source)).toEqual(parseTransitions(full));
+    const result = execute(source, input, initial);
+    expect(result.result?.reason).toBe("halt");
+    expect(result.output).toBe(expected);
+  });
+
+  it("keeps explicit write and movement on complete calls", () => {
+    const source = `f(s,end):\n    s,□->end,2,N\nstart,1->f,9,R`;
+    const { machine, output, result } = execute(source, "1", "start");
+    expect(result?.reason).toBe("halt");
+    expect(output).toBe("92");
+    expect(machine.headPosition).toBe(1);
+  });
+
+  it("still checks the read symbol on a direct call", () => {
+    const source = `f(s,end):\n    s,1->end,2,N\nstart,1->f`;
+    const { machine, result } = execute(source, "", "start");
+    expect(result?.reason).toBe("missing-transition");
+    expect(machine.stepCount).toBe(0);
+  });
+
+  it.each(["missing", "ordinary", "HALT"])("rejects incomplete ordinary transitions targeting %s", target => {
+    const source = `f(s,end):\n    s,□->end,1,N\nstart,□->${target}\nordinary,□->HALT,2,N`;
+    expect(parseTransitions(source).errors.join()).toContain(`第 3 行：简写调用目标 ${target} 不是已定义函数`);
+  });
+
   const forwardFunctions = `seed(s,end):
     s,□->end,0,R
 f(s,end):
@@ -58,6 +91,11 @@ g(s,end):
   it("keeps explicit ret when jumping to a later function invocation", () => {
     const source = `f(s,out):\n    s,□->out,1,R\n    ret out\nstart,□->f,□,N\nout,□->HALT,4,N\nf\nafter,□->HALT,3,N`;
     expect(execute(source, "", "start").output).toBe("14");
+  });
+
+  it("applies the later matching call lookup to direct calls too", () => {
+    const source = `${forwardFunctions}\nseed\na,□->f\nskipped,□->HALT,9,N\nf\nafter,□->HALT,3,N`;
+    expect(execute(source, "").output).toBe("013");
   });
 
   it("exposes actual names for each call context and written source label", () => {

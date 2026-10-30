@@ -35,6 +35,7 @@ export function parseRuleFunctions(
   const functions = new Map<string, RuleFunction>();
   const rules: SourceRule[] = [];
   const calls: Call[] = [];
+  const directCalls: Array<{ name: string; line: number; owner?: RuleFunction }> = [];
   let current: RuleFunction | null = null;
   for (const [index, raw] of lines.entries()) {
     const line = raw.trim(), number = index + 1;
@@ -84,9 +85,13 @@ export function parseRuleFunctions(
     }
     if (identifier.test(line)) (current?.calls ?? calls).push({ name: line, line: number });
     else {
-      const parsed = parseFlat(line);
+      const direct = line.match(/^([^,]+),(.+?)\s*->\s*([^,]+)$/);
+      const parsed = parseFlat(direct ? `${direct[1]},${direct[2]}->${direct[3]},${direct[2]},N` : line);
       if (parsed.errors.length || parsed.transitions.length !== 1) fail(number, "格式错误；使用转移规则或单独的函数名");
-      else (current?.rules ?? rules).push({ rule: parsed.transitions[0], line: number });
+      else {
+        (current?.rules ?? rules).push({ rule: parsed.transitions[0], line: number });
+        if (direct) directCalls.push({ name: parsed.transitions[0].toState, line: number, owner: current ?? undefined });
+      }
     }
   }
 
@@ -95,6 +100,9 @@ export function parseRuleFunctions(
   const reject = new Set(options.rejectStates ?? ["REJECT"]);
   const terminal = new Set([...halt, ...accept, ...reject]);
   const callee = (owner: RuleFunction | undefined, name: string) => functions.get(owner?.bindings.get(name) ?? name);
+  for (const call of directCalls) {
+    if (!callee(call.owner, call.name)) fail(call.line, `简写调用目标 ${call.name} 不是已定义函数；普通转移需要写入符号和移动方向`);
+  }
   if (functions.size && halt.size === 0) fail(1, "函数需要至少一个普通停机态，例如 HALT，作为自动结束点");
   const references = new Map<string, Call[]>();
   const firstCallLine = calls[0]?.line ?? Infinity;

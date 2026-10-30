@@ -1,0 +1,43 @@
+import assert from "node:assert/strict";
+import { createRequire } from "node:module";
+import { mkdir, writeFile } from "node:fs/promises";
+
+const { chromium } = createRequire(import.meta.url)(process.argv[2] || "playwright");
+const browser = await chromium.launch({ headless: true, ...(process.argv[3] ? { executablePath: process.argv[3] } : {}) });
+try {
+  const page = await browser.newPage();
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("http://127.0.0.1:5173/turing-machine-simulator/");
+  const source = `f(s,end):\n    s,1->end,2,R\nstart,1->f\nafter,□->HALT,3,N`;
+  await page.fill("#rules", source);
+  await page.fill("#blankSymbol", "□");
+  await page.fill("#input", "1");
+  await page.fill("#initialState", "start");
+  await page.fill("#haltStates", "HALT");
+  await page.click("#apply");
+  assert.equal(await page.locator("#errors").textContent(), "");
+  await page.locator("#compiledProgram > summary").click();
+  await page.waitForFunction(() => document.querySelector("#compiledRuleSource").value.includes("start,1->"));
+  const compiled = await page.inputValue("#compiledRuleSource");
+  assert.match(compiled, /^start,1->__fn\..*,1,N$/m);
+  await page.click("#step");
+  assert.equal(await page.locator("#headPosition").textContent(), "0");
+  const afterCall = (await page.locator("#tape .cell > span:last-child").allTextContents()).filter(symbol => symbol !== "□").join("");
+  assert.equal(afterCall, "1");
+  await page.click("#step");
+  await page.click("#step");
+  assert.equal(await page.locator("#currentState").textContent(), "HALT");
+  const output = (await page.locator("#tape .cell > span:last-child").allTextContents()).filter(symbol => symbol !== "□").join("");
+  assert.equal(output, "23");
+  await page.fill("#rules", source.replace("start,1->f", "start,1->unknown"));
+  await page.click("#apply");
+  const invalidMessage = await page.locator("#errors").textContent();
+  assert.match(invalidMessage, /第 3 行：简写调用目标 unknown 不是已定义函数/);
+  assert.deepEqual(errors, []);
+  const result = { source, headAfterCall: 0, tapeAfterCall: afterCall, output, steps: 3, compiled, invalidMessage, pageErrors: errors };
+  const directory = new URL("../doc/函数直接调用/evidence/", import.meta.url);
+  await mkdir(directory, { recursive: true });
+  await writeFile(new URL("browser.json", directory), JSON.stringify(result, null, 2) + "\n");
+  console.log(JSON.stringify(result, null, 2));
+} finally { await browser.close(); }

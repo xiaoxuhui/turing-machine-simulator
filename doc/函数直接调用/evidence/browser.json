@@ -1,0 +1,10 @@
+{
+  "source": "f(s,end):\n    s,1->end,2,R\nstart,1->f\nafter,□->HALT,3,N",
+  "headAfterCall": 0,
+  "tapeAfterCall": "1",
+  "output": "23",
+  "steps": 3,
+  "compiled": "__fn.1.f.s,1->after,2,R\nstart,1->__fn.1.f.s,1,N\nafter,□->HALT,3,N\n__fn.2.f.s,1->HALT,2,R",
+  "invalidMessage": "第 3 行：简写调用目标 unknown 不是已定义函数；普通转移需要写入符号和移动方向",
+  "pageErrors": []
+}
