@@ -23,6 +23,75 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  const predForCopy = `pred(s,end):\n    s,1->end,0,L`;
+  const userCopy = `${predForCopy}\ncopy(0,1):\n    0,1->pred\n    0,l->1,l,L\n    pred\ncopy`;
+
+  it.each([["1", "0"], ["l", "l"]])("supports the user's mixed copy body on input %s", (input, expected) => {
+    const { machine, result, output } = execute(userCopy, input);
+    expect(result?.reason).toBe("halt");
+    expect(output).toBe(expected);
+    expect(machine.stepCount).toBe(input === "1" ? 2 : 1);
+    expect(machine.headPosition).toBe(-1);
+  });
+
+  it("continues below an in-place child call when there is no matching call later", () => {
+    const source = `child(s,end):\n    s,□->end,1,R\nother(s,end):\n    s,□->end,3,R\nparent(s,end):\n    s,□->child\n    next,□->next,2,R\n    other\nparent`;
+    // Explicit next loops; use a separate named target to finish the expression.
+    expect(execute(source.replace("next,□->next,2,R", "next,□->end,2,R"), "").output).toBe("12");
+    const ordered = source.replace("next,□->next,2,R", "next,□->other");
+    expect(execute(ordered, "").output).toBe("13");
+  });
+
+  it("jumps past intervening rules and other calls to the nearest child invocation", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\ng(s,end):\n    s,□->end,9,R\np(s,end,x=f):\n    s,□->x\n    skipped,□->HALT,8,N\n    g\n    f\n    after,□->end,2,N\n    x\np`;
+    expect(execute(source, "").output).toBe("12");
+  });
+
+  it("preserves mixed local loops and missing branches", () => {
+    const source = `f(s,end):\n    s,□->end,2,N\np(s,end):\n    s,1->s,1,R\n    s,□->f\n    f\np`;
+    expect(execute(source, "111").output).toBe("1112");
+    expect(execute(source.replace("s,1->s,1,R", "s,0->s,0,R"), "111").result?.reason).toBe("missing-transition");
+  });
+
+  it("uses the selected initial local state even when a bare child appears first", () => {
+    const source = `f(s,end):\n    s,□->end,9,R\np(start,end):\n    f\n    start,□->end,1,N\np`;
+    expect(execute(source, "").output).toBe("1");
+  });
+
+  it("continues a bare child into the following expression and isolates repeated calls", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\np(s,end):\n    s,□->f\n    f\n    after,□->end,2,R\np\np`;
+    const result = execute(source, "");
+    expect(result.output).toBe("1212");
+    expect(result.machine.stepCount).toBe(6);
+  });
+
+  it("returns a child's ret to its mixed parent's local state", () => {
+    const source = `f(s,back):\n    s,□->back,1,R\n    ret back\np(s,end):\n    s,□->f\n    skipped,□->end,9,N\n    f\n    back,□->end,2,N\np`;
+    expect(execute(source, "").output).toBe("12");
+  });
+
+  it("keeps mixed parent ret and terminal branches", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\np(s,out):\n    s,□->f\n    f\n    after,□->out,2,R\n    ret out\nout,□->HALT,3,N\np`;
+    expect(execute(source, "").output).toBe("123");
+    expect(execute(source.replace("s,□->f\n    f", "s,□->REJECT,4,N\n    f"), "").result?.reason).toBe("reject");
+  });
+
+  it("exports mixed local states and applies external extensions per instance", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\np(s,end):\n    s,□->f\n    f\n    after,□->private,□,N\n    导出状态 after,private\np.private,□->end,2,R\np\np`;
+    expect(execute(source, "").output).toBe("1212");
+    expect(execute(source, "", "p.after").output).toBe("2");
+    expect(execute(source.replace("->private,□,N", "->p.private,□,N"), "").output).toBe("1212");
+  });
+
+  it("keeps repeated local expression groups separate after a bare call", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\np(s,end):\n    s,□->f\n    f\n    x,□->x,2,R\n    x,□->end,3,R\np`;
+    expect(execute(source, "").output).toBe("123");
+  });
+
+  it("executes later repeated child invocations once each", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\np(s,end):\n    s,□->f\n    f\n    f\n    after,□->end,2,N\np`;
+    expect(execute(source, "").output).toBe("112");
+  });
   it.each([
     [`f(s,end):\n    s,1->end,2,R\nstart,1->f\nafter,□->HALT,3,N`, "1", "start", "23"],
     [`start,□->f\nafter,□->HALT,3,N\nf(s,end):\n    s,□->end,2,R`, "", "start", "23"],
@@ -377,7 +446,7 @@ g(s,end):
     ["坏(q):\n\tq,□ -> HALT,1,N", "Tab"],
     ["坏(q):\n    q,1 -> q,1,R\n  q,□ -> HALT,1,N", "缩进必须一致"],
     ["外(q):\n    内(p):\n        p,□ -> HALT,1,N", "不能嵌套定义"],
-    ["混合(q):\n    q,□ -> HALT,1,N\n    未知", "不能混写"],
+    ["混合(q):\n    q,□ -> HALT,1,N\n    未知", "未定义函数"],
     ["递归(q):\n    q,□ -> 递归,□,N\n递归", "不支持递归"],
     ["甲(q):\n    乙\n乙(q):\n    甲\n甲", "不支持递归"],
     ["HALT(q):\n    q,□ -> HALT,1,N", "函数名不能与终态"],
