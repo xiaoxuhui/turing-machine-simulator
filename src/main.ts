@@ -20,6 +20,7 @@ import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
 import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
 import { attachSpaceIndentation } from "./text-insertion";
 import { attachRuleDiagnostics } from "./rule-diagnostics";
+import { routeSymbolColor, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -162,7 +163,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <div class="route-actions"><label>运行步数<input id="routeSteps" type="number" min="1" step="1" value="10000" /></label><button id="generateRoute" class="btn primary">后台生成</button><button id="cancelRoute" class="btn" disabled>取消</button></div>
         </div>
         <div class="route-progress"><progress id="routeProgress" max="100" value="0"></progress><span id="routeStatus">等待生成</span></div>
-        <div class="route-legend"><span class="legend-head"></span>读写头 <span class="legend-written"></span>非空纸带 <span class="legend-empty"></span>空白；纵向为时间，横向为纸带位置</div>
+        <div id="routeLegend" class="route-legend"><span class="legend-head"></span>读写头（略带当前符号颜色） <span class="legend-empty"></span>空白；生成后显示各符号颜色。纵向为时间，横向为纸带位置</div>
         <div class="route-canvas-shell"><canvas id="routeCanvas" width="900" height="260"></canvas><div id="routeEmpty">输入步数后点击“后台生成”</div></div>
       </section>
       <section class="panel puzzle-panel">
@@ -328,24 +329,46 @@ function generatePuzzle(): void {
   renderPuzzle();
 }
 
+let routeBlankSymbol = "□";
 function drawRoute(frames: RouteFrame[], min: number, max: number): void {
   const canvas = byId<HTMLCanvasElement>("routeCanvas");
   const positions = max - min + 1;
   const size = routeCanvasSize(frames.length, positions);
   canvas.width = size.width; canvas.height = size.height;
   const context = canvas.getContext("2d")!;
-  context.fillStyle = "#f4f7fa"; context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = ROUTE_BLANK_COLOR; context.fillRect(0, 0, canvas.width, canvas.height);
+  const symbols = new Set<string>();
+  for (const frame of frames) for (const [, symbol] of frame.cells) symbols.add(symbol);
+  symbols.delete(routeBlankSymbol);
+  const colors = new Map([...symbols].map(symbol => [symbol, routeSymbolColor(symbol, routeBlankSymbol)]));
+  const headColors = new Map([...symbols, routeBlankSymbol].map(symbol => [symbol, routeHeadColor(symbol, routeBlankSymbol)]));
   for (let y = 0; y < canvas.height; y += 1) {
     const frame = frames[routeSampleIndex(y, canvas.height, frames.length)];
-    const occupied = new Set(frame.cells.map(([position]) => position));
+    const cells = new Map(frame.cells);
     for (let x = 0; x < canvas.width; x += 1) {
       const position = min + routeSampleIndex(x, canvas.width, positions);
-      if (position === frame.head) context.fillStyle = "#ef476f";
-      else if (occupied.has(position)) context.fillStyle = "#168963";
+      const symbol = cells.get(position) ?? routeBlankSymbol;
+      if (position === frame.head) context.fillStyle = headColors.get(symbol)!;
+      else if (symbol !== routeBlankSymbol) context.fillStyle = colors.get(symbol)!;
       else continue;
       context.fillRect(x, y, 1, 1);
     }
   }
+  const legend = byId("routeLegend");
+  legend.replaceChildren();
+  const key = (label: string, color: string, symbol?: string) => {
+    const item = document.createElement("label"), swatch = document.createElement("i");
+    swatch.style.backgroundColor = color;
+    if (symbol !== undefined) { item.dataset.symbol = symbol; item.dataset.color = color; }
+    item.append(swatch, document.createTextNode(label));
+    legend.append(item);
+  };
+  key("读写头（略带当前符号颜色）", "#ef476f");
+  key(`空白 ${routeBlankSymbol}`, ROUTE_BLANK_COLOR);
+  for (const symbol of symbols) key(symbol, colors.get(symbol)!, symbol);
+  const note = document.createElement("small");
+  note.textContent = "纵向为时间，横向为纸带位置";
+  legend.append(note);
   byId("routeEmpty").hidden = true;
 }
 
@@ -386,6 +409,7 @@ function generateRoute(): void {
   if (!machine) return;
   const maxSteps = normalizeRouteSteps(Number(value("routeSteps")));
   byId<HTMLInputElement>("routeSteps").value = String(maxSteps);
+  routeBlankSymbol = machine.definition.blankSymbol;
   routeController.start({ definition: machine.definition, initialTape: inputToTape(value("input"), machine.definition.blankSymbol), maxSteps });
 }
 

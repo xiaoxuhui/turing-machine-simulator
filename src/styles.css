@@ -153,7 +153,10 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .route-actions label { width: 112px; }
 .route-progress { margin: 15px 0 8px; display: flex; align-items: center; gap: 10px; color: #596678; font-size: 13px; }
 .route-progress progress { flex: 1; height: 12px; accent-color: #168963; }
-.route-legend { margin-bottom: 8px; color: #758194; font-size: 12px; }
+.route-legend { margin-bottom: 8px; color: #758194; font-size: 12px; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; max-height: 120px; overflow: auto; }
+.route-legend label { display: inline-flex; align-items: center; gap: 5px; overflow-wrap: anywhere; min-width: 0; }
+.route-legend i { display: inline-block; flex: 0 0 11px; width: 11px; height: 11px; border: 1px solid #cbd5e1; border-radius: 2px; }
+.route-legend small { flex-basis: 100%; }
 .route-legend span { display: inline-block; width: 11px; height: 11px; margin: 0 4px 0 10px; border-radius: 2px; vertical-align: -1px; }
 .legend-head { background: #ef476f; }.legend-written { background: #168963; }.legend-empty { background: #f4f7fa; border: 1px solid #cbd5e1; }
 .route-canvas-shell { position: relative; overflow: auto; min-height: 180px; max-height: 620px; border: 1px solid #dfe5ed; border-radius: 10px; background: #f4f7fa; }
