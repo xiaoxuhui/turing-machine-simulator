@@ -318,6 +318,13 @@ export function parseRuleFunctions(
   const afterCall = (index: number, _fn: RuleFunction): string => {
     return scriptEntry(index, undefined, finalState);
   };
+  const forwardCall = (index: number, name: string): string | undefined => {
+    for (let position = index; position < statements.length; position++) {
+      const item = statements[position];
+      if (item.kind === "call" && item.call.name === name) return scriptEntries.get(position);
+    }
+    return undefined;
+  };
   const scriptTarget = (index: number, state: string): string => {
     if (globalStates.has(state)) return state;
     let target = statements.findIndex((item, position) => position >= index && item.kind === "rules" && item.state === state);
@@ -338,7 +345,7 @@ export function parseRuleFunctions(
       for (const { rule, line } of statement.rules) {
         const called = functions.get(rule.toState);
         const target = terminal.has(rule.toState) ? rule.toState
-          : called ? compile(called.name, afterCall(index + 1, called))
+          : called ? forwardCall(index + 1, called.name) ?? compile(called.name, afterCall(index + 1, called))
           : scriptTarget(index + 1, rule.toState);
         append({ ...rule, fromState: entry, toState: target }, line);
       }
@@ -350,7 +357,7 @@ export function parseRuleFunctions(
     for (const { rule, line } of declarations) {
       if (publicRef(rule.fromState)) continue;
       const next = declarations.find(item => item.line > line && item.rule.fromState !== rule.fromState && !publicRef(item.rule.fromState));
-      append({ ...rule, toState: functions.has(rule.toState) ? compile(rule.toState, next?.rule.fromState ?? initialState ?? finalState) : rule.toState }, line);
+      append({ ...rule, toState: functions.has(rule.toState) ? forwardCall(0, rule.toState) ?? compile(rule.toState, next?.rule.fromState ?? initialState ?? finalState) : rule.toState }, line);
     }
     const functionEntries = [...functions.keys()].map(name => ({ name, state: compile(name, finalState) }));
     // Extend each isolated invocation, not just one copy of an exported state.

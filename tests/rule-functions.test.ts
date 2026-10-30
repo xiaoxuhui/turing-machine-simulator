@@ -23,6 +23,43 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  const forwardFunctions = `seed(s,end):
+    s,□->end,0,R
+f(s,end):
+    s,□->end,1,R
+g(s,end):
+    s,□->end,2,R`;
+
+  it("jumps to the nearest later matching bare call and resumes below that location", () => {
+    const source = `${forwardFunctions}\nseed\na,□->f,□,N\nskipped,□->HALT,9,N\ng\nf\nafter,□->HALT,3,N\nf`;
+    const result = execute(source, "");
+    expect(result.output).toBe("013");
+    expect(result.result?.reason).toBe("halt");
+    const nextF = result.parsed.internalNames!.find(item => item.source === "f" && item.context.startsWith("源码第"))!;
+    const a = result.parsed.transitions.find(rule => rule.fromState.endsWith(".a"))!;
+    expect(a.toState).toBe(nextF.actual);
+  });
+
+  it("calls in place when only a different function occurs later", () => {
+    const source = `${forwardFunctions}\nseed\na,□->f,□,N\nb,□->g,3,R\ng`;
+    expect(execute(source, "").output).toBe("0132");
+  });
+
+  it("does not search backward for a matching call", () => {
+    const source = `${forwardFunctions}\nf\na,□->f,□,N\nb,□->HALT,3,N`;
+    expect(execute(source, "").output).toBe("113");
+  });
+
+  it("also sends a declaration to its later bare call, skipping intervening declarations", () => {
+    const source = `${forwardFunctions}\nstart,□->f,□,N\nskipped,□->HALT,9,N\ng\nf\nafter,□->HALT,3,N`;
+    expect(execute(source, "", "start").output).toBe("13");
+  });
+
+  it("keeps explicit ret when jumping to a later function invocation", () => {
+    const source = `f(s,out):\n    s,□->out,1,R\n    ret out\nstart,□->f,□,N\nout,□->HALT,4,N\nf\nafter,□->HALT,3,N`;
+    expect(execute(source, "", "start").output).toBe("14");
+  });
+
   it("exposes actual names for each call context and written source label", () => {
     const source = mixedCallProgram;
     const parsed = parseTransitions(source, { haltStates: ["H"] });
@@ -35,28 +72,25 @@ describe("indented rule functions", () => {
     for (const item of mapping) expect(actualStates.has(item.actual), `${item.source}: ${item.actual}`).toBe(true);
     expect(resolveInitialState(parsed, "a1")).toBe("a1");
   });
-  it("runs the user's complete no-ret program from a1 through later labels and resumes after each call", () => {
+  it("runs the user's no-ret program using later matching calls as jump locations", () => {
     const source = mixedCallProgram;
     const parsed = parseTransitions(source, { haltStates: ["H"] });
     expect(parsed.errors).toEqual([]);
     const machine = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, "a1"), acceptStates: [], rejectStates: [], haltStates: ["H"], transitions: parsed.transitions }, []);
     const states: string[] = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 5; i++) {
       const result = machine.step();
       expect(result.reason, `step ${i + 1}: ${machine.currentState}`).not.toBe("missing-transition");
-      expect(result.stopped).toBe(i === 7);
+      expect(result.stopped).toBe(i === 4);
       states.push(machine.currentState);
     }
     expect(states[0]).toMatch(/\.d1$/);
     expect(states[1]).toMatch(/\.r\.q0$/);
-    expect(states[2]).toMatch(/\.a3$/);
-    expect(states[3]).toMatch(/\.d3$/);
-    expect(states[4]).toMatch(/\.r\.q0$/);
-    expect(states[5]).toMatch(/\.f\.q0$/);
-    expect(states[6]).toMatch(/\.r\.q0$/);
-    expect(states[7]).toBe("H");
+    expect(states[2]).toMatch(/\.d3$/);
+    expect(states[3]).toMatch(/\.r\.q0$/);
+    expect(states[4]).toBe("H");
     expect(machine.headPosition).toBe(2);
-    expect(machine.tape.entries()).toEqual([[2, "1"]]);
+    expect(machine.tape.entries()).toEqual([]);
   });
   it("never loses a written label in 279 entry/input combinations of the user's program", () => {
     const source = mixedCallProgram;
@@ -117,22 +151,21 @@ describe("indented rule functions", () => {
     expect(output).toBe("1");
     expect(result?.reason).toBe("missing-transition");
   });
-  it("runs expressions and function calls in source order and resumes after the calling expression", () => {
+  it("enters the later bare call once when an expression targets its function", () => {
     const source = `r(q0,q1):\n    q0,0 -> q1,0,R\n    q0,1 -> q1,1,R\nf(q0,q1):\n    q0,0 -> q1,1,L\n    q0,1 -> q1,0,L\nr\nq1,0 -> q2,1,N\nq1,1 -> q2,1,N\nq2,0 -> r,0,N\nq2,1 -> r,1,N\nr`;
     const parsed = parseTransitions(source, { haltStates: ["H"] });
     expect(parsed.errors).toEqual([]);
     const machine = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, "r"), acceptStates: [], rejectStates: [], haltStates: ["H"], transitions: parsed.transitions }, inputToTape("", "0"));
     const trace: string[] = [];
-    for (let i = 0; i < 5; i++) {
-      expect(machine.step().stopped).toBe(i === 4);
+    for (let i = 0; i < 4; i++) {
+      expect(machine.step().stopped).toBe(i === 3);
       trace.push(machine.currentState);
     }
     expect(trace[0]).toMatch(/\.q1$/);
     expect(trace[1]).toMatch(/\.q2$/);
     expect(trace[2]).toMatch(/\.r\.q0$/);
-    expect(trace[3]).toMatch(/\.r\.q0$/);
-    expect(trace[4]).toBe("H");
-    expect(machine.headPosition).toBe(3);
+    expect(trace[3]).toBe("H");
+    expect(machine.headPosition).toBe(2);
     expect(machine.tape.read(1)).toBe("1");
     expect(machine.tape.read(2)).toBe("0");
   });
