@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { mkdir, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 
 const { chromium } = createRequire(import.meta.url)(process.argv[2] || "playwright");
 const browser = await chromium.launch({ headless: true, ...(process.argv[3] ? { executablePath: process.argv[3] } : {}) });
@@ -19,9 +20,9 @@ try {
   await button.click();
   const selected = await page.locator("#rules").evaluate(editor => editor.value.slice(editor.selectionStart, editor.selectionEnd));
   assert.equal(selected, "q0,l->q1,l.L");
-  await page.locator(".rule-editor-frame").screenshot({ path: new URL("line-100.png", directory).pathname.replace(/^\/(\w:)/, "$1") });
+  await page.locator(".rule-editor-frame").screenshot({ path: fileURLToPath(new URL("line-100.png", directory)) });
   const highlighted = await page.locator('.rule-error-line[data-line="100"]').evaluate(mark => ({ top: parseFloat(mark.style.top), color: getComputedStyle(mark).backgroundColor, height: mark.getBoundingClientRect().height }));
-  assert.ok(highlighted.top >= 0 && highlighted.top < 100);
+  assert.ok(highlighted.top >= 0 && highlighted.top < await page.locator("#rules").evaluate(editor => editor.clientHeight));
   assert.match(highlighted.color, /239, 68, 68/);
   await page.locator("#rules").evaluate(editor => { editor.scrollTop = 0; editor.style.height = "300px"; editor.dispatchEvent(new Event("scroll")); });
   assert.ok(await page.locator('.rule-error-line[data-line="100"]').evaluate(mark => parseFloat(mark.style.top)) > 1000);

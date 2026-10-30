@@ -1,0 +1,52 @@
+{
+  "colors": {
+    "firstHead": [
+      174,
+      91,
+      107,
+      255
+    ],
+    "x": [
+      59,
+      130,
+      246,
+      255
+    ],
+    "y": [
+      228,
+      161,
+      27,
+      255
+    ],
+    "normalOne": [
+      22,
+      137,
+      99,
+      255
+    ],
+    "headOnX": [
+      185,
+      89,
+      152,
+      255
+    ]
+  },
+  "legend": [
+    {
+      "symbol": "1",
+      "color": "#168963"
+    },
+    {
+      "symbol": "X",
+      "color": "#3b82f6"
+    },
+    {
+      "symbol": "Y",
+      "color": "#e4a11b"
+    }
+  ],
+  "machineUnchanged": true,
+  "safeSymbolText": true,
+  "mobileNoOverflow": true,
+  "pageErrors": []
+}

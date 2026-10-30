@@ -1,0 +1,16 @@
+{
+  "selected": "q0,l->q1,l.L",
+  "highlighted": {
+    "top": 214.2,
+    "color": "rgba(239, 68, 68, 0.16)",
+    "height": 20.796875
+  },
+  "scrollAndResize": true,
+  "clearsAfterCorrection": true,
+  "fastInvalidEditMarked": true,
+  "sameFrameCorrectionClears": true,
+  "longLineNoWrap": true,
+  "mobileNoOverflow": true,
+  "campaign": true,
+  "pageErrors": []
+}

@@ -68,6 +68,8 @@ From the first top-level bare call onward, calls and following transition expres
 
 Functions compile to ordinary tape rules without computation shortcuts. Their expanded table is read-only; edit source instead. Tab inserts four spaces and Enter retains indentation. Raw drafts save independently of valid projects, including unfinished syntax, exact spaces and intentional clearing. Reload restores text without Apply; execution restarts at the beginning. Explicit imports/example loads replace the draft. Storage failures show a warning. Text lost by refreshing an older version cannot be recovered automatically.
 
+Direct function calls may omit writing and movement: `q0,1->f` is equivalent to `q0,1->f,1,N`. The read condition and one control step remain. Local child aliases are supported; complete rules retain their explicit writing and movement. Workbench and campaign editors highlight parse-error lines in red and list clickable line numbers with reasons. Corrections clear stale marks; long source lines scroll horizontally for accurate positioning.
+
 ## Gijswijt's Sequence
 
 Choose direct calculation to append one term or generate a target number of terms, with cancellation and reset. The latest 40 terms appear on a tape, and the full result is available in a text box. Switching modes retains both modes' progress for the current page session.
@@ -102,7 +104,7 @@ Select **Enter Campaign** from the workbench to open a separate learning page. T
 
 After you apply a machine definition, a shuffled set of tiles is generated at the bottom of the page. The board reads top-to-bottom as time and left-to-right as tape position; tiles labeled with a state name mark the head. The current version generates the finite computation history (tableau) within the chosen step count and tape window, up to 30 steps, and detects cycles using the full machine configuration.
 
-The "full-route overview" executes the current machine in a cancellable background task: red marks the head route and green marks the non-blank tape. Very long runs are compressed to at most ~2,400 sampled visualization rows; you can keep running the simulator or solving tiles while it generates, and cancel at any time.
+The "full-route overview" executes the current machine in a cancellable background task. Nonblank symbols have stable colors and a matching legend. The head stays predominantly pink, mixed with 30% of the current symbol color; blank cells stay pale. Very long runs are compressed to at most ~2,400 sampled visualization rows; you can keep running the simulator or solving tiles while it generates, and cancel at any time.
 
 ## Screenshots
 
@@ -110,7 +112,7 @@ The "full-route overview" executes the current machine in a cancellable backgrou
 *Main UI: run status, tape, machine definition, structured rule table*
 
 ![Full-route overview and tile puzzle](doc/screenshots/route-and-puzzle.png)
-*Full-route overview (red = head, green = non-blank tape) and the computation tile puzzle*
+*An earlier full-route overview and computation tile puzzle; the current overview uses per-symbol colors.*
 
 ## Run Locally
 
