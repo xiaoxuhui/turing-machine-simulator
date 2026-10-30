@@ -30,6 +30,8 @@ describe("built-in examples", () => {
     ["functionParentReturn", "123", 4],
     ["functionExportEntry", "23", 2],
     ["functionExportRepeat", "1212", 4],
+    ["functionMixed", "11", 6],
+    ["functionMixedContinue", "123", 6],
   ] as const)("runs function tutorial %s with its advertised output and steps", (key, expected, steps) => {
     const { machine, reason } = run(examples[key]);
     expect(reason).toBe("halt");

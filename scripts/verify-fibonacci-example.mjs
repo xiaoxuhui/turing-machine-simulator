@@ -10,7 +10,7 @@ try {
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(process.argv[4] || "http://127.0.0.1:5173/turing-machine-simulator/");
   await page.waitForSelector('#example option[value="fibonacci"]', { state: "attached" });
-  assert.equal(await page.locator("#example option").count(), 29);
+  assert.equal(await page.locator("#example option").count(), 31);
   const before = await page.inputValue("#rules");
   await page.selectOption("#example", "fibonacci");
   assert.equal(await page.inputValue("#rules"), before, "selecting only previews the example");
@@ -47,7 +47,7 @@ try {
   assert.equal(await page.inputValue("#initialState"), "fib.seedFirst");
   assert.equal(await page.isChecked("#unlimitedSteps"), true);
   assert.deepEqual(errors, []);
-  const result = { example: "fibonacci", examples: 29, initialState: "fib.seedFirst", blankSymbol: "0", input: "", unlimited: true, rules: 54, phaseNotes, manualSteps: 3, route, preservedAfterReload: true, pageErrors: errors };
+  const result = { example: "fibonacci", examples: 31, initialState: "fib.seedFirst", blankSymbol: "0", input: "", unlimited: true, rules: 54, phaseNotes, manualSteps: 3, route, preservedAfterReload: true, pageErrors: errors };
   const directory = new URL("../doc/斐波那契示例/evidence/", import.meta.url);
   await mkdir(directory, { recursive: true });
   await writeFile(new URL("browser.json", directory), JSON.stringify(result, null, 2) + "\n");

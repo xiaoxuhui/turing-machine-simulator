@@ -11,6 +11,7 @@ const cases = [
   ["functionReturn", "12", 3], ["functionComposition", "123", 3],
   ["functionParentReturn", "123", 4], ["functionExportEntry", "23", 2],
   ["functionExportRepeat", "1212", 4], ["functionExports", "1234", 5],
+  ["functionMixed", "11", 6], ["functionMixedContinue", "123", 6],
 ];
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -22,21 +23,22 @@ try {
   assert.equal(response.status(), 200);
   await page.waitForSelector("#example option", { state: "attached" });
   const groups = await page.locator("#example optgroup").evaluateAll(items => items.map(group => ({ name: group.label, count: group.children.length })));
-  assert.equal(await page.locator("#example option").count(), 29);
-  assert.equal(groups.find(group => group.name === "函数教程")?.count, 8);
+  assert.equal(await page.locator("#example option").count(), 31);
+  assert.equal(groups.find(group => group.name === "函数教程")?.count, 10);
   assert.equal(await page.inputValue("#exampleSourceStyle"), "plain");
 
   const results = [];
   for (const [key, expected, steps] of cases) {
     await page.selectOption("#example", key);
-    assert.match(await page.locator("#exampleNote").textContent(), /第 [1-8] 课/);
+    assert.match(await page.locator("#exampleNote").textContent(), /第 (?:[1-9]|10) 课/);
     await page.click("#loadExample");
     assert.equal(await page.locator("#errors").textContent(), "");
     assert.equal(await page.locator("#addRule").isDisabled(), true);
     assert.match(await page.locator("#functionStatus").textContent(), /已识别.*函数/);
     for (let i = 0; i < steps; i++) await page.click("#step");
     const actual = await page.locator("#tape .cell > span:last-child").allTextContents();
-    const output = actual.filter(symbol => symbol !== "□").join("");
+    const blank = await page.inputValue("#blankSymbol");
+    const output = actual.filter(symbol => symbol !== blank).join("");
     assert.equal(output, expected, key);
     assert.equal(await page.locator("#stepCount").textContent(), String(steps), key);
     assert.equal(await page.locator("#currentState").textContent(), "HALT", key);
@@ -44,6 +46,8 @@ try {
     results.push({ key, output, steps, state: "HALT" });
   }
 
+  await page.selectOption("#example", "functionExports");
+  await page.click("#loadExample");
   const beforeStyleChange = await page.inputValue("#rules");
   await page.selectOption("#exampleSourceStyle", "commented");
   assert.equal(await page.inputValue("#rules"), beforeStyleChange);
