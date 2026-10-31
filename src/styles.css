@@ -79,7 +79,7 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .rule-table { border:1px solid #dbe2eb; border-radius:9px; overflow:auto; max-height:270px; }
 .rule-row { display:grid; grid-template-columns:1.2fr .7fr 1.2fr .7fr 72px 40px; gap:6px; align-items:center; padding:6px; border-bottom:1px solid #edf0f4; min-width:620px; }
 .rule-row:last-child { border-bottom:0; }
-.rule-head { background:#f6f8fb; color:#697588; font-size:11px; padding-block:8px; }
+.rule-head { position:sticky; top:0; z-index:1; background:#f6f8fb; color:#697588; font-size:11px; padding-block:8px; }
 .rule-row input,.rule-row select { min-width:0; padding:6px 7px; font-size:12px; }
 .delete-rule { border:0; background:transparent; color:#a73535; font-size:20px; border-radius:6px; }
 .delete-rule:hover { background:#fff0f0; }
@@ -144,8 +144,6 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .converter-status { min-height: 18px; margin: 10px 0 0; color: #16664d; font-size: 13px; }
 #gijswijtResult { margin-top: 12px; }
 #gijswijtOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
-.rule-pagination { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.rule-pagination span { margin-right: auto; color: #697588; font-size: 12px; }
 .route-heading { display: flex; justify-content: space-between; align-items: end; gap: 18px; }
 .route-heading h2 { margin: 0 0 5px; font-size: 18px; }
 .route-heading p { margin: 0; color: #697588; font-size: 13px; }

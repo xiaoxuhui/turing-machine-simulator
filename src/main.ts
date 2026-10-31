@@ -36,8 +36,6 @@ let selectedTileId: string | null = null;
 let solutionVisible = false;
 let tileOrder: string[] = [];
 let tapeScroll = 0;
-let ruleTablePage = 0;
-const RULE_PAGE_SIZE = 100;
 let appliedGijswijtThreshold: number | null = null;
 // 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
 let tapeRenderCenter: number | null = null;
@@ -141,7 +139,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </details>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
-          <div class="rule-pagination"><span id="rulePageInfo"></span><button id="rulePrev" class="btn">上一页</button><button id="ruleNext" class="btn">下一页</button></div>
+          <div id="ruleCount" class="hint" role="status"></div>
           <div class="editor-actions"><button id="apply" class="btn primary">应用并重置</button><button id="clear" class="btn danger">清空规则</button><span id="errors" class="error"></span></div>
           <div class="hint">快捷键：空格运行/暂停，Alt + → 单步，Ctrl + R 重置（输入框聚焦时不触发）。</div>
         </section>
@@ -508,26 +506,19 @@ function renderRuleTable(): void {
     : "";
   if (parsed.errors.length) {
     host.innerHTML = `<div class="empty">修正文本规则后即可同步结构化表格</div>`;
-    byId("rulePageInfo").textContent = "规则格式待修正";
-    byId<HTMLButtonElement>("rulePrev").disabled = true;
-    byId<HTMLButtonElement>("ruleNext").disabled = true;
+    byId("ruleCount").textContent = "规则格式待修正";
     return;
   }
-  const pages = Math.max(1, Math.ceil(parsed.transitions.length / RULE_PAGE_SIZE));
-  ruleTablePage = Math.min(ruleTablePage, pages - 1);
-  const start = ruleTablePage * RULE_PAGE_SIZE;
-  byId("rulePageInfo").textContent = `共 ${parsed.transitions.length} 条 · 第 ${ruleTablePage + 1}/${pages} 页`;
-  byId<HTMLButtonElement>("rulePrev").disabled = ruleTablePage === 0;
-  byId<HTMLButtonElement>("ruleNext").disabled = ruleTablePage === pages - 1;
+  byId("ruleCount").textContent = `共 ${parsed.transitions.length} 条 · 向下滚动查看全部规则`;
   host.innerHTML = `<div class="rule-row rule-head"><span>当前状态</span><span>读取</span><span>下一状态</span><span>写入</span><span>移动</span><span></span></div>` +
-    parsed.transitions.slice(start, start + RULE_PAGE_SIZE).map((rule, offset) => { const index = start + offset; return `<div class="rule-row rule-data-row" data-index="${index}">
+    parsed.transitions.map((rule, index) => `<div class="rule-row rule-data-row" data-index="${index}">
       <input aria-label="规则 ${index + 1} 当前状态" value="${escapeAttribute(rule.fromState)}" />
       <input aria-label="规则 ${index + 1} 读取符号" value="${escapeAttribute(rule.readSymbol)}" />
       <input aria-label="规则 ${index + 1} 下一状态" value="${escapeAttribute(rule.toState)}" />
       <input aria-label="规则 ${index + 1} 写入符号" value="${escapeAttribute(rule.writeSymbol)}" />
       <select aria-label="规则 ${index + 1} 移动方向"><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
       <button class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
-    </div>`; }).join("");
+    </div>`).join("");
   if (parsed.hasFunctions) {
     host.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input,select,button").forEach(field => { field.disabled = true; });
     return;
@@ -691,7 +682,6 @@ byId("compileGijswijt").addEventListener("click", () => {
     if (!raw) throw new Error("请输入整数阈值。");
     const project = compileGijswijtMachine(Number(raw));
     fillProject({ ...project, speed: Number(value("speed")) });
-    ruleTablePage = 0;
     createMachine();
     const runtimeNote = Number(raw) === 3 ? " 此机器超过 3 需约 1514 万步，在 1000 步/秒下约 4.2 小时。" : "";
     byId("gijswijtCompileStatus").textContent = `转换完成，共 ${project.rules.split("\n").length - 3} 条规则。已开启 Max 步数；点击上方“运行”开始。${runtimeNote}`;
@@ -699,8 +689,6 @@ byId("compileGijswijt").addEventListener("click", () => {
     byId("gijswijtCompileStatus").textContent = error instanceof Error ? error.message : "转换失败";
   }
 });
-byId("rulePrev").addEventListener("click", () => { ruleTablePage = Math.max(0, ruleTablePage - 1); renderRuleTable(); });
-byId("ruleNext").addEventListener("click", () => { ruleTablePage += 1; renderRuleTable(); });
 byId("step").addEventListener("click", () => { tapeMotion = "manual"; pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
@@ -743,7 +731,7 @@ byId("addRule").addEventListener("click", () => {
   renderRuleTable();
 });
 for (const field of editorFields) byId(field).addEventListener("input", persistEditorDraft);
-byId("rules").addEventListener("input", () => { ruleTablePage = 0; renderRuleTable(); });
+byId("rules").addEventListener("input", renderRuleTable);
 for (const field of ["initialState", "acceptStates", "rejectStates", "haltStates"]) byId(field).addEventListener("input", renderRuleTable);
 byId("compiledProgram").addEventListener("toggle", renderRuleTable);
 attachSpaceIndentation(byId<HTMLTextAreaElement>("rules"));
