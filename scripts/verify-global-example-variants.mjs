@@ -38,7 +38,7 @@ try {
     let summary = await page.locator("#exampleNote").textContent();
     if (structure === "functions" && key.startsWith("unary")) {
       assert.match(summary, /提取 \d+ 个公共函数/);
-      assert.match(source, /^[^,\n]+: 公共.+ -> /m);
+      assert.match(source, /^[^,\n]+:\s*公共[^\s]+\s*->/m);
       assert.doesNotMatch(source, /主程序\(/);
     }
     await page.fill("#routeSteps", "250000");

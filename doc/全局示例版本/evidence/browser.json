@@ -1,0 +1,55 @@
+{
+  "globalOptionsVisible": true,
+  "selectionPreservesDraft": true,
+  "results": [
+    {
+      "key": "unaryPower",
+      "names": "descriptive",
+      "structure": "functions",
+      "output": "111111111",
+      "steps": 9799,
+      "summary": "111^11 表示 3²，得到 9 个 1。指数为 0 得 1，本示例约定 0^0=1。 两侧用 1 的个数表示数值，空串表示 0。工作区在原点左侧，停机后只留下答案的 1；规则全部由读写头执行，默认 Max，仍可暂停或设置步数上限。 提取 5 个公共函数供 181 个入口复用，减少 415 条重复源码规则；入口:函数->续接状态 不增加计算步。"
+    },
+    {
+      "key": "unaryPower",
+      "names": "numeric",
+      "structure": "functions",
+      "output": "111111111",
+      "steps": 9799,
+      "summary": "111^11 表示 3²，得到 9 个 1。指数为 0 得 1，本示例约定 0^0=1。 两侧用 1 的个数表示数值，空串表示 0。工作区在原点左侧，停机后只留下答案的 1；规则全部由读写头执行，默认 Max，仍可暂停或设置步数上限。 提取 5 个公共函数供 181 个入口复用，减少 415 条重复源码规则；入口:函数->续接状态 不增加计算步。"
+    },
+    {
+      "key": "unaryRoot",
+      "names": "numeric",
+      "structure": "functions",
+      "output": "11",
+      "steps": 39706,
+      "summary": "n~x求最大整数a使a^n≤x；n≥1、x≥0。例2~5=2，2~9=3；x=0返回0。 向下取整，默认输入两侧为2和5，输出11。全部用1的数量表示数值，~和@可直接键入。工作区位于左侧，停机后只保留答案；实际纸带计算，默认Max。 提取 5 个公共函数供 378 个入口复用，减少 849 条重复源码规则；入口:函数->续接状态 不增加计算步。"
+    },
+    {
+      "key": "functionExports",
+      "names": "numeric",
+      "structure": "original",
+      "output": "1234",
+      "steps": 5,
+      "summary": "第 8 课（综合）：绑定 写=写一，子函数用 ret after 返回父状态；导出状态 inside 公开为 主函数.inside；主函数用 ret q1 跳到外部 q1。空输入 5 步输出 1234。"
+    },
+    {
+      "key": "functionExports",
+      "names": "numeric",
+      "structure": "flat",
+      "output": "1234",
+      "steps": 5,
+      "summary": "第 8 课（综合）：绑定 写=写一，子函数用 ret after 返回父状态；导出状态 inside 公开为 主函数.inside；主函数用 ret q1 跳到外部 q1。空输入 5 步输出 1234。"
+    },
+    {
+      "key": "binary",
+      "names": "numeric",
+      "structure": "functions",
+      "output": "1100",
+      "steps": 8,
+      "summary": "先移动到最右端，再从低位处理进位。 本例没有可安全提取的重复规则块，保留普通规则。"
+    }
+  ],
+  "pageErrors": []
+}
