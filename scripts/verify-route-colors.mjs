@@ -28,17 +28,25 @@ try {
     const ctx = canvas.getContext("2d"), pixel = (x, y) => [...ctx.getImageData(x, y, 1, 1).data];
     return { firstHead: pixel(0, 0), secondSymbol: pixel(107, 0), blank: pixel(214, 0), normalOne: pixel(0, canvas.height - 1), headOnBlank: pixel(214, canvas.height - 1) };
   });
-  assert.deepEqual(colors, { firstHead: [238, 103, 80, 255], secondSymbol: [159, 186, 40, 255], blank: [244, 247, 250, 255], normalOne: [234, 179, 8, 255], headOnBlank: [239, 71, 111, 255] });
+  assert.deepEqual(colors, { firstHead: [238, 103, 80, 255], secondSymbol: [47, 164, 170, 255], blank: [244, 247, 250, 255], normalOne: [234, 179, 8, 255], headOnBlank: [239, 71, 111, 255] });
   const legend = await page.locator("#routeLegend [data-symbol]").evaluateAll(items => items.map(item => ({ symbol: item.dataset.symbol, color: item.dataset.color })));
-  const expected = ["#eab308", "#9fba28", "#54c149", "#25bd71", "#2fa4aa", "#388ae3", "#678ebb", "#a8a161"];
+  const expected = ["#eab308", "#2fa4aa"];
   assert.deepEqual(legend, expected.map((color, index) => ({ symbol: String(index + 1), color })));
   assert.equal(await page.locator("#stepCount").textContent(), "0");
-  const directory = new URL("../doc/符号等分配色/evidence/", import.meta.url);
+  const directory = new URL("../doc/路线实际符号/evidence/", import.meta.url);
   await mkdir(directory, { recursive: true });
   await page.locator(".route-panel").screenshot({ path: fileURLToPath(new URL("route-colors.png", directory)) });
   await page.fill("#routeSteps", "1");
   await generate();
   assert.deepEqual(await page.locator("#routeLegend [data-symbol]").evaluateAll(items => items.map(item => ({ symbol: item.dataset.symbol, color: item.dataset.color }))), legend);
+  await page.selectOption("#example", "unaryPower");
+  await page.click("#loadExample");
+  await page.fill("#routeSteps", "10000");
+  await generate();
+  const powerSymbols = await page.locator("#routeLegend [data-symbol]").evaluateAll(items => items.map(item => item.dataset.symbol));
+  assert.ok(powerSymbols.includes("^"));
+  for (const unused of ["+", "-", "*", "/", "?"]) assert.ok(!powerSymbols.includes(unused));
+  await page.fill("#initialState", "q0");
   await page.fill("#rules", "q0,1->HALT,<img src=x>,R");
   await page.fill("#input", "1");
   await page.click("#apply");
@@ -49,7 +57,7 @@ try {
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   assert.deepEqual(pageErrors, []);
-  const result = { colors, legend, allEightWriteSymbolsIncluded: true, onlyTwoSymbolsVisited: true, stableAcrossStepCounts: true, redReservedForHead: true, machineUnchanged: true, safeSymbolText: true, mobileNoOverflow: true, pageErrors };
+  const result = { colors, legend, unusedWriteSymbolsOmitted: true, powerSymbols, unusedOperatorsOmitted: true, sameObservedSymbolsKeepColors: true, redReservedForHead: true, machineUnchanged: true, safeSymbolText: true, mobileNoOverflow: true, pageErrors };
   await writeFile(new URL("browser.json", directory), JSON.stringify(result, null, 2) + "\n");
   console.log(JSON.stringify(result, null, 2));
 } finally { await browser.close(); }

@@ -2,7 +2,7 @@ import type { MachineDefinition } from "./core";
 
 export interface RouteFrame { step: number; state: string; head: number; cells: Array<[number, string]> }
 export interface RouteRequest { definition: MachineDefinition; initialTape: Array<[number, string]>; maxSteps: number }
-export interface RouteComplete { frames: RouteFrame[]; min: number; max: number; reason: string }
+export interface RouteComplete { frames: RouteFrame[]; min: number; max: number; reason: string; symbols: string[] }
 export interface RouteCallbacks {
   onStart(maxSteps: number): void;
   onProgress(step: number, maxSteps: number): void;

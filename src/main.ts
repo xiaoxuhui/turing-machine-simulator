@@ -331,15 +331,14 @@ function generatePuzzle(): void {
 }
 
 let routeBlankSymbol = "□";
-let routePalette = new Map<string, string>();
-function drawRoute(frames: RouteFrame[], min: number, max: number): void {
+function drawRoute(frames: RouteFrame[], min: number, max: number, symbols: string[]): void {
   const canvas = byId<HTMLCanvasElement>("routeCanvas");
   const positions = max - min + 1;
   const size = routeCanvasSize(frames.length, positions);
   canvas.width = size.width; canvas.height = size.height;
   const context = canvas.getContext("2d")!;
   context.fillStyle = ROUTE_BLANK_COLOR; context.fillRect(0, 0, canvas.width, canvas.height);
-  const colors = routePalette;
+  const colors = createRoutePalette(symbols, routeBlankSymbol);
   const headColors = new Map([...colors].map(([symbol, color]) => [symbol, routeHeadColor(color)]));
   headColors.set(routeBlankSymbol, routeHeadColor());
   for (let y = 0; y < canvas.height; y += 1) {
@@ -367,7 +366,7 @@ function drawRoute(frames: RouteFrame[], min: number, max: number): void {
   key(`空白背景（${routeBlankSymbol}）`, ROUTE_BLANK_COLOR);
   for (const [symbol, color] of colors) key(symbol, color, symbol);
   const note = document.createElement("small");
-  note.textContent = `共 ${colors.size} 种非空符号，按数量等分黄→绿→蓝→黄；红色系仅表示读写头。纵向为时间，横向为纸带位置`;
+  note.textContent = `本次实际出现 ${colors.size} 种非空符号，按数量等分黄→绿→蓝→黄；红色系仅表示读写头。纵向为时间，横向为纸带位置`;
   legend.append(note);
   byId("routeEmpty").hidden = true;
 }
@@ -385,8 +384,8 @@ const routeController = new RouteController(
       byId<HTMLProgressElement>("routeProgress").value = step / maxSteps * 100;
       byId("routeStatus").textContent = `后台计算中：${step} / ${maxSteps} 步（你可以继续玩）`;
     },
-    onComplete: ({ frames, min, max, reason }) => {
-      drawRoute(frames, min, max);
+    onComplete: ({ frames, min, max, reason, symbols }) => {
+      drawRoute(frames, min, max, symbols);
       byId<HTMLProgressElement>("routeProgress").value = 100;
       byId("routeStatus").textContent = `已显示 ${frames.length} 个时刻，纸带位置 ${min}…${max}，结束原因：${reasonText[reason as keyof typeof reasonText] ?? "达到步数上限"}`;
       byId<HTMLButtonElement>("generateRoute").disabled = false;
@@ -411,7 +410,6 @@ function generateRoute(): void {
   byId<HTMLInputElement>("routeSteps").value = String(maxSteps);
   routeBlankSymbol = machine.definition.blankSymbol;
   const initialTape = inputToTape(value("input"), machine.definition.blankSymbol);
-  routePalette = createRoutePalette([...machine.definition.transitions.map(rule => rule.writeSymbol), ...initialTape.map(([, symbol]) => symbol)], routeBlankSymbol);
   routeController.start({ definition: machine.definition, initialTape, maxSteps });
 }
 

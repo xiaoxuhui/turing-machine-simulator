@@ -8,6 +8,7 @@ self.onmessage = (event: MessageEvent<Request>) => {
   try {
     const { definition, initialTape, maxSteps } = event.data;
     const machine = new TuringMachine(definition, initialTape);
+    const symbols = new Set(initialTape.filter(([, symbol]) => symbol !== definition.blankSymbol).map(([, symbol]) => symbol));
     const frames: Frame[] = [];
     const sampleEvery = Math.max(1, Math.ceil((maxSteps + 1) / 2400));
     let reason: StopReason | "step-limit" = "step-limit";
@@ -19,6 +20,7 @@ self.onmessage = (event: MessageEvent<Request>) => {
       bounds = expandPositionBounds(bounds, [machine.headPosition]);
       if (step === maxSteps) break;
       const result = machine.step();
+      if (result.record && result.record.writeSymbol !== definition.blankSymbol) symbols.add(result.record.writeSymbol);
       if (step % 250 === 0) self.postMessage({ type: "progress", step, maxSteps });
       if (result.stopped) {
         reason = result.reason!;
@@ -28,7 +30,7 @@ self.onmessage = (event: MessageEvent<Request>) => {
         break;
       }
     }
-    self.postMessage({ type: "complete", frames, min: bounds.min, max: bounds.max, reason });
+    self.postMessage({ type: "complete", frames, min: bounds.min, max: bounds.max, reason, symbols: [...symbols] });
   } catch (error) {
     self.postMessage({ type: "error", message: error instanceof Error ? error.message : "未知后台错误" });
   }
