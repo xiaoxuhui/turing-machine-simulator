@@ -10,9 +10,10 @@ try {
   const pageErrors = [];
   page.on("pageerror", error => pageErrors.push(error.message));
   await page.goto("http://127.0.0.1:5173/turing-machine-simulator/");
-  await page.fill("#rules", "q0,1->HALT,1,R");
-  await page.fill("#input", "1XY");
-  await page.fill("#blankSymbol", "□");
+  const source = "unused,0->HALT,0,N\nq0,1->q1,1,R\nq1,2->HALT,2,R\n" + [3,4,5,6,7,8].map(n => `unused${n},0->HALT,${n},N`).join("\n");
+  await page.fill("#rules", source);
+  await page.fill("#input", "12");
+  await page.fill("#blankSymbol", "0");
   await page.fill("#initialState", "q0");
   await page.fill("#haltStates", "HALT");
   await page.click("#apply");
@@ -25,15 +26,19 @@ try {
   await generate();
   const colors = await page.locator("#routeCanvas").evaluate(canvas => {
     const ctx = canvas.getContext("2d"), pixel = (x, y) => [...ctx.getImageData(x, y, 1, 1).data];
-    return { firstHead: pixel(0, 0), x: pixel(107, 0), y: pixel(214, 0), normalOne: pixel(0, canvas.height - 1), headOnX: pixel(107, canvas.height - 1) };
+    return { firstHead: pixel(0, 0), secondSymbol: pixel(107, 0), blank: pixel(214, 0), normalOne: pixel(0, canvas.height - 1), headOnBlank: pixel(214, canvas.height - 1) };
   });
-  assert.deepEqual(colors, { firstHead: [174, 91, 107, 255], x: [59, 130, 246, 255], y: [228, 161, 27, 255], normalOne: [22, 137, 99, 255], headOnX: [185, 89, 152, 255] });
+  assert.deepEqual(colors, { firstHead: [238, 103, 80, 255], secondSymbol: [159, 186, 40, 255], blank: [244, 247, 250, 255], normalOne: [234, 179, 8, 255], headOnBlank: [239, 71, 111, 255] });
   const legend = await page.locator("#routeLegend [data-symbol]").evaluateAll(items => items.map(item => ({ symbol: item.dataset.symbol, color: item.dataset.color })));
-  assert.deepEqual(legend, [{ symbol: "1", color: "#168963" }, { symbol: "X", color: "#3b82f6" }, { symbol: "Y", color: "#e4a11b" }]);
+  const expected = ["#eab308", "#9fba28", "#54c149", "#25bd71", "#2fa4aa", "#388ae3", "#678ebb", "#a8a161"];
+  assert.deepEqual(legend, expected.map((color, index) => ({ symbol: String(index + 1), color })));
   assert.equal(await page.locator("#stepCount").textContent(), "0");
-  const directory = new URL("../doc/路线符号配色/evidence/", import.meta.url);
+  const directory = new URL("../doc/符号等分配色/evidence/", import.meta.url);
   await mkdir(directory, { recursive: true });
   await page.locator(".route-panel").screenshot({ path: fileURLToPath(new URL("route-colors.png", directory)) });
+  await page.fill("#routeSteps", "1");
+  await generate();
+  assert.deepEqual(await page.locator("#routeLegend [data-symbol]").evaluateAll(items => items.map(item => ({ symbol: item.dataset.symbol, color: item.dataset.color }))), legend);
   await page.fill("#rules", "q0,1->HALT,<img src=x>,R");
   await page.fill("#input", "1");
   await page.click("#apply");
@@ -43,7 +48,7 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   assert.deepEqual(pageErrors, []);
-  const result = { colors, legend, machineUnchanged: true, safeSymbolText: true, mobileNoOverflow: true, pageErrors };
+  const result = { colors, legend, allEightWriteSymbolsIncluded: true, onlyTwoSymbolsVisited: true, stableAcrossStepCounts: true, redReservedForHead: true, machineUnchanged: true, safeSymbolText: true, mobileNoOverflow: true, pageErrors };
   await writeFile(new URL("browser.json", directory), JSON.stringify(result, null, 2) + "\n");
   console.log(JSON.stringify(result, null, 2));
 } finally { await browser.close(); }

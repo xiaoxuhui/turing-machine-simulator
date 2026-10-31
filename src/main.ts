@@ -20,7 +20,7 @@ import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
 import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
 import { attachSpaceIndentation } from "./text-insertion";
 import { attachRuleDiagnostics } from "./rule-diagnostics";
-import { routeSymbolColor, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
+import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -331,6 +331,7 @@ function generatePuzzle(): void {
 }
 
 let routeBlankSymbol = "□";
+let routePalette = new Map<string, string>();
 function drawRoute(frames: RouteFrame[], min: number, max: number): void {
   const canvas = byId<HTMLCanvasElement>("routeCanvas");
   const positions = max - min + 1;
@@ -338,11 +339,9 @@ function drawRoute(frames: RouteFrame[], min: number, max: number): void {
   canvas.width = size.width; canvas.height = size.height;
   const context = canvas.getContext("2d")!;
   context.fillStyle = ROUTE_BLANK_COLOR; context.fillRect(0, 0, canvas.width, canvas.height);
-  const symbols = new Set<string>();
-  for (const frame of frames) for (const [, symbol] of frame.cells) symbols.add(symbol);
-  symbols.delete(routeBlankSymbol);
-  const colors = new Map([...symbols].map(symbol => [symbol, routeSymbolColor(symbol, routeBlankSymbol)]));
-  const headColors = new Map([...symbols, routeBlankSymbol].map(symbol => [symbol, routeHeadColor(symbol, routeBlankSymbol)]));
+  const colors = routePalette;
+  const headColors = new Map([...colors].map(([symbol, color]) => [symbol, routeHeadColor(color)]));
+  headColors.set(routeBlankSymbol, routeHeadColor());
   for (let y = 0; y < canvas.height; y += 1) {
     const frame = frames[routeSampleIndex(y, canvas.height, frames.length)];
     const cells = new Map(frame.cells);
@@ -365,10 +364,10 @@ function drawRoute(frames: RouteFrame[], min: number, max: number): void {
     legend.append(item);
   };
   key("读写头（略带当前符号颜色）", "#ef476f");
-  key(`空白 ${routeBlankSymbol}`, ROUTE_BLANK_COLOR);
-  for (const symbol of symbols) key(symbol, colors.get(symbol)!, symbol);
+  key(`空白背景（${routeBlankSymbol}）`, ROUTE_BLANK_COLOR);
+  for (const [symbol, color] of colors) key(symbol, color, symbol);
   const note = document.createElement("small");
-  note.textContent = "纵向为时间，横向为纸带位置";
+  note.textContent = `共 ${colors.size} 种非空符号，按数量等分黄→绿→蓝→黄；红色系仅表示读写头。纵向为时间，横向为纸带位置`;
   legend.append(note);
   byId("routeEmpty").hidden = true;
 }
@@ -411,7 +410,9 @@ function generateRoute(): void {
   const maxSteps = normalizeRouteSteps(Number(value("routeSteps")));
   byId<HTMLInputElement>("routeSteps").value = String(maxSteps);
   routeBlankSymbol = machine.definition.blankSymbol;
-  routeController.start({ definition: machine.definition, initialTape: inputToTape(value("input"), machine.definition.blankSymbol), maxSteps });
+  const initialTape = inputToTape(value("input"), machine.definition.blankSymbol);
+  routePalette = createRoutePalette([...machine.definition.transitions.map(rule => rule.writeSymbol), ...initialTape.map(([, symbol]) => symbol)], routeBlankSymbol);
+  routeController.start({ definition: machine.definition, initialTape, maxSteps });
 }
 
 function renderTape(): void {
