@@ -106,7 +106,7 @@ Select **Enter Campaign** from the workbench to open a separate learning page. T
 
 After you apply a machine definition, a shuffled set of tiles is generated at the bottom of the page. The board reads top-to-bottom as time and left-to-right as tape position; tiles labeled with a state name mark the head. The current version generates the finite computation history (tableau) within the chosen step count and tape window, up to 30 steps, and detects cycles using the full machine configuration.
 
-The "full-route overview" executes the current machine in a cancellable background task. Nonblank symbols have stable colors and a matching legend. The head stays predominantly pink, mixed with 30% of the current symbol color; blank cells stay pale. Very long runs are compressed to at most ~2,400 sampled visualization rows; you can keep running the simulator or solving tiles while it generates, and cancel at any time.
+The "full-route overview" executes the current machine in a cancellable background task. It divides a yellow-green-blue-yellow gradient evenly by the number of distinct nonblank write symbols, including those in unexecuted rules; input-only symbols are appended. The legend follows that order. Red tones are reserved for the head, mixed with 30% of the current symbol color; blank cells stay pale. Changing the step limit preserves the palette for the same machine and input. Very long runs are compressed to at most ~2,400 sampled visualization rows; you can keep running the simulator or solving tiles while it generates, and cancel at any time.
 
 ## Screenshots
 

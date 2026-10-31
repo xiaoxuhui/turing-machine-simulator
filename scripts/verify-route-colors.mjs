@@ -46,6 +46,7 @@ try {
   assert.equal(await page.locator("#routeLegend img").count(), 0);
   assert.ok((await page.locator("#routeLegend").textContent()).includes("<img src=x>"));
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
   assert.deepEqual(pageErrors, []);
   const result = { colors, legend, allEightWriteSymbolsIncluded: true, onlyTwoSymbolsVisited: true, stableAcrossStepCounts: true, redReservedForHead: true, machineUnchanged: true, safeSymbolText: true, mobileNoOverflow: true, pageErrors };

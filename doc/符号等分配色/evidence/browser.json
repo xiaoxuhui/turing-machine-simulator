@@ -1,0 +1,76 @@
+{
+  "colors": {
+    "firstHead": [
+      238,
+      103,
+      80,
+      255
+    ],
+    "secondSymbol": [
+      159,
+      186,
+      40,
+      255
+    ],
+    "blank": [
+      244,
+      247,
+      250,
+      255
+    ],
+    "normalOne": [
+      234,
+      179,
+      8,
+      255
+    ],
+    "headOnBlank": [
+      239,
+      71,
+      111,
+      255
+    ]
+  },
+  "legend": [
+    {
+      "symbol": "1",
+      "color": "#eab308"
+    },
+    {
+      "symbol": "2",
+      "color": "#9fba28"
+    },
+    {
+      "symbol": "3",
+      "color": "#54c149"
+    },
+    {
+      "symbol": "4",
+      "color": "#25bd71"
+    },
+    {
+      "symbol": "5",
+      "color": "#2fa4aa"
+    },
+    {
+      "symbol": "6",
+      "color": "#388ae3"
+    },
+    {
+      "symbol": "7",
+      "color": "#678ebb"
+    },
+    {
+      "symbol": "8",
+      "color": "#a8a161"
+    }
+  ],
+  "allEightWriteSymbolsIncluded": true,
+  "onlyTwoSymbolsVisited": true,
+  "stableAcrossStepCounts": true,
+  "redReservedForHead": true,
+  "machineUnchanged": true,
+  "safeSymbolText": true,
+  "mobileNoOverflow": true,
+  "pageErrors": []
+}
