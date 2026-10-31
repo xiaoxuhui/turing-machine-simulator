@@ -1,0 +1,60 @@
+{
+  "colors": {
+    "firstHead": [
+      238,
+      103,
+      80,
+      255
+    ],
+    "secondSymbol": [
+      47,
+      164,
+      170,
+      255
+    ],
+    "blank": [
+      244,
+      247,
+      250,
+      255
+    ],
+    "normalOne": [
+      234,
+      179,
+      8,
+      255
+    ],
+    "headOnBlank": [
+      239,
+      71,
+      111,
+      255
+    ]
+  },
+  "legend": [
+    {
+      "symbol": "1",
+      "color": "#eab308"
+    },
+    {
+      "symbol": "2",
+      "color": "#2fa4aa"
+    }
+  ],
+  "unusedWriteSymbolsOmitted": true,
+  "powerSymbols": [
+    "1",
+    "^",
+    "#",
+    "|",
+    "a",
+    "b"
+  ],
+  "unusedOperatorsOmitted": true,
+  "sameObservedSymbolsKeepColors": true,
+  "redReservedForHead": true,
+  "machineUnchanged": true,
+  "safeSymbolText": true,
+  "mobileNoOverflow": true,
+  "pageErrors": []
+}
