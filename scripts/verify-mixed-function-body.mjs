@@ -51,7 +51,7 @@ try {
   await page.reload();
   assert.equal(await page.inputValue("#rules"), sourceBeforeReload);
   assert.deepEqual(pageErrors, []);
-  const report = { examples: 31, functionTutorials: 10, cases, lBranch: { steps: 1, output: "l", head: -1 }, internalCallLocations: true, continuousRun: { steps: 6, state: "HALT" }, reloadPreservesDraft: true, pageErrors };
+  const report = { examples: 37, functionTutorials: 10, cases, lBranch: { steps: 1, output: "l", head: -1 }, internalCallLocations: true, continuousRun: { steps: 6, state: "HALT" }, reloadPreservesDraft: true, pageErrors };
   const directory = new URL("../doc/函数体混写/evidence/", import.meta.url);
   await mkdir(directory, { recursive: true });
   await writeFile(new URL("browser.json", directory), JSON.stringify(report, null, 2) + "\n");

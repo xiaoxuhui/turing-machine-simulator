@@ -5,6 +5,7 @@ import { hyperoperationExamples } from "./hyperoperation-examples";
 import { functionExamples } from "./function-examples";
 import { compactRuleArrows } from "./rule-format";
 import { fibonacciExample } from "./fibonacci-example";
+import { inverseOperationExamples } from "./inverse-operation-examples";
 
 export interface ExampleProject {
   category?: "基础示例" | "函数教程" | "一进制运算" | "忙碌海狸" | "猜想验证";
@@ -73,6 +74,7 @@ const exampleDefinitions: Record<string, ExampleProject> = {
   ...unaryExamples,
   fibonacci: fibonacciExample,
   ...hyperoperationExamples,
+  ...inverseOperationExamples,
   ...busyBeaverExamples,
   ...conjectureExamples,
 };
