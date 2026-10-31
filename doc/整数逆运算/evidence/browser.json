@@ -1,0 +1,93 @@
+{
+  "examples": 37,
+  "results": [
+    {
+      "key": "unaryRoot",
+      "style": "plain",
+      "output": "11",
+      "steps": 39706,
+      "reason": "halt"
+    },
+    {
+      "key": "unaryRoot",
+      "style": "commented",
+      "output": "11",
+      "steps": 39706,
+      "reason": "halt"
+    },
+    {
+      "key": "unaryLog",
+      "style": "plain",
+      "output": "11",
+      "steps": 44194,
+      "reason": "halt"
+    },
+    {
+      "key": "unaryLog",
+      "style": "commented",
+      "output": "11",
+      "steps": 44194,
+      "reason": "halt"
+    },
+    {
+      "key": "unarySuperRoot",
+      "style": "plain",
+      "output": "11",
+      "steps": 68566,
+      "reason": "halt"
+    },
+    {
+      "key": "unarySuperRoot",
+      "style": "commented",
+      "output": "11",
+      "steps": 68566,
+      "reason": "halt"
+    },
+    {
+      "key": "unarySuperLog",
+      "style": "plain",
+      "output": "11",
+      "steps": 89861,
+      "reason": "halt"
+    },
+    {
+      "key": "unarySuperLog",
+      "style": "commented",
+      "output": "11",
+      "steps": 89861,
+      "reason": "halt"
+    },
+    {
+      "key": "unaryPentaRoot",
+      "style": "plain",
+      "output": "11",
+      "steps": 106432,
+      "reason": "halt"
+    },
+    {
+      "key": "unaryPentaRoot",
+      "style": "commented",
+      "output": "11",
+      "steps": 106432,
+      "reason": "halt"
+    },
+    {
+      "key": "unaryPentaLog",
+      "style": "plain",
+      "output": "11",
+      "steps": 161080,
+      "reason": "halt"
+    },
+    {
+      "key": "unaryPentaLog",
+      "style": "commented",
+      "output": "11",
+      "steps": 161080,
+      "reason": "halt"
+    }
+  ],
+  "backgroundLeavesSimulatorUntouched": true,
+  "reloadPreservesDraft": true,
+  "mobileNoOverflow": true,
+  "pageErrors": []
+}

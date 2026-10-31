@@ -1,0 +1,72 @@
+{
+  "example": "fibonacci",
+  "examples": 37,
+  "initialState": "fib.seedFirst",
+  "blankSymbol": "0",
+  "input": "",
+  "unlimited": true,
+  "rules": 54,
+  "phaseNotes": 9,
+  "manualSteps": 3,
+  "route": "已显示 2001 个时刻，纸带位置 -2…145，结束原因：达到步数上限",
+  "variants": [
+    {
+      "names": "descriptive",
+      "structure": "flat",
+      "style": "plain",
+      "steps": 3,
+      "output": "11"
+    },
+    {
+      "names": "descriptive",
+      "structure": "flat",
+      "style": "commented",
+      "steps": 3,
+      "output": "11"
+    },
+    {
+      "names": "descriptive",
+      "structure": "functions",
+      "style": "plain",
+      "steps": 3,
+      "output": "11"
+    },
+    {
+      "names": "descriptive",
+      "structure": "functions",
+      "style": "commented",
+      "steps": 3,
+      "output": "11"
+    },
+    {
+      "names": "numeric",
+      "structure": "flat",
+      "style": "plain",
+      "steps": 3,
+      "output": "11"
+    },
+    {
+      "names": "numeric",
+      "structure": "flat",
+      "style": "commented",
+      "steps": 3,
+      "output": "11"
+    },
+    {
+      "names": "numeric",
+      "structure": "functions",
+      "style": "plain",
+      "steps": 3,
+      "output": "11"
+    },
+    {
+      "names": "numeric",
+      "structure": "functions",
+      "style": "commented",
+      "steps": 3,
+      "output": "11"
+    }
+  ],
+  "preservedAfterReload": true,
+  "pageErrors": []
+}

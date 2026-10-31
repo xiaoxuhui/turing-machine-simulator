@@ -26,7 +26,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Sparse tape that extends left and right, with head-following view
 - Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
-- 31 grouped examples: 10 function tutorials in a dedicated group, unary arithmetic (addition through pentation and Fibonacci generation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
+- 37 grouped examples: 10 function tutorials in a dedicated group, unary arithmetic (addition through pentation, six floored inverses and Fibonacci generation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
 - Local autosave, project JSON import/export, and execution-log CSV export
 - Clear accept / reject / halt / missing-rule feedback
@@ -80,13 +80,17 @@ Generated rules are editable, with 100 rows per table page. Conversion enables M
 
 ## Example Programs
 
-The selector groups 31 programs into unary arithmetic, function tutorials, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+The selector groups 37 programs into unary arithmetic, function tutorials, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
 
-The 10 function tutorials progress from a single call through returns, exports, mixed rule/call bodies and local aliases. All 31 examples offer plain and commented source; plain is the default. Comments explain arithmetic phases between rules, including register increments, decrements, zero branches, parsing and cleanup for higher operations. Switching styles preserves the editor until Load is clicked. `ret` controls return flow, while `导出状态` publishes names.
+The 10 function tutorials progress from a single call through returns, exports, mixed rule/call bodies and local aliases. All 37 examples offer plain and commented source; plain is the default. Comments explain arithmetic phases between rules, including register increments, decrements, zero branches, parsing and cleanup for higher operations. Switching styles preserves the editor until Load is clicked. `ret` controls return flow, while `导出状态` publishes names.
 
 Mixed function bodies start at the state selected in the header. A child-function target searches later bare calls within that same body, choosing the nearest call of the same function, including aliases. If none exists, the child is invoked in place and resumes at the next expression. Bare calls resume below their own location. Ordinary local state targets still support loops, and missing read branches remain errors. Tutorial 9 uses the user's copy wrapper with a decrementing pred: input 111 becomes 11 in 6 steps, while l takes the one-step exit branch. Tutorial 10 mixes aliases, later-call lookup and in-place calls to output 123 in 6 steps.
 
 The user-created Fibonacci generator preserves its original 54 tape transitions with descriptive state names and phase comments. It starts on an empty tape with blank `0` and Max enabled. Completed runs of `1` encode 1, 1, 2, 3, 5…; `X`/`Y` mark work in progress, so the unfinished tail is not a completed term. One million matching steps were verified against the original program.
+
+Fibonacci also offers independent numeric/descriptive names and flat/four-function structure selectors, alongside plain/commented source: eight combinations preserve the same 54 tape transitions. Selecting only previews; Load applies the source. The numeric flat version restores the user's original rules exactly.
+
+Six new unary examples implement floored integer inverse operations: n-th root (`n~x`), logarithm (`a@x`), super-root/super-logarithm (`~~`/`@@`), and pentation root/logarithm (`~~~`/`@@@`). They return the largest integer argument whose forward result is at most x. Root degree is positive, logarithm base is at least two, and x is positive except ordinary roots permit zero. A bounded tape computation stops each candidate once it exceeds x; no answer is precomputed. These are discrete integer threshold inverses, not fractional-height analytic extensions.
 
 The expandable actual-name panel shows per-call name mappings, the resolved initial entry and all actual transition rules as plain text. Saved drafts migrate to compact arrows such as `q0,□->HALT,1,N` on reload, preserving indentation. Old function-lesson drafts use the same `done` completion label inside and outside when no conflicting user definition exists. The campaign adds worked arithmetic derivations and read-only previews before a level is unlocked for practice.
 
