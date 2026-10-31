@@ -2,7 +2,7 @@ import type { ExampleProject } from "./examples";
 import { compileRegisterMachine, type RegisterInstruction } from "./register-tm";
 
 /** Build finite control flow, not answers: every counter change runs on tape. */
-class Program {
+export class Program {
   readonly instructions = new Map<string, RegisterInstruction>([
     ["done", { kind: "halt" }], ["reject", { kind: "reject" }],
   ]);

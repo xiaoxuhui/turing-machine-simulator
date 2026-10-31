@@ -12,7 +12,7 @@ export function compileRegisterMachine(
   registers: number, result: number, operator: string,
 ): string {
   if (!Number.isInteger(registers) || registers < 2 || result < 0 || result >= registers || !instructions.has(entry)) throw new Error("无效寄存器程序");
-  if (!["/", "^", "^^", "^^^", "+"].includes(operator)) throw new Error("不支持的输入分隔符");
+  if (!["/", "^", "^^", "^^^", "+", "~", "~~", "~~~", "@", "@@", "@@@"].includes(operator)) throw new Error("不支持的输入分隔符");
   for (const instruction of instructions.values()) {
     if ("register" in instruction && (!Number.isInteger(instruction.register) || instruction.register < 0 || instruction.register >= registers)) throw new Error("寄存器越界");
     const targets = instruction.kind === "dec" ? [instruction.positive, instruction.zero] : "next" in instruction ? [instruction.next] : [];
@@ -79,7 +79,7 @@ export function compileRegisterMachine(
   }
 
   // Build an empty register array to the left of the fixed origin.
-  const inputSymbols = ["1", "0", "+", "-", "*", "/", "^", "?", "□", "#", "|", "a", "b"];
+  const inputSymbols = ["1", "0", "+", "-", "*", "/", "^", "?", "□", "#", "|", "a", "b", ...new Set([...operator].filter(symbol => symbol === "~" || symbol === "@"))];
   lines.push("# 初始化：从原点左侧建立用 | 分隔的计数器区域，# 固定原点位置。");
   for (const read of inputSymbols) add("BOOT", read, "init.fence", read, "L");
   add("init.fence", "□", "init.0", "#", "L");
