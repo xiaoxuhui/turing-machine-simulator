@@ -2,7 +2,7 @@ import type { ParseOptions, ParseResult, Transition } from "./core";
 import { transitionFormatError } from "./rule-error";
 
 interface SourceRule { rule: Transition; line: number }
-interface Call { name: string; line: number }
+interface Call { name: string; line: number; label?: string; next?: string }
 type Statement = { kind: "call"; call: Call } | { kind: "rules"; state: string; rules: SourceRule[] };
 
 function orderedStatements(rules: SourceRule[], calls: Call[]): Statement[] {
@@ -99,6 +99,12 @@ export function parseRuleFunctions(
       }
       continue;
     }
+    const namedCall = line.match(/^([^,():\s]+)\s*:\s*([^,():\s]+)\s*->\s*([^,():\s]+)$/u);
+    if (namedCall) {
+      if (current) fail(number, "带入口及续接状态的调用声明请放在顶层");
+      else calls.push({ label: namedCall[1], name: namedCall[2], next: namedCall[3], line: number });
+      continue;
+    }
     if (identifier.test(line)) (current?.calls ?? calls).push({ name: line, line: number });
     else {
       const direct = line.match(/^([^,]+),(.+?)\s*->\s*([^,]+)$/);
@@ -133,6 +139,12 @@ export function parseRuleFunctions(
     }
   };
   checkDuplicates(declarations);
+  const callLabels = new Set<string>();
+  for (const call of calls) if (call.label) {
+    if (callLabels.has(call.label) || rules.some(item => item.rule.fromState === call.label)) fail(call.line, `调用入口 ${call.label} 重复定义`);
+    if (functions.has(call.label) || terminal.has(call.label)) fail(call.line, "调用入口不能与函数名或终态同名");
+    callLabels.add(call.label);
+  }
   for (const { rule, line } of rules) {
     if (functions.has(rule.fromState)) fail(line, "顶格状态不能与函数名重名，请直接调用函数名");
   }
@@ -190,6 +202,7 @@ export function parseRuleFunctions(
     return { fn, local, alias: `${fn.name}.${local}` };
   };
   const extensions = new Map<string, Array<{ local: string; source: SourceRule }>>();
+  for (const call of calls) if (call.next) publicRef(call.next, undefined, call.line);
   for (const item of declarations) {
     const from = publicRef(item.rule.fromState, undefined, item.line);
     publicRef(item.rule.toState, from?.fn, item.line);
@@ -236,7 +249,7 @@ export function parseRuleFunctions(
   for (const name of functions.keys()) checkGraph(name, 0);
   if (errors.length) return { transitions: [], errors, hasFunctions: true };
 
-  const states = [...rules, ...[...functions.values()].flatMap(fn => fn.rules)].flatMap(({ rule }) => [rule.fromState, rule.toState]);
+  const states = [...rules, ...[...functions.values()].flatMap(fn => fn.rules)].flatMap(({ rule }) => [rule.fromState, rule.toState]).concat(calls.flatMap(call => [call.label ?? "", call.next ?? ""]));
   let prefix = "__fn.";
   const publicNames = [...functions.values()].flatMap(fn => [...fn.exports.keys()].map(state => `${fn.name}.${state}`));
   while ([...states, ...terminal, ...functions.keys(), ...publicNames].some(state => state.startsWith(prefix))) prefix = `_${prefix}`;
@@ -389,7 +402,7 @@ export function parseRuleFunctions(
     return undefined;
   };
   const scriptTarget = (index: number, state: string): string => {
-    if (globalStates.has(state)) return state;
+    if (globalStates.has(state) || callLabels.has(state)) return state;
     let target = statements.findIndex((item, position) => position >= index && item.kind === "rules" && item.state === state);
     if (target < 0) target = statements.findIndex(item => item.kind === "rules" && item.state === state);
     return target < 0 ? scriptEntry(index, state, state) : scriptEntries.get(target)!;
@@ -400,7 +413,7 @@ export function parseRuleFunctions(
       const statement = statements[index];
       if (statement.kind === "call") {
         const fn = functions.get(statement.call.name)!;
-        scriptEntries.set(index, compile(fn.name, afterCall(index + 1, fn)));
+        scriptEntries.set(index, compile(fn.name, statement.call.next ?? afterCall(index + 1, fn)));
         continue;
       }
       const entry = `${prefix}script.${index}.${statement.state}`;
@@ -438,6 +451,7 @@ export function parseRuleFunctions(
       append({ ...rule, fromState: localState(ctx, local), toState: target }, line);
     }
     const aliases = new Map<string, string>();
+    for (const [index, statement] of statements.entries()) if (statement.kind === "call" && statement.call.label) aliases.set(statement.call.label, scriptEntries.get(index)!);
     for (const fn of functions.values()) {
       const ctx = [...contexts.values()].find(item => item.fn === fn && item.continuation === finalState)!;
       for (const local of fn.exports.keys()) aliases.set(`${fn.name}.${local}`, local === fn.initial ? ctx.entry : localState(ctx, local));
@@ -472,7 +486,7 @@ export function parseRuleFunctions(
     const stateExports = publicNames.map(name => ({ name, state: resolve(name) }));
     const sourceEntries: Array<{ name: string; state: string }> = [];
     for (const [index, statement] of statements.entries()) {
-      const name = statement.kind === "call" ? statement.call.name : statement.state;
+      const name = statement.kind === "call" ? statement.call.label ?? statement.call.name : statement.state;
       if (!globalStates.has(name) && !sourceEntries.some(item => item.name === name)) sourceEntries.push({ name, state: resolve(scriptEntries.get(index)!) });
     }
     const internalNames: NonNullable<ParseResult["internalNames"]> = [];
@@ -493,7 +507,7 @@ export function parseRuleFunctions(
       }
     }
     for (const [index, statement] of statements.entries()) {
-      const source = statement.kind === "call" ? statement.call.name : statement.state;
+      const source = statement.kind === "call" ? statement.call.label ?? statement.call.name : statement.state;
       const line = statement.kind === "call" ? statement.call.line : statement.rules[0].line;
       recordName(source, scriptEntries.get(index)!, `源码第 ${line} 行`);
     }

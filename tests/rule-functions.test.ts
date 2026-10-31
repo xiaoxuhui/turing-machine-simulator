@@ -23,6 +23,18 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("allows shared calls to expose named entries and independent continuation states without extra steps", () => {
+    const source = `扫(s,end):\n    s,1->s,1,R\n    s,□->end,□,N\na: 扫 -> b\nb,□->c,2,R\nc: 扫 -> HALT`;
+    const result = execute(source, "1", "a");
+    expect(result.output).toBe("12");
+    expect(result.machine.stepCount).toBe(4);
+    expect(execute(source, "", "c").machine.stepCount).toBe(1);
+  });
+  it("rejects duplicate and terminal named-call entries", () => {
+    const fn = "f(s,end):\n    s,□->end,1,N\n";
+    expect(parseTransitions(fn + "a: f -> HALT\na: f -> HALT").errors.join()).toContain("重复定义");
+    expect(parseTransitions(fn + "HALT: f -> HALT").errors.join()).toContain("终态");
+  });
   const predForCopy = `pred(s,end):\n    s,1->end,0,L`;
   const userCopy = `${predForCopy}\ncopy(0,1):\n    0,1->pred\n    0,l->1,l,L\n    pred\ncopy`;
 
