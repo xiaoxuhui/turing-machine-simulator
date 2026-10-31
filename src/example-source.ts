@@ -26,15 +26,15 @@ const phaseNotes: Record<string, string> = {
   "mul.clean": "清除输入与分隔符，只留下输出区的答案。",
 };
 
-export function exampleSource(project: ExampleProject, style: ExampleSourceStyle): string {
+export function exampleSource(project: ExampleProject, style: ExampleSourceStyle, includeHeader = true): string {
   const plain = compactRuleArrows(project.rules).split(/\r?\n/).filter(line => !line.trimStart().startsWith("#")).join("\n");
   if (style === "plain") return plain;
-  const lines = [
+  const lines = includeHeader ? [
     `# ${project.name}`,
     ...project.description.split(/\r?\n/).map(line => `# ${line}`),
     `# 初始输入：${project.input || "空纸带"}；初始状态：${project.initialState || "留空，使用首个调用"}；空白符：${project.blankSymbol}`,
     "# R 向右一格，L 向左一格，N 不移动；普通停机态以机器配置为准。",
-  ];
+  ] : [];
   if (project.name.includes("超超幂")) lines.push("# 从结果 1 开始，每轮执行 底数↑↑旧结果；旧结果是下一轮的幂塔高度。");
   else if (project.name.includes("超幂")) lines.push("# 从结果 1 开始，每轮执行 底数^旧结果；幂塔右结合，不能当成重复乘法。");
   else if (project.name.includes("乘方")) lines.push("# 从结果 1 开始，按指数次数重复乘以底数；指数为 0 时不进入循环。");

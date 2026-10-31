@@ -49,20 +49,23 @@ try {
   const variants = [];
   const original = (await readFile(new URL("../tests/fixtures/fibonacci-original.tm", import.meta.url), "utf8")).trim();
   await page.selectOption("#example", "fibonacci");
-  assert.equal(await page.locator("#fibonacciSourceOptions").isVisible(), true);
+  assert.equal(await page.locator("#exampleProgramOptions").isVisible(), true);
   for (const names of ["descriptive", "numeric"]) for (const structure of ["flat", "functions"]) for (const style of ["plain", "commented"]) {
     const before = await page.inputValue("#rules");
-    await page.selectOption("#fibonacciStateNames", names);
-    await page.selectOption("#fibonacciStructure", structure);
+    await page.selectOption("#exampleStateNames", names);
+    await page.selectOption("#exampleStructure", structure);
     await page.selectOption("#exampleSourceStyle", style);
     assert.equal(await page.inputValue("#rules"), before);
     await page.click("#loadExample");
     assert.equal(await page.locator("#errors").textContent(), "");
-    assert.equal(await page.inputValue("#initialState"), structure === "functions" ? "初始化" : names === "numeric" ? "0.0" : "fib.seedFirst");
+    assert.equal(await page.inputValue("#initialState"), names === "numeric" ? "0.0" : "fib.seedFirst");
     const source = await page.inputValue("#rules");
     assert.equal(/^\s*#/m.test(source), style === "commented");
     if (names === "numeric" && structure === "flat" && style === "plain") assert.equal(source.trim(), original);
-    if (structure === "functions") assert.match(await page.locator("#functionStatus").textContent(), /已识别 4 个函数，展开为 54 条/);
+    if (structure === "functions") {
+      assert.match(await page.locator("#functionStatus").textContent(), /已识别 \d+ 个函数/);
+      assert.ok(source.split("\n").filter(line => /^\s*[^,#]+,.+?->/.test(line)).length < 54);
+    }
     for (let i = 0; i < 3; i++) await page.click("#step");
     assert.equal(await page.locator("#stepCount").textContent(), "3");
     assert.equal(await page.locator("#headPosition").textContent(), "1");
@@ -73,9 +76,9 @@ try {
   const finalSource = await page.inputValue("#rules");
   await page.reload();
   assert.equal(await page.inputValue("#rules"), finalSource);
-  assert.equal(await page.inputValue("#initialState"), "初始化");
+  assert.equal(await page.inputValue("#initialState"), "0.0");
   await page.selectOption("#example", "unary");
-  assert.equal(await page.locator("#fibonacciSourceOptions").isHidden(), true);
+  assert.equal(await page.locator("#exampleProgramOptions").isVisible(), true);
   assert.deepEqual(errors, []);
   const result = { example: "fibonacci", examples: 37, initialState: "fib.seedFirst", blankSymbol: "0", input: "", unlimited: true, rules: 54, phaseNotes, manualSteps: 3, route, variants, preservedAfterReload: true, pageErrors: errors };
   const directory = new URL("../doc/斐波那契示例/evidence/", import.meta.url);

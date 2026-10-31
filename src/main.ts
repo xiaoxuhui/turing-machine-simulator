@@ -22,6 +22,7 @@ import { attachSpaceIndentation } from "./text-insertion";
 import { attachRuleDiagnostics } from "./rule-diagnostics";
 import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
 import { fibonacciSourceVariant } from "./fibonacci-example";
+import { exampleVariant, type ExampleNames, type ExampleStructure } from "./example-variants";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -128,6 +129,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <p>状态到函数可简写为 q0,1-&gt;函数名：读取 1 时直接调用，原样保留符号、不移动读写头，等价于 q0,1-&gt;函数名,1,N。写全的规则仍执行指定的写入和移动；普通状态转移需要完整格式。</p>
             <p>顶层表达式跳到函数时，先找后面最近的同名裸调用：有就跳到那一行，执行后继续它下面；没有则在当前表达式处调用，完成后继续下一行。相邻同状态、不同读取符号的规则作为分支选择。</p>
             <p>函数体也可混写规则和裸调用：状态跳到子函数时，先找当前函数体下面最近的同名或同一绑定函数的调用；没有则就地调用后续行。裸调用完成后执行下面的表达式或调用。函数头指定初始状态，普通局部状态仍可循环。</p>
+            <p>复用公共规则块时可在顶层写“入口状态: 公共函数 -&gt; 续接状态”。它直接把入口连接到函数，完成后转到指定状态，不增加额外读写或移动步骤。多个入口可复用一个函数并分别续接。</p>
             <p>正常执行完函数就继续下一行。函数内写“ret q1”，执行到 q1 才跳到外面对应的状态；兼容中文“返回状态 q1”。写“导出状态 inside”则公开为“主函数.inside”，用于补写规则或选择入口。示例菜单的“函数教程”分组提供 10 课；新增混合函数体与局部别名两课，“返回外部状态”可比较保留和删除 ret 的不同结果。</p>
           </details>
           <div id="functionStatus" class="hint" role="status"></div>
@@ -150,9 +152,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               ${["一进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
             <label style="margin-top:10px">示例源码<select id="exampleSourceStyle"><option value="plain">无注释</option><option value="commented">有注释</option></select></label>
-            <div id="fibonacciSourceOptions" hidden>
-              <label style="margin-top:10px">状态名称<select id="fibonacciStateNames"><option value="descriptive">用途名称</option><option value="numeric">原始数字名称</option></select></label>
-              <label style="margin-top:10px">程序结构<select id="fibonacciStructure"><option value="flat">无函数</option><option value="functions">有函数（四个阶段）</option></select></label>
+            <div id="exampleProgramOptions">
+              <label style="margin-top:10px">状态名称<select id="exampleStateNames"><option value="descriptive">示例原名</option><option value="numeric">数字状态名</option></select></label>
+              <label style="margin-top:10px">程序结构<select id="exampleStructure"><option value="original">保留示例结构</option><option value="flat">无函数（展开规则）</option><option value="functions">公共函数（提取重复代码）</option></select></label>
+              <p class="hint">适用于所有示例。公共函数只定义一次，各入口指定自己的续接状态；无重复块时保留原规则。选择后点击“加载此示例”。</p>
             </div>
             <p id="exampleNote" class="example-note"></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
@@ -755,16 +758,15 @@ byId("maxSteps").addEventListener("change", () => {
 });
 function selectedExample(): ExampleProject {
   return value("example") === "fibonacci"
-    ? fibonacciSourceVariant(value("fibonacciStateNames") as "descriptive" | "numeric", value("fibonacciStructure") as "flat" | "functions")
-    : examples[value("example")];
+    ? exampleVariant(fibonacciSourceVariant(value("exampleStateNames") as ExampleNames, "flat"), "descriptive", value("exampleStructure") as ExampleStructure)
+    : exampleVariant(examples[value("example")], value("exampleStateNames") as ExampleNames, value("exampleStructure") as ExampleStructure);
 }
 function previewExample(): void {
-  byId("fibonacciSourceOptions").hidden = value("example") !== "fibonacci";
   byId("exampleNote").textContent = selectedExample().description;
 }
 byId("example").addEventListener("change", previewExample);
-byId("fibonacciStateNames").addEventListener("change", previewExample);
-byId("fibonacciStructure").addEventListener("change", previewExample);
+byId("exampleStateNames").addEventListener("change", previewExample);
+byId("exampleStructure").addEventListener("change", previewExample);
 byId("loadExample").addEventListener("click", () => {
   const example = selectedExample();
   fillProject({ ...example, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
