@@ -3,6 +3,29 @@ import { expect, it } from "vitest";
 import { examples } from "../src/examples";
 import { exampleSource } from "../src/example-source";
 import { parseTransitions, TuringMachine, type MachineDefinition } from "../src/core";
+import { fibonacciSourceVariant } from "../src/fibonacci-example";
+import { resolveInitialState } from "../src/core";
+
+it.each(["descriptive", "numeric"] as const)("preserves each tape step with %s names and optional functions", naming => {
+  for (const structure of ["flat", "functions"] as const) for (const style of ["plain", "commented"] as const) {
+    const project = fibonacciSourceVariant(naming, structure);
+    const parsed = parseTransitions(exampleSource(project, style), { haltStates: project.haltStates ? [project.haltStates] : [], acceptStates: [], rejectStates: [] });
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.transitions).toHaveLength(54);
+    const a = new TuringMachine({ blankSymbol: "0", initialState: "0.0", haltStates: [], acceptStates: [], rejectStates: [], transitions: original.transitions }, []);
+    const b = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, project.initialState), haltStates: project.haltStates ? [project.haltStates] : [], acceptStates: [], rejectStates: [], transitions: parsed.transitions }, []);
+    for (let step = 0; step < 10000; step++) {
+      const x = a.step(), y = b.step();
+      if (x.stopped || y.stopped || a.headPosition !== b.headPosition || x.record?.readSymbol !== y.record?.readSymbol || x.record?.writeSymbol !== y.record?.writeSymbol || x.record?.direction !== y.record?.direction) throw new Error(`${naming}/${structure}/${style} differs at ${step}`);
+    }
+    expect(b.tape.entries()).toEqual(a.tape.entries());
+    expect(style === "commented" || !/^\s*#/m.test(exampleSource(project, style))).toBe(true);
+  }
+});
+
+it("restores the exact original numeric flat rule source", () => {
+  expect(exampleSource(fibonacciSourceVariant("numeric", "flat"), "plain").trim()).toBe(originalSource.trim());
+});
 
 const original = parseTransitions(originalSource);
 const renamed = parseTransitions(examples.fibonacci.rules);

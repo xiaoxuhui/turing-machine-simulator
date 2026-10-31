@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 
 const { chromium } = createRequire(import.meta.url)(process.argv[2] || "playwright");
 const browser = await chromium.launch({ headless: true, ...(process.argv[3] ? { executablePath: process.argv[3] } : {}) });
@@ -46,10 +46,43 @@ try {
   assert.equal(await page.inputValue("#rules"), plain);
   assert.equal(await page.inputValue("#initialState"), "fib.seedFirst");
   assert.equal(await page.isChecked("#unlimitedSteps"), true);
+  const variants = [];
+  const original = (await readFile(new URL("../tests/fixtures/fibonacci-original.tm", import.meta.url), "utf8")).trim();
+  await page.selectOption("#example", "fibonacci");
+  assert.equal(await page.locator("#fibonacciSourceOptions").isVisible(), true);
+  for (const names of ["descriptive", "numeric"]) for (const structure of ["flat", "functions"]) for (const style of ["plain", "commented"]) {
+    const before = await page.inputValue("#rules");
+    await page.selectOption("#fibonacciStateNames", names);
+    await page.selectOption("#fibonacciStructure", structure);
+    await page.selectOption("#exampleSourceStyle", style);
+    assert.equal(await page.inputValue("#rules"), before);
+    await page.click("#loadExample");
+    assert.equal(await page.locator("#errors").textContent(), "");
+    assert.equal(await page.inputValue("#initialState"), structure === "functions" ? "初始化" : names === "numeric" ? "0.0" : "fib.seedFirst");
+    const source = await page.inputValue("#rules");
+    assert.equal(/^\s*#/m.test(source), style === "commented");
+    if (names === "numeric" && structure === "flat" && style === "plain") assert.equal(source.trim(), original);
+    if (structure === "functions") assert.match(await page.locator("#functionStatus").textContent(), /已识别 4 个函数，展开为 54 条/);
+    for (let i = 0; i < 3; i++) await page.click("#step");
+    assert.equal(await page.locator("#stepCount").textContent(), "3");
+    assert.equal(await page.locator("#headPosition").textContent(), "1");
+    const output = (await page.locator("#tape .cell > span:last-child").allTextContents()).filter(symbol => symbol !== "0").join("");
+    assert.equal(output, "11");
+    variants.push({ names, structure, style, steps: 3, output });
+  }
+  const finalSource = await page.inputValue("#rules");
+  await page.reload();
+  assert.equal(await page.inputValue("#rules"), finalSource);
+  assert.equal(await page.inputValue("#initialState"), "初始化");
+  await page.selectOption("#example", "unary");
+  assert.equal(await page.locator("#fibonacciSourceOptions").isHidden(), true);
   assert.deepEqual(errors, []);
-  const result = { example: "fibonacci", examples: 37, initialState: "fib.seedFirst", blankSymbol: "0", input: "", unlimited: true, rules: 54, phaseNotes, manualSteps: 3, route, preservedAfterReload: true, pageErrors: errors };
+  const result = { example: "fibonacci", examples: 37, initialState: "fib.seedFirst", blankSymbol: "0", input: "", unlimited: true, rules: 54, phaseNotes, manualSteps: 3, route, variants, preservedAfterReload: true, pageErrors: errors };
   const directory = new URL("../doc/斐波那契示例/evidence/", import.meta.url);
   await mkdir(directory, { recursive: true });
   await writeFile(new URL("browser.json", directory), JSON.stringify(result, null, 2) + "\n");
+  const variantDirectory = new URL("../doc/斐波那契源码版本/evidence/", import.meta.url);
+  await mkdir(variantDirectory, { recursive: true });
+  await writeFile(new URL("browser.json", variantDirectory), JSON.stringify(result, null, 2) + "\n");
   console.log(JSON.stringify(result, null, 2));
 } finally { await browser.close(); }

@@ -76,3 +76,43 @@ fib.checkNewerEnd,Y->fib.copyNewer,Y,L
 fib.rewindNewer,X->fib.rewindNewer,X,L
 fib.rewindNewer,0->fib.copyOlder,0,R`,
 };
+
+const phaseNames = ["初始化", "标记两项", "复制前项", "复制后项"] as const;
+const states: Record<string, readonly [string, number]> = {
+  "fib.seedFirst": ["0.0", 0], "fib.seedGap": ["0.1", 0], "fib.seedSecond": ["0.2", 0], "fib.backToFirst": ["0.3", 0],
+  "fib.markFirst": ["1.1.1", 1], "fib.markSecond": ["1.1.2", 1], "fib.findOlderGap": ["1.2.1.1", 1],
+  "fib.findOlderStart": ["1.2.1.1.1", 1], "fib.enterOlder": ["1.2.1.2", 1],
+  "fib.copyOlder": ["1.2.1.3", 2], "fib.crossOlder": ["1.2.1.3.1", 2], "fib.scanAppend": ["1.2.1.4", 2],
+  "fib.checkAppendGap": ["1.2.1.4.1", 2], "fib.returnOlder": ["1.2.1.5", 2], "fib.findRestored": ["1.2.1.6", 2],
+  "fib.takeOlder": ["1.2.1.7", 2], "fib.scanTail": ["1.2.1.8", 2], "fib.checkTailGap": ["1.2.1.8.1", 2], "fib.appendOlder": ["1.2.1.8.2", 2],
+  "fib.copyNewer": ["1.2.2.1", 3], "fib.scanNewerTail": ["1.2.2.2", 3], "fib.checkNewerGap": ["1.2.2.2.1", 3],
+  "fib.appendNewer": ["1.2.2.2.2", 3], "fib.returnNewerGap": ["1.2.2.3", 3], "fib.findNewerMark": ["1.2.2.4", 3],
+  "fib.checkNewerEnd": ["1.2.2.5", 3], "fib.rewindNewer": ["1.2.2.6", 3],
+};
+
+export function fibonacciSourceVariant(names: "descriptive" | "numeric", structure: "flat" | "functions"): ExampleProject {
+  const local = (state: string) => names === "numeric" ? states[state][0] : state;
+  const sections = phaseNames.map(() => [] as string[]);
+  const plain: string[] = [];
+  let comments: string[] = [];
+  for (const line of fibonacciExample.rules.split("\n")) {
+    if (line.startsWith("#")) { comments.push(line); continue; }
+    const match = line.match(/^([^,]+),(.+?)->([^,]+),(.+?),([LRN])$/)!;
+    const [, from, read, to, write, direction] = match;
+    const phase = states[from][1];
+    const target = states[to][1] === phase ? local(to) : `${phaseNames[states[to][1]]}.${local(to)}`;
+    plain.push(...comments, `${local(from)},${read}->${local(to)},${write},${direction}`);
+    sections[phase].push(...comments, `${local(from)},${read}->${target},${write},${direction}`);
+    comments = [];
+  }
+  const rules = structure === "flat" ? plain.join("\n") : sections.map((lines, phase) => {
+    const locals = Object.keys(states).filter(state => states[state][1] === phase).map(local);
+    return `${phaseNames[phase]}(${locals[0]},完成):\n${lines.map(line => `    ${line}`).join("\n")}\n    导出状态 ${locals.join(",")}`;
+  }).join("\n\n") + "\n\n初始化";
+  return {
+    ...fibonacciExample, rules,
+    initialState: structure === "functions" ? "初始化" : local("fib.seedFirst"),
+    haltStates: structure === "functions" ? "HALT" : "",
+    description: `${fibonacciExample.description} 当前为${names === "numeric" ? "原始数字状态" : "用途状态名"}、${structure === "functions" ? "四阶段函数版，阶段间通过公开状态连接" : "无函数版"}。`,
+  };
+}

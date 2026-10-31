@@ -21,6 +21,7 @@ import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
 import { attachSpaceIndentation } from "./text-insertion";
 import { attachRuleDiagnostics } from "./rule-diagnostics";
 import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
+import { fibonacciSourceVariant } from "./fibonacci-example";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -149,6 +150,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               ${["一进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
             <label style="margin-top:10px">示例源码<select id="exampleSourceStyle"><option value="plain">无注释</option><option value="commented">有注释</option></select></label>
+            <div id="fibonacciSourceOptions" hidden>
+              <label style="margin-top:10px">状态名称<select id="fibonacciStateNames"><option value="descriptive">用途名称</option><option value="numeric">原始数字名称</option></select></label>
+              <label style="margin-top:10px">程序结构<select id="fibonacciStructure"><option value="flat">无函数</option><option value="functions">有函数（四个阶段）</option></select></label>
+            </div>
             <p id="exampleNote" class="example-note"></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
           </section>
@@ -748,11 +753,20 @@ byId("maxSteps").addEventListener("change", () => {
   const storageError = saveProject(localStorage, STORAGE_KEY, collectProject());
   if (storageError) byId("errors").textContent = storageError;
 });
-byId("example").addEventListener("change", () => {
-  byId("exampleNote").textContent = examples[value("example")].description;
-});
+function selectedExample(): ExampleProject {
+  return value("example") === "fibonacci"
+    ? fibonacciSourceVariant(value("fibonacciStateNames") as "descriptive" | "numeric", value("fibonacciStructure") as "flat" | "functions")
+    : examples[value("example")];
+}
+function previewExample(): void {
+  byId("fibonacciSourceOptions").hidden = value("example") !== "fibonacci";
+  byId("exampleNote").textContent = selectedExample().description;
+}
+byId("example").addEventListener("change", previewExample);
+byId("fibonacciStateNames").addEventListener("change", previewExample);
+byId("fibonacciStructure").addEventListener("change", previewExample);
 byId("loadExample").addEventListener("click", () => {
-  const example = examples[value("example")];
+  const example = selectedExample();
   fillProject({ ...example, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
   createMachine();
   byId("exampleNote").textContent = example.description;
@@ -833,6 +847,6 @@ document.addEventListener("keydown", (event) => {
 const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
 const editorDraft = loadEditorDraft(localStorage);
 fillProject({ ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed });
-byId("exampleNote").textContent = examples[value("example")].description;
+previewExample();
 createMachine();
 renderRuleTable();
