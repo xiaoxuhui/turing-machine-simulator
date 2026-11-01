@@ -23,6 +23,7 @@ import { attachRuleDiagnostics } from "./rule-diagnostics";
 import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
 import { fibonacciSourceVariant } from "./fibonacci-example";
 import { exampleVariant, type ExampleNames, type ExampleStructure } from "./example-variants";
+import { requestDownload } from "./download";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -667,14 +668,6 @@ function persistTargetSpeed(speed: number): void {
   if (error) byId("errors").textContent = error;
 }
 
-function download(name: string, content: string, type: string): void {
-  const anchor = document.createElement("a");
-  anchor.href = URL.createObjectURL(new Blob([content], { type }));
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(anchor.href);
-}
-
 byId("apply").addEventListener("click", createMachine);
 byId("compileGijswijt").addEventListener("click", () => {
   try {
@@ -761,7 +754,7 @@ byId("loadExample").addEventListener("click", () => {
   createMachine();
   byId("exampleNote").textContent = example.description;
 });
-byId("exportProject").addEventListener("click", () => download("turing-machine-project.json", JSON.stringify(collectProject(), null, 2), "application/json"));
+byId("exportProject").addEventListener("click", () => requestDownload("turing-machine-project.json", JSON.stringify(collectProject(), null, 2), "application/json"));
 byId("importProject").addEventListener("click", () => byId<HTMLInputElement>("fileInput").click());
 byId("fileInput").addEventListener("change", async () => {
   const file = byId<HTMLInputElement>("fileInput").files?.[0];
@@ -778,7 +771,7 @@ byId("fileInput").addEventListener("change", async () => {
 byId("exportLog").addEventListener("click", () => {
   const header = "step,from,read,to,write,direction,headBefore,headAfter";
   const rows = records.map((r) => [r.step,r.fromState,r.readSymbol,r.toState,r.writeSymbol,r.direction,r.headBefore,r.headAfter].map((x) => JSON.stringify(x)).join(","));
-  download("turing-machine-log.csv", [header, ...rows].join("\n"), "text/csv");
+  requestDownload("turing-machine-log.csv", [header, ...rows].join("\n"), "text/csv");
 });
 byId("generatePuzzle").addEventListener("click", generatePuzzle);
 byId("generateRoute").addEventListener("click", generateRoute);

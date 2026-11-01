@@ -61,6 +61,12 @@ body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }
 .compiled-program summary { cursor: pointer; font-weight: 700; color: #28597c; }
 .compiled-program label { margin-top: 10px; }
 .compiled-program textarea { width: 100%; min-height: 130px; font-family: Consolas, "Microsoft YaHei", monospace; white-space: pre; overflow: auto; }
+.download-dialog { width:min(420px, calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; padding:24px; border:1px solid #ccd5e1; border-radius:12px; color:#1d2939; }
+.download-dialog::backdrop { background:rgb(20 35 50 / 35%); }
+.download-dialog h2 { margin:0 0 18px; font-size:18px; }
+.download-dialog input { width:100%; margin-top:6px; }
+.download-dialog .error { min-height:20px; font-size:13px; overflow-wrap:anywhere; }
+.download-actions { display:flex; gap:8px; justify-content:flex-end; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .panel-title h2 { margin: 0; font-size: 16px; }
 .panel-title small { color: #758194; }
