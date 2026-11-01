@@ -1,0 +1,16 @@
+{
+  "projectName": "我的图灵机.json",
+  "projectContentMatches": true,
+  "logName": "执行记录.CSV",
+  "logContentMatches": true,
+  "emptyAndInvalidNameRejected": true,
+  "cancelAndEscapeNoDownload": true,
+  "enterSubmits": true,
+  "inputFocused": true,
+  "mobileFits": true,
+  "downloads": [
+    "我的图灵机.json",
+    "执行记录.CSV"
+  ],
+  "errors": []
+}

@@ -28,7 +28,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Plain-text and structured rule-table editing
 - 37 grouped examples: 10 function tutorials in a dedicated group, unary arithmetic (addition through pentation, six floored inverses and Fibonacci generation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
-- Local autosave, project JSON import/export, and execution-log CSV export
+- Local autosave, project JSON import/export, and execution-log CSV export with editable filenames
 - Clear accept / reject / halt / missing-rule feedback
 - Generate a Wang tile puzzle from the machine's finite computation history
 - Click/drag tiling, edge-match validation, cycle detection, and one-click correct solution
@@ -76,7 +76,7 @@ Choose direct calculation to append one term or generate a target number of term
 
 In Turing-machine mode, enter a threshold (0–16), convert it into rules, and use the ordinary Run or Step controls. The existing single-tape engine computes each term by comparing repeated suffix blocks. It continues on equality and writes the first term strictly above the threshold before halting. Zero means unwritten; temporary position and counting markers are cleared at halt. Threshold 2 takes 733 transitions and ends with the ninth term, 3. Threshold 3 takes 15,141,538 transitions and ends with term 220, 4—about 4.2 hours at 1000 steps/s. Direct mode is suitable for quickly inspecting longer prefixes.
 
-Generated rules are editable, with 100 rows per table page. Conversion enables Max steps. Large rule tables may exceed browser autosave capacity; the page reports this and still supports running and JSON export. Project import accepts files up to 20 MB. Reload resets direct calculation to its seed and restarts the saved machine definition from its initial state.
+Generated rules are editable in one continuously scrolling table, with a fixed header and no pagination. Conversion enables Max steps. Large rule tables may exceed browser autosave capacity; the page reports this and still supports running and JSON export. Project import accepts files up to 20 MB. Reload resets direct calculation to its seed and restarts the saved machine definition from its initial state.
 
 ## Example Programs
 

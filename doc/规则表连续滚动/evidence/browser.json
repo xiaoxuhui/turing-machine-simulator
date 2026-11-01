@@ -1,0 +1,22 @@
+{
+  "flat": {
+    "rows": 219,
+    "mismatches": 0,
+    "pagers": 0
+  },
+  "scroll": {
+    "scrolled": true,
+    "lastVisible": true,
+    "sticky": true
+  },
+  "lastRuleEdit": true,
+  "lastRuleDelete": true,
+  "invalidSourceRecovery": true,
+  "functions": {
+    "rows": 438,
+    "actual": 438,
+    "mismatches": 0,
+    "pagers": 0
+  },
+  "functionsReadonly": true
+}
