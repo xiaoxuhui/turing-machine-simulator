@@ -23,6 +23,41 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it.each(["", "    ret q1\n"])("preserves a literal outer continuation name with return declaration %j", declaration => {
+    const source = `f(s,q1):\n    s,□->q1,1,R\n${declaration}f\nq1,□->HALT,2,N`;
+    const { parsed, machine, output } = execute(source, "");
+    expect(output).toBe("12");
+    expect(machine.stepCount).toBe(2);
+    expect(resolveInitialState(parsed, "q1")).toBe("q1");
+    expect(parsed.transitions.some(rule => rule.fromState === "q1")).toBe(true);
+    expect(parsed.transitions.some(rule => rule.fromState.includes(".f.") && rule.toState === "q1")).toBe(true);
+    expect(parsed.internalNames).toContainEqual({ source: "q1", actual: "q1", context: `源码第 ${declaration ? 5 : 4} 行` });
+  });
+  it("keeps same-named local states separate from a literal outer state", () => {
+    const source = `f(s,end):\n    s,□->q1,1,R\n    q1,□->end,2,R\nf\nq1,□->HALT,9,N`;
+    const { parsed, output } = execute(source, "");
+    expect(output).toBe("129");
+    expect(resolveInitialState(parsed, "q1")).toBe("q1");
+    expect(parsed.transitions.some(rule => rule.fromState.endsWith(".f.q1"))).toBe(true);
+  });
+  it("suffixes repeated outer expressions without taking a user-defined name", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\nf\nq1,□->q1,2,R\nq1,□->HALT,3,N\nq1_2,□->HALT,8,N`;
+    const { parsed, machine, output } = execute(source, "");
+    expect(output).toBe("123");
+    expect(machine.stepCount).toBe(3);
+    const states = new Set(parsed.transitions.map(rule => rule.fromState));
+    expect(states.has("q1")).toBe(true);
+    expect(states.has("q1_2")).toBe(true);
+    expect(states.has("q1_3")).toBe(true);
+    expect(parsed.transitions.find(rule => rule.fromState === "q1")?.toState).toBe("q1_3");
+  });
+  it("preserves earlier outer declarations while suffixing later expressions", () => {
+    const source = `f(s,end):\n    s,□->end,1,R\nq1,□->HALT,8,N\nf\nq1,□->HALT,2,N`;
+    const { parsed, output } = execute(source, "");
+    expect(output).toBe("12");
+    expect(execute(source, "", "q1").output).toBe("8");
+    expect(parsed.transitions.some(rule => rule.fromState === "q1_2" && rule.writeSymbol === "2")).toBe(true);
+  });
   it("allows shared calls to expose named entries and independent continuation states without extra steps", () => {
     const source = `扫(s,end):\n    s,1->s,1,R\n    s,□->end,□,N\na: 扫 -> b\nb,□->c,2,R\nc: 扫 -> HALT`;
     const result = execute(source, "1", "a");
@@ -150,7 +185,7 @@ g(s,end):
     expect(result.output).toBe("013");
     expect(result.result?.reason).toBe("halt");
     const nextF = result.parsed.internalNames!.find(item => item.source === "f" && item.context.startsWith("源码第"))!;
-    const a = result.parsed.transitions.find(rule => rule.fromState.endsWith(".a"))!;
+    const a = result.parsed.transitions.find(rule => rule.fromState === "a")!;
     expect(a.toState).toBe(nextF.actual);
   });
 
@@ -184,7 +219,7 @@ g(s,end):
     const parsed = parseTransitions(source, { haltStates: ["H"] });
     expect(parsed.errors).toEqual([]);
     const mapping = parsed.internalNames!;
-    expect(mapping.some(item => item.source === "d1" && item.actual.endsWith(".d1"))).toBe(true);
+    expect(mapping.some(item => item.source === "d1" && item.actual === "d1")).toBe(true);
     const rEntries = new Set(mapping.filter(item => item.source === "r.q0").map(item => item.actual));
     expect(rEntries.size).toBeGreaterThan(1);
     const actualStates = new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]));
@@ -203,9 +238,9 @@ g(s,end):
       expect(result.stopped).toBe(i === 4);
       states.push(machine.currentState);
     }
-    expect(states[0]).toMatch(/\.d1$/);
+    expect(states[0]).toBe("d1");
     expect(states[1]).toMatch(/\.r\.q0$/);
-    expect(states[2]).toMatch(/\.d3$/);
+    expect(states[2]).toBe("d3");
     expect(states[3]).toMatch(/\.r\.q0$/);
     expect(states[4]).toBe("H");
     expect(machine.headPosition).toBe(2);
@@ -265,7 +300,7 @@ g(s,end):
   it("reports a missing return transition instead of jumping into a later bare call", () => {
     const source = `r(q0,q1):\n    q0,□ -> q1,1,R\nr\nq1,1 -> HALT,2,N\nr`;
     const { output, machine, result } = execute(source, "");
-    expect(machine.currentState).toMatch(/\.q1$/);
+    expect(machine.currentState).toBe("q1");
     expect(machine.stepCount).toBe(1);
     expect(output).toBe("1");
     expect(result?.reason).toBe("missing-transition");
@@ -280,8 +315,8 @@ g(s,end):
       expect(machine.step().stopped).toBe(i === 3);
       trace.push(machine.currentState);
     }
-    expect(trace[0]).toMatch(/\.q1$/);
-    expect(trace[1]).toMatch(/\.q2$/);
+    expect(trace[0]).toBe("q1");
+    expect(trace[1]).toBe("q2");
     expect(trace[2]).toMatch(/\.r\.q0$/);
     expect(trace[3]).toBe("H");
     expect(machine.headPosition).toBe(2);

@@ -269,8 +269,25 @@ export function parseRuleFunctions(
   }
   const defaultReturn = (_name: string) => finalState;
   const scriptEntries = new Map<number, string>();
+  const assignedOuterNames = new Set(globalStates);
+  const reservedNames = new Set([...states, ...terminal, ...functions.keys(), ...publicNames]);
+  const outerSuffixes = new Map<string, number>();
   for (const [index, statement] of statements.entries()) {
-    if (statement.kind === "rules") scriptEntries.set(index, `${prefix}script.${index}.${statement.state}`);
+    if (statement.kind !== "rules") continue;
+    const state = statement.state;
+    // Export extensions belong to isolated function instances. Ordinary outer
+    // states retain their written names; repeated expressions need distinct entries.
+    if (publicRef(state)) { scriptEntries.set(index, `${prefix}script.${index}.${state}`); continue; }
+    let entry = state;
+    if (assignedOuterNames.has(state)) {
+      let suffix = outerSuffixes.get(state) ?? 2;
+      while (reservedNames.has(`${state}_${suffix}`)) suffix++;
+      entry = `${state}_${suffix}`;
+      outerSuffixes.set(state, suffix + 1);
+    }
+    assignedOuterNames.add(state);
+    reservedNames.add(entry);
+    scriptEntries.set(index, entry);
   }
   const outerReturn = (fn: RuleFunction, state: string): string => {
     if (globalStates.has(state) || terminal.has(state)) return state;
@@ -416,8 +433,7 @@ export function parseRuleFunctions(
         scriptEntries.set(index, compile(fn.name, statement.call.next ?? afterCall(index + 1, fn)));
         continue;
       }
-      const entry = `${prefix}script.${index}.${statement.state}`;
-      scriptEntries.set(index, entry);
+      const entry = scriptEntries.get(index)!;
       for (const { rule, line } of statement.rules) {
         const called = functions.get(rule.toState);
         const target = terminal.has(rule.toState) ? rule.toState
@@ -456,11 +472,8 @@ export function parseRuleFunctions(
       const ctx = [...contexts.values()].find(item => item.fn === fn && item.continuation === finalState)!;
       for (const local of fn.exports.keys()) aliases.set(`${fn.name}.${local}`, local === fn.initial ? ctx.entry : localState(ctx, local));
     }
-    for (const [index, statement] of statements.entries()) {
-      if (statement.kind === "rules" && !globalStates.has(statement.state) && !terminal.has(statement.state) && !publicRef(statement.state) && !aliases.has(statement.state)) {
-        aliases.set(statement.state, scriptEntries.get(index)!);
-      }
-    }
+    // Ordinary outer states already use their literal names. A later repeated
+    // expression must never redirect that original name to its suffixed entry.
     const resolved = new Map<string, string>();
     const resolve = (state: string): string => {
       const path: string[] = [], visiting = new Set<string>();
