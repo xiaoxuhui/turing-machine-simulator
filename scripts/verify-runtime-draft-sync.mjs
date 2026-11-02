@@ -30,6 +30,7 @@ try {
   const stableAfterEdit = async () => {
     assert.match(await page.textContent("#status"), /待应用/);
     assert.match(await page.textContent("#compiledEntry"), /草稿预览/);
+    assert.match(await page.textContent("#logTitle"), /旧定义/);
     const steps = await page.textContent("#stepCount");
     await page.waitForTimeout(80);
     assert.equal(await page.textContent("#stepCount"), steps);
@@ -50,6 +51,7 @@ try {
   assert.match(await page.textContent("#log"), /q0,□ → HALT,2,N/);
   assert.doesNotMatch(await page.textContent("#log"), /q0,1,R/);
   assert.doesNotMatch(await page.textContent("#compiledEntry"), /尚未应用/);
+  assert.equal(await page.textContent("#logTitle"), "执行记录");
 
   await edit({ rules: "q0,□->q0,1,R" });
   await page.click("#apply");

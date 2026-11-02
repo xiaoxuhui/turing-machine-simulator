@@ -69,6 +69,7 @@ body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }
 .download-actions { display:flex; gap:8px; justify-content:flex-end; }
 .panel-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .panel-title h2 { margin: 0; font-size: 16px; }
+#stopMessage:empty { display:none; }
 .panel-title small { color: #758194; }
 .form-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 12px; }
 .step-limit-field { display: grid; gap: 5px; }

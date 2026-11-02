@@ -161,7 +161,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
           </section>
           <section class="panel">
-            <div class="panel-title"><h2>执行记录</h2><small id="stopMessage"></small></div>
+            <div class="panel-title"><h2 id="logTitle">执行记录</h2></div>
+            <p id="stopMessage" class="hint" role="status"></p>
             <div id="log" class="log"></div>
           </section>
         </aside>
@@ -479,6 +480,7 @@ function tapeCellPitch(): number {
 }
 
 function renderLog(): void {
+  byId("logTitle").textContent = status === "定义已修改，待应用" ? "上次运行记录（旧定义）" : "执行记录";
   renderExecutionLog(byId("log"), records);
 }
 
