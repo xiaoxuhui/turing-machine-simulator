@@ -1,0 +1,52 @@
+{
+  "pausedFields": [
+    {
+      "field": "rules",
+      "stoppedAt": 33
+    },
+    {
+      "field": "input",
+      "stoppedAt": 17
+    },
+    {
+      "field": "blankSymbol",
+      "stoppedAt": 16
+    },
+    {
+      "field": "initialState",
+      "stoppedAt": 17
+    },
+    {
+      "field": "acceptStates",
+      "stoppedAt": 16
+    },
+    {
+      "field": "rejectStates",
+      "stoppedAt": 17
+    },
+    {
+      "field": "haltStates",
+      "stoppedAt": 17
+    }
+  ],
+  "editedRuleSingleStep": true,
+  "resetUsesDraft": true,
+  "invalidDraftCannotResume": true,
+  "runUsesDraft": true,
+  "undoStaysPaused": true,
+  "addAndClearPause": true,
+  "renamedOuterStateLookup": [
+    "after",
+    "HALT"
+  ],
+  "retTrace": [
+    "out",
+    "HALT"
+  ],
+  "match": {
+    "records": 2,
+    "logsMatch": true,
+    "tableMatches": true
+  },
+  "errors": []
+}

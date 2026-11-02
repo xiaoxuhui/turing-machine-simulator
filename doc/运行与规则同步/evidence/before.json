@@ -1,0 +1,9 @@
+{
+  "oldRule": "q0,□->q0,1,R",
+  "editedRule": "q0,□->HALT,2,N",
+  "displayedCompiledRule": "q0,□->HALT,2,N",
+  "stepsWhenEdited": 153,
+  "stepsWhenPaused": 163,
+  "lastRecord": "#163q0,□ → q0,1,R　[162→163]",
+  "observedWith": "independent Playwright browser before the fix"
+}
