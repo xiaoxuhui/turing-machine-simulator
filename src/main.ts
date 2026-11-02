@@ -484,7 +484,8 @@ function renderLog(): void {
 
 function renderCompiledProgram(parsed: ReturnType<typeof parseTransitions>): void {
   const entry = resolveInitialState(parsed, value("initialState"));
-  byId("compiledEntry").textContent = parsed.errors.length ? `无法转换：${parsed.errors[0]}` : `实际初始入口：${entry || "未指定"} · ${parsed.transitions.length} 条实际规则`;
+  const pending = shouldApplyCurrentDraft(Boolean(machine), appliedMachineKey, machineProjectKey(collectProject()));
+  byId("compiledEntry").textContent = parsed.errors.length ? `无法转换：${parsed.errors[0]}` : `${pending ? "草稿预览（尚未应用），初始入口" : "实际初始入口"}：${entry || "未指定"} · ${parsed.transitions.length} 条实际规则`;
   if (!byId<HTMLDetailsElement>("compiledProgram").open) return;
   const mapping = byId<HTMLTextAreaElement>("internalNameMap");
   const source = byId<HTMLTextAreaElement>("compiledRuleSource");
@@ -640,11 +641,11 @@ function pause(changeStatus = true): void {
 
 function resetMachine(): void {
   pause(false);
-  if (!machine) {
+  if (shouldApplyCurrentDraft(Boolean(machine), appliedMachineKey, machineProjectKey(collectProject()))) {
     createMachine();
     return;
   }
-  machine.reset();
+  machine!.reset();
   records = [];
   tapeScroll = 0;
   tapeRenderCenter = null;
@@ -652,6 +653,22 @@ function resetMachine(): void {
   stopMessage = "";
   byId("errors").textContent = "";
   render();
+}
+
+function handleEditorInput(): void {
+  persistEditorDraft();
+  const pending = shouldApplyCurrentDraft(Boolean(machine), appliedMachineKey, machineProjectKey(collectProject()));
+  if (pending) {
+    if (scheduler.running) pause(false);
+    status = "定义已修改，待应用";
+    stopMessage = "旧程序已暂停。单步、运行或重置会应用当前定义，并从初始输入开始。";
+    render();
+  } else if (status === "定义已修改，待应用") {
+    status = machine?.stepCount ? "已暂停" : "就绪";
+    stopMessage = "";
+    render();
+  }
+  renderRuleTable();
 }
 
 const speedEls: SpeedSyncElements = {
@@ -715,18 +732,14 @@ attachTapeDrag(byId("tape"), {
 byId("clear").addEventListener("click", () => {
   pause();
   byId<HTMLTextAreaElement>("rules").value = "";
-  persistEditorDraft();
-  renderRuleTable();
+  handleEditorInput();
 });
 byId("addRule").addEventListener("click", () => {
   const source = value("rules").trim();
   byId<HTMLTextAreaElement>("rules").value = `${source}${source ? "\n" : ""}q0,□->HALT,□,N`;
-  persistEditorDraft();
-  renderRuleTable();
+  handleEditorInput();
 });
-for (const field of editorFields) byId(field).addEventListener("input", persistEditorDraft);
-byId("rules").addEventListener("input", renderRuleTable);
-for (const field of ["initialState", "acceptStates", "rejectStates", "haltStates"]) byId(field).addEventListener("input", renderRuleTable);
+for (const field of editorFields) byId(field).addEventListener("input", handleEditorInput);
 byId("compiledProgram").addEventListener("toggle", renderRuleTable);
 attachSpaceIndentation(byId<HTMLTextAreaElement>("rules"));
 byId("unlimitedSteps").addEventListener("change", () => {
