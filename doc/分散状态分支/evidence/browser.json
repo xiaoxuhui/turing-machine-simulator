@@ -1,0 +1,39 @@
+{
+  "results": [
+    {
+      "name": "separated-script",
+      "beforeCall": {
+        "state": "0",
+        "symbol": "|",
+        "head": -2
+      },
+      "called": "__fn.1.output.0",
+      "final": "HALT",
+      "steps": 5
+    },
+    {
+      "name": "across-declaration",
+      "beforeCall": {
+        "state": "0",
+        "symbol": "|",
+        "head": -2
+      },
+      "called": "__fn.1.output.0",
+      "final": "HALT",
+      "steps": 5
+    },
+    {
+      "name": "local-scan-cleanup",
+      "trace": [
+        "__fn.1.scan.0",
+        "__fn.1.scan.0",
+        "__fn.2.output.0",
+        "HALT"
+      ],
+      "output": "11",
+      "steps": 4,
+      "logMatchesCompiled": true
+    }
+  ],
+  "errors": []
+}
