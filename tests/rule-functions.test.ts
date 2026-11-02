@@ -23,6 +23,38 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  const outputOnSeparator = "output(s,end):\n    s,|->end,□,N\n";
+  it.each([
+    `${outputOnSeparator}r(s,end):\n    s,1->end,1,R\nr\n0,1->HALT,1,N\nr\n0,|->output\noutput`,
+    `${outputOnSeparator}0,1->HALT,1,N\noutput\n0,|->output`,
+    "output(0,1):\n    0,|->1,□,N\nr(0,1):\n    0,1->1,1,R\nr\n0,1->HALT,1,N\nr\n0,|->output\noutput",
+  ])("keeps the user's 0,|->output branch on state 0 across source positions", source => {
+    const parsed = parseTransitions(source);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.transitions.some(rule => rule.fromState === "0" && rule.readSymbol === "|")).toBe(true);
+    const machine = new TuringMachine({ blankSymbol: "□", initialState: "0", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions: parsed.transitions }, [[-2, "|"]], -2);
+    machine.stepCount = 206;
+    const call = machine.step();
+    expect(call.stopped).toBe(false);
+    expect(call.record).toMatchObject({ step: 207, fromState: "0", readSymbol: "|", writeSymbol: "|", direction: "N", headBefore: -2, headAfter: -2 });
+    expect(machine.currentState).toMatch(/\.output\.(s|0)$/);
+    expect(machine.step().reason).toBe("halt");
+    expect(machine.tape.entries()).toEqual([]);
+  });
+  it("keeps separated local scan branches on one state and actually reaches cleanup", () => {
+    const source = `${outputOnSeparator}scan(s,end):\n    s,1->s,1,R\n    unused,□->end,9,N\n    s,|->output\n    output\nscan`;
+    const { output, machine, result } = execute(source, "11|");
+    expect(result?.reason).toBe("halt");
+    expect(output).toBe("11");
+    expect(machine.stepCount).toBe(4);
+    expect(machine.headPosition).toBe(2);
+  });
+  it("uses the separator branch's own source position for its later call and continuation", () => {
+    const source = `f(s,end):\n    s,|->end,2,R\nseed(s,end):\n    s,1->end,1,N\nseed\n0,1->HALT,1,N\nf\nbetween,□->HALT,9,N\n0,|->f\nf\nafter,□->HALT,3,N`;
+    expect(execute(source, "|", "0").output).toBe("23");
+    const local = `f(s,end):\n    s,|->end,2,R\np(s,end):\n    s,1->end,1,N\n    f\n    between,□->end,9,N\n    s,|->f\n    f\n    after,□->end,3,N\np`;
+    expect(execute(local, "|").output).toBe("23");
+  });
   it.each(["", "    ret q1\n"])("preserves a literal outer continuation name with return declaration %j", declaration => {
     const source = `f(s,q1):\n    s,□->q1,1,R\n${declaration}f\nq1,□->HALT,2,N`;
     const { parsed, machine, output } = execute(source, "");

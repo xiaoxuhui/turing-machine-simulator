@@ -18,6 +18,29 @@ function orderedStatements(rules: SourceRule[], calls: Call[]): Statement[] {
   }
   return statements;
 }
+
+/** Keep physical positions for calls/continuations, while disjoint symbol
+ * branches of a state share one entry. Repeated read keys start a new group. */
+function branchEntries(statements: Statement[], declarations: SourceRule[] = []): Map<number, number> {
+  const groups = new Map<string, { index: number; symbols: Set<string> }>();
+  for (const { rule } of declarations) {
+    let group = groups.get(rule.fromState);
+    if (!group) { group = { index: -1, symbols: new Set() }; groups.set(rule.fromState, group); }
+    group.symbols.add(rule.readSymbol);
+  }
+  const entries = new Map<number, number>();
+  for (const [index, statement] of statements.entries()) {
+    if (statement.kind !== "rules") continue;
+    let group = groups.get(statement.state);
+    if (!group || statement.rules.some(({ rule }) => group!.symbols.has(rule.readSymbol))) {
+      group = { index, symbols: new Set() };
+      groups.set(statement.state, group);
+    }
+    for (const { rule } of statement.rules) group.symbols.add(rule.readSymbol);
+    entries.set(index, group.index);
+  }
+  return entries;
+}
 interface RuleFunction {
   name: string;
   initial: string;
@@ -269,12 +292,16 @@ export function parseRuleFunctions(
   }
   const defaultReturn = (_name: string) => finalState;
   const scriptEntries = new Map<number, string>();
+  const scriptBranches = branchEntries(statements, declarations.filter(({ rule }) => !publicRef(rule.fromState)));
   const assignedOuterNames = new Set(globalStates);
   const reservedNames = new Set([...states, ...terminal, ...functions.keys(), ...publicNames]);
   const outerSuffixes = new Map<string, number>();
   for (const [index, statement] of statements.entries()) {
     if (statement.kind !== "rules") continue;
     const state = statement.state;
+    const shared = scriptBranches.get(index)!;
+    if (shared === -1) { scriptEntries.set(index, state); continue; }
+    if (shared !== index) { scriptEntries.set(index, scriptEntries.get(shared)!); continue; }
     // Export extensions belong to isolated function instances. Ordinary outer
     // states retain their written names; repeated expressions need distinct entries.
     if (publicRef(state)) { scriptEntries.set(index, `${prefix}script.${index}.${state}`); continue; }
@@ -325,10 +352,13 @@ export function parseRuleFunctions(
   const compileMixed = (ctx: Context): void => {
     const { fn } = ctx;
     const items = orderedStatements(fn.rules, fn.calls), entries = new Map<number, string>();
+    const branches = branchEntries(items);
     const labels = new Map<string, string>();
     ctx.labels = labels;
     ctx.body = { items, entries };
     for (const [index, item] of items.entries()) if (item.kind === "rules") {
+      const shared = branches.get(index)!;
+      if (shared !== index) { entries.set(index, entries.get(shared)!); continue; }
       const entry = labels.has(item.state) ? `${ctx.scope}line.${index}.${item.state}` : `${ctx.scope}${item.state}`;
       entries.set(index, entry);
       if (!labels.has(item.state)) labels.set(item.state, entry);
