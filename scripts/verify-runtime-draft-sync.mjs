@@ -93,6 +93,21 @@ try {
   await page.click("#clear");
   await stableAfterEdit();
 
+  const beforeRename = "f(s,end):\n    s,□->before,1,R\n    ret before\nf\nbefore,□->before,1,R";
+  const afterRename = "f(s,end):\n    s,□->after,1,R\n    ret after\nf\nafter,□->HALT,2,N";
+  await start({ rules: beforeRename });
+  await edit({ rules: afterRename });
+  await stableAfterEdit();
+  assert.match(await page.inputValue("#compiledRuleSource"), /^after,□->HALT,2,N$/m);
+  assert.doesNotMatch(await page.inputValue("#compiledRuleSource"), /before/);
+  await page.click("#reset");
+  await page.click("#step");
+  assert.equal(await page.textContent("#currentState"), "after");
+  await page.click("#step");
+  assert.equal(await page.textContent("#currentState"), "HALT");
+  assert.match(await page.textContent("#log"), /after,□ → HALT,2,N/);
+  assert.doesNotMatch(await page.textContent("#log"), /before/);
+
   const ret = "f(s,end):\n    s,□->out,1,R\n    ret out\nf\nout,□->HALT,2,N";
   await edit({ ...base, rules: ret });
   await page.locator("#compiledRuleSource").scrollIntoViewIfNeeded();
@@ -113,7 +128,7 @@ try {
   });
   assert.deepEqual(match, { records: 2, logsMatch: true, tableMatches: true });
   assert.deepEqual(errors, []);
-  const report = { pausedFields, editedRuleSingleStep: true, resetUsesDraft: true, invalidDraftCannotResume: true, runUsesDraft: true, undoStaysPaused: true, addAndClearPause: true, retTrace: ["out", "HALT"], match, errors };
+  const report = { pausedFields, editedRuleSingleStep: true, resetUsesDraft: true, invalidDraftCannotResume: true, runUsesDraft: true, undoStaysPaused: true, addAndClearPause: true, renamedOuterStateLookup: ["after", "HALT"], retTrace: ["out", "HALT"], match, errors };
   await writeFile(new URL("browser.json", directory), JSON.stringify(report, null, 2) + "\n");
   console.log(JSON.stringify(report, null, 2));
 } finally { await browser.close(); }
