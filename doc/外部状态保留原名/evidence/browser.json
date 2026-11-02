@@ -1,0 +1,59 @@
+{
+  "results": [
+    {
+      "name": "ret",
+      "trace": [
+        "q1",
+        "HALT"
+      ],
+      "output": "12",
+      "steps": 2,
+      "externalPrefixRemoved": true
+    },
+    {
+      "name": "normal",
+      "trace": [
+        "q1",
+        "HALT"
+      ],
+      "output": "12",
+      "steps": 2,
+      "externalPrefixRemoved": true
+    },
+    {
+      "name": "local-isolation",
+      "trace": [
+        "__fn.1.f.q1",
+        "q1",
+        "HALT"
+      ],
+      "output": "129",
+      "steps": 3,
+      "externalPrefixRemoved": true
+    },
+    {
+      "name": "collision",
+      "trace": [
+        "q1",
+        "q1_3",
+        "HALT"
+      ],
+      "output": "123",
+      "steps": 3,
+      "externalPrefixRemoved": true
+    },
+    {
+      "name": "parent-return",
+      "trace": [
+        "__fn.2.child.s",
+        "__fn.1.parent.back",
+        "final",
+        "HALT"
+      ],
+      "output": "123",
+      "steps": 4,
+      "externalPrefixRemoved": true
+    }
+  ],
+  "errors": []
+}
