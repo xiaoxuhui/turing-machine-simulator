@@ -376,8 +376,9 @@ export function parseRuleFunctions(
           const forward = items.findIndex((statement, position) => position > index && statement.kind === "call" && callee(fn, statement.call.name) === called);
           target = forward < 0 ? compile(called.name, nextEntry(index + 1), ctx) : entries.get(forward)!;
         } else {
-          const forward = items.findIndex((statement, position) => position > index && statement.kind === "rules" && statement.state === rule.toState);
-          target = forward < 0 ? localState(ctx, rule.toState) : entries.get(forward)!;
+          const self = rule.toState === rule.fromState;
+          const forward = items.findIndex((statement, position) => position > index && statement.kind === "rules" && statement.state === rule.toState && (!self || statement.rules.some(branch => branch.rule.readSymbol === rule.readSymbol)));
+          target = forward >= 0 ? entries.get(forward)! : self ? entries.get(index)! : localState(ctx, rule.toState);
         }
         append({ ...rule, fromState: entries.get(index)!, toState: target }, line);
       }
@@ -442,7 +443,11 @@ export function parseRuleFunctions(
     }
     return undefined;
   };
-  const scriptTarget = (index: number, state: string): string => {
+  const scriptTarget = (index: number, state: string, rule: Transition): string => {
+    if (state === rule.fromState) {
+      const target = statements.findIndex((item, position) => position >= index && item.kind === "rules" && item.state === state && item.rules.some(branch => branch.rule.readSymbol === rule.readSymbol));
+      return scriptEntries.get(target < 0 ? index - 1 : target)!;
+    }
     if (globalStates.has(state) || callLabels.has(state)) return state;
     let target = statements.findIndex((item, position) => position >= index && item.kind === "rules" && item.state === state);
     if (target < 0) target = statements.findIndex(item => item.kind === "rules" && item.state === state);
@@ -462,7 +467,7 @@ export function parseRuleFunctions(
         const called = functions.get(rule.toState);
         const target = terminal.has(rule.toState) ? rule.toState
           : called ? forwardCall(index + 1, called.name) ?? compile(called.name, afterCall(index + 1, called))
-          : scriptTarget(index + 1, rule.toState);
+          : scriptTarget(index + 1, rule.toState, rule);
         append({ ...rule, fromState: entry, toState: target }, line);
       }
     }

@@ -23,6 +23,19 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("keeps a scan self-loop when a later same-named expression only handles another symbol", () => {
+    const f = "f(s,end):\n    s,|->end,|,N\n";
+    const local = `${f}scan(s,end):\n    s,1->s,1,R\n    s,|->end,□,N\n    f\n    s,|->end,9,N\nscan`;
+    const a = execute(local, "11|");
+    expect(a.result?.reason).toBe("halt");
+    expect(a.output).toBe("11");
+    expect(a.machine.stepCount).toBe(3);
+    const outer = `${f}f\ns,1->s,1,R\ns,|->HALT,□,N\nf\ns,|->HALT,9,N`;
+    const b = execute(outer, "11|", "s");
+    expect(b.result?.reason).toBe("halt");
+    expect(b.output).toBe("11");
+    expect(b.machine.stepCount).toBe(3);
+  });
   const outputOnSeparator = "output(s,end):\n    s,|->end,□,N\n";
   it.each([
     `${outputOnSeparator}r(s,end):\n    s,1->end,1,R\nr\n0,1->HALT,1,N\nr\n0,|->output\noutput`,
