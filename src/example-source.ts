@@ -26,6 +26,19 @@ const phaseNotes: Record<string, string> = {
   "mul.clean": "清除输入与分隔符，只留下输出区的答案。",
 };
 
+const registerFunctionNotes: Record<string, string> = {
+  r: "原稿右移工具：保留当前符号，读写头向右一格后完成。",
+  l: "原稿左移工具：保留当前符号，读写头向左一格后完成。",
+  goo: "向右越过工作区，找到 o 边界后左移一格，交给后续调用。",
+  go: "初始化工作区：向左写 o 和两个 |，建立寄存器边界，再定位到输入。",
+  copy_m: "逐个把左操作数的 1 标为 X，返回工作寄存器调用 succ 计数，再扫描下一个输入。",
+  copy_n: "逐个标记右操作数，越过靠近 o 的寄存器，在另一寄存器调用 succ 计数。",
+  X0: "从右向左擦掉 X 和 +，回到 o 左侧；工作寄存器继续保留。",
+  succ: "寄存器加一：C1 记住返回位置，向左调整 1 与 |，扩展边界后恢复标记。",
+  pred: "寄存器减一：用 C1 或 C| 记住被移动的符号，向左调整后缩短计数区并恢复标记。",
+  output: "原稿收尾：定位两个寄存器，标记要保留的 1，再擦除 o、| 及其它工作符。",
+};
+
 export function exampleSource(project: ExampleProject, style: ExampleSourceStyle, includeHeader = true): string {
   const plain = compactRuleArrows(project.rules).split(/\r?\n/).filter(line => !line.trimStart().startsWith("#")).join("\n");
   if (style === "plain") return plain;
@@ -39,13 +52,24 @@ export function exampleSource(project: ExampleProject, style: ExampleSourceStyle
   else if (project.name.includes("超幂")) lines.push("# 从结果 1 开始，每轮执行 底数^旧结果；幂塔右结合，不能当成重复乘法。");
   else if (project.name.includes("乘方")) lines.push("# 从结果 1 开始，按指数次数重复乘以底数；指数为 0 时不进入循环。");
   const seen = new Set<string>();
+  const registerAdder = project.name === "寄存器加法器（原稿）";
+  const notedFunctions = new Set<string>();
   for (const line of compactRuleArrows(project.rules).split(/\r?\n/)) {
     const text = line.trim();
     const indent = line.slice(0, line.length - line.trimStart().length);
-    if (/^[^,():\s]+\([^()]*\):$/.test(text)) lines.push(`# 定义 ${text.slice(0, text.indexOf("("))}：括号前两个值是函数入口与正常完成状态。`);
+    if (/^[^,():\s]+\([^()]*\):$/.test(text)) {
+      const name = text.slice(0, text.indexOf("("));
+      lines.push(`# 定义 ${name}：括号前两个值是函数入口与正常完成状态。`);
+      if (registerAdder && registerFunctionNotes[name]) { lines.push(`# ${registerFunctionNotes[name]}`); notedFunctions.add(name); }
+    }
     if (/^ret(?:\s|:)/.test(text)) lines.push(`${indent}# 只有到达这里声明的状态，才跳到外部或父函数的对应状态。`);
     if (/^导出状态(?:\s|:)/.test(text)) lines.push(`${indent}# 公开名称供外部补写或选择入口；这条声明本身不要求返回。`);
     const state = text.match(/^([^,\s]+),/)?.[1];
+    const registerFunction = state?.match(/^_+fn\.\d+\.([^.]+)\./)?.[1];
+    if (registerAdder && registerFunction && registerFunctionNotes[registerFunction] && !notedFunctions.has(registerFunction)) {
+      lines.push(`${indent}# ${registerFunctionNotes[registerFunction]}`);
+      notedFunctions.add(registerFunction);
+    }
     if (state && phaseNotes[state] && !seen.has(state)) { lines.push(`${indent}# ${phaseNotes[state]}`); seen.add(state); }
     if (/^[\p{L}_][\p{L}\p{N}_-]*$/u.test(text)) lines.push(`${indent}# 调用 ${text}；正常完成后从本调用下面继续。`);
     lines.push(line);

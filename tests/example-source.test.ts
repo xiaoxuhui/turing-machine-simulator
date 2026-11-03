@@ -24,3 +24,12 @@ it.each(["unaryMultiply", "unaryDivide", "unaryPower", "unaryTetration", "unaryP
   expect(middleNotes.some(item => /清理|擦除/.test(item.line))).toBe(true);
   expect(middleNotes.some(item => item.index > lines.length / 2)).toBe(true);
 });
+
+it("places the user's register adder explanations between function definitions", () => {
+  const source = exampleSource(examples.registerAdder, "commented");
+  expect(source).toContain("# 逐个把左操作数的 1 标为 X");
+  expect(source).toContain("# 寄存器减一");
+  expect(source).toContain("# 原稿收尾");
+  expect(source).toContain("2,1->3,1,L");
+  expect(source.lastIndexOf("# 原稿收尾")).toBeGreaterThan(source.length / 2);
+});

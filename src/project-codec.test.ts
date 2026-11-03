@@ -24,6 +24,10 @@ describe("project codec", () => {
   it("accepts and preserves a version 1 project", () => {
     expect(parseProjectJson(JSON.stringify(validProject))).toEqual(validProject);
   });
+  it("preserves a short ordinary jump when importing a project", () => {
+    const project = { ...validProject, initialState: "q0", rules: "q0,1->HALT" };
+    expect(parseProjectJson(JSON.stringify(project))).toEqual(project);
+  });
 
   it("accepts Max mode and preserves it through storage", () => {
     const project = { ...validProject, maxSteps: null };
@@ -38,7 +42,7 @@ describe("project codec", () => {
     ["missing field", { ...validProject, rules: undefined }],
     ["invalid limit", { ...validProject, maxSteps: 0 }],
     ["invalid Max text", { ...validProject, maxSteps: "Max" }],
-    ["invalid rules", { ...validProject, rules: "q0,1 -> broken" }],
+    ["invalid rules", { ...validProject, rules: "q0,1 -> broken,1" }],
     ["duplicate rules", { ...validProject, rules: "q0,1 -> q0,1,R\nq0,1 -> q1,1,N" }],
   ])("rejects %s before it reaches the workbench", (_name, project) => {
     expect(() => parseProjectJson(JSON.stringify(project))).toThrow();
