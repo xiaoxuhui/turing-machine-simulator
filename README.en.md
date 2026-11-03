@@ -26,7 +26,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Sparse tape that extends left and right, with head-following view
 - Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
-- 37 grouped examples: 10 function tutorials in a dedicated group, unary arithmetic (addition through pentation, six floored inverses and Fibonacci generation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
+- 38 grouped examples: 10 function tutorials in a dedicated group, unary arithmetic (the user's original register adder, addition through pentation, six floored inverses and Fibonacci generation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
 - Local autosave, project JSON import/export, and execution-log CSV export with editable filenames
 - Clear accept / reject / halt / missing-rule feedback
@@ -58,7 +58,7 @@ append
 
 Input `111` with ordinary halt state `HALT` takes 5 transitions and leaves `11111`. Normal function completion continues below the call. Only an indented `ret q1` declaration jumps to the matching outer or caller state when q1 is reached. The Chinese spelling `返回状态 q1` remains accepted. An explicit terminal target still stops the program; a missing transition remains an error.
 
-Initial State takes precedence: select a state, function, or public entry explicitly. An empty field defaults to the first top-level call; choosing the second function starts there, and an unknown name is never replaced with the first call. Composite bodies contain only calls; mixing rules and calls within a body remains unsupported. Local states are isolated. Recursion is unsupported; expansion is limited to 64 levels, 10000 instances and 100000 transitions.
+Initial State takes precedence: select a state, function, or public entry explicitly. An empty field defaults to the first top-level call; choosing the second function starts there, and an unknown name is never replaced with the first call. Bodies may contain rules, calls, or both. Local states are isolated. Recursion is unsupported; expansion is limited to 64 levels, 10000 instances and 100000 transitions.
 
 Extra header fields declare child functions or local aliases, e.g. `parent(q0,q1,write=child):`. Normal child completion continues below the call; ret explicitly targets a caller/outer state. These are function bindings, not arbitrary value arguments.
 
@@ -70,7 +70,7 @@ From the first top-level bare call onward, calls and following transition expres
 
 Functions compile to ordinary tape rules without computation shortcuts. Their expanded table is read-only; edit source instead. Tab inserts four spaces and Enter retains indentation. Raw drafts save independently of valid projects, including unfinished syntax, exact spaces and intentional clearing. Reload restores text without Apply; execution restarts at the beginning. Explicit imports/example loads replace the draft. Storage failures show a warning. Text lost by refreshing an older version cannot be recovered automatically.
 
-Direct function calls may omit writing and movement: `q0,1->f` is equivalent to `q0,1->f,1,N`. The read condition and one control step remain. Local child aliases are supported; complete rules retain their explicit writing and movement. Workbench and campaign editors highlight parse-error lines in red and list clickable line numbers with reasons. Corrections clear stale marks; long source lines scroll horizontally for accurate positioning.
+Any transition may omit both writing and movement: `q0,1->target` is equivalent to `q0,1->target,1,N`, including ordinary states, functions and terminals. The read condition and one transition step remain. Local child aliases are supported; complete rules retain their explicit writing and L/R/N movement. Unknown ordinary targets produce a missing-transition result when reached. Workbench and campaign editors highlight parse-error lines in red and list clickable line numbers with reasons. Corrections clear stale marks; long source lines scroll horizontally for accurate positioning.
 
 ## Gijswijt's Sequence
 
@@ -82,9 +82,11 @@ Generated rules are editable in one continuously scrolling table, with a fixed h
 
 ## Example Programs
 
-The selector groups 37 programs into unary arithmetic, function tutorials, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+The selector groups 38 programs into unary arithmetic, function tutorials, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
 
-The 10 function tutorials progress from a single call through returns, exports, mixed rule/call bodies and local aliases. All 37 examples offer plain and commented source; plain is the default. Comments explain arithmetic phases between rules, including register increments, decrements, zero branches, parsing and cleanup for higher operations. Switching styles preserves the editor until Load is clicked. `ret` controls return flow, while `导出状态` publishes names.
+The 10 function tutorials progress from a single call through returns, exports, mixed rule/call bodies and local aliases. All 38 examples offer plain and commented source; plain is the default. Comments explain arithmetic phases between rules, including register increments, decrements, zero branches, parsing and cleanup for higher operations. Switching styles preserves the editor until Load is clicked. `ret` controls return flow, while `导出状态` publishes names.
+
+The user's original register adder is preserved in full, including `2,1->3,1,L`. With blank `0` and initial state `go`, its default `1+11` produces `111` in 146 steps. The unchanged original produces `1` for `11+`; this arithmetic discrepancy is documented in its preview for further debugging. Scan self-loops stay at their current entry when a later expression only handles another read symbol.
 
 Mixed function bodies start at the state selected in the header. A child-function target searches later bare calls within that same body, choosing the nearest call of the same function, including aliases. If none exists, the child is invoked in place and resumes at the next expression. Bare calls resume below their own location. Ordinary local state targets still support loops, and missing read branches remain errors. Tutorial 9 uses the user's copy wrapper with a decrementing pred: input 111 becomes 11 in 6 steps, while l takes the one-step exit branch. Tutorial 10 mixes aliases, later-call lookup and in-place calls to output 123 in 6 steps.
 

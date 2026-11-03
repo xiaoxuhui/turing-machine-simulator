@@ -1,0 +1,82 @@
+{
+  "ordinaryShortJumpPreservesSymbolAndHead": true,
+  "fullSyntaxStillWritesAndMoves": true,
+  "unknownTargetNotReplacedByBareCall": true,
+  "selectionKeepsDraft": true,
+  "originalUnchanged": true,
+  "results": [
+    {
+      "input": "+",
+      "output": "",
+      "steps": 33
+    },
+    {
+      "input": "+1111",
+      "output": "1111",
+      "steps": 143
+    },
+    {
+      "input": "1+",
+      "output": "1",
+      "steps": 80
+    },
+    {
+      "input": "1+11",
+      "output": "111",
+      "steps": 146
+    },
+    {
+      "input": "11+",
+      "output": "1",
+      "steps": 109
+    },
+    {
+      "input": "111+11",
+      "output": "1111",
+      "steps": 276
+    }
+  ],
+  "variants": [
+    {
+      "names": "descriptive",
+      "structure": "original",
+      "style": "commented",
+      "input": "1+11",
+      "output": "111",
+      "steps": 146
+    },
+    {
+      "names": "numeric",
+      "structure": "original",
+      "style": "plain",
+      "input": "1+11",
+      "output": "111",
+      "steps": 146
+    },
+    {
+      "names": "descriptive",
+      "structure": "flat",
+      "style": "plain",
+      "input": "1+11",
+      "output": "111",
+      "steps": 146
+    },
+    {
+      "names": "numeric",
+      "structure": "flat",
+      "style": "commented",
+      "input": "1+11",
+      "output": "111",
+      "steps": 146
+    },
+    {
+      "names": "descriptive",
+      "structure": "functions",
+      "style": "plain",
+      "input": "1+11",
+      "output": "111",
+      "steps": 146
+    }
+  ],
+  "errors": []
+}
