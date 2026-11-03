@@ -228,6 +228,13 @@ describe("indented rule functions", () => {
     expect(result.machine.stepCount).toBe(3);
     expect(result.machine.headPosition).toBe(0);
   });
+  it("does not redirect an unknown ordinary short target into the next bare function", () => {
+    const result = execute("f(s,end):\n    s,□->end,9,N\nf\nstart,□->missing\nf", "", "start");
+    expect(result.result?.reason).toBe("missing-transition");
+    expect(result.machine.currentState).toBe("missing");
+    expect(result.machine.stepCount).toBe(1);
+    expect(result.output).toBe("");
+  });
 
   const forwardFunctions = `seed(s,end):
     s,□->end,0,R

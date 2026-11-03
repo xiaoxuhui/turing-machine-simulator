@@ -451,7 +451,7 @@ export function parseRuleFunctions(
     if (globalStates.has(state) || callLabels.has(state)) return state;
     let target = statements.findIndex((item, position) => position >= index && item.kind === "rules" && item.state === state);
     if (target < 0) target = statements.findIndex(item => item.kind === "rules" && item.state === state);
-    return target < 0 ? scriptEntry(index, state, state) : scriptEntries.get(target)!;
+    return target < 0 ? state : scriptEntries.get(target)!;
   };
   const compileScript = (): string => {
     // Build continuations backwards so long straight-line scripts do not recurse in JS.
