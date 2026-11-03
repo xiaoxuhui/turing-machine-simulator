@@ -13,6 +13,16 @@ describe("Tape", () => {
 });
 
 describe("transition parser", () => {
+  it.each(["q0,1->q1", " q0, | -> q1 ", "q0,C1->HALT"])("expands an ordinary short jump without writing or moving: %s", source => {
+    const [from, rest] = source.trim().split(",");
+    const [read, to] = rest.split("->").map(value => value.trim());
+    const result = parseTransitions(source);
+    expect(result.errors).toEqual([]);
+    expect(result.transitions).toEqual(parseTransitions(`${from.trim()},${read}->${to},${read},N`).transitions);
+  });
+  it.each(["q0,1->q1,1", "q0,1->q1,1,Q", "q0,1->"])("still rejects an incomplete or invalid full rule: %s", source => {
+    expect(parseTransitions(source).errors[0]).toContain("第 1 行");
+  });
   it("parses rules and rejects duplicate keys", () => {
     expect(parseTransitions("q0,1 -> q1,0,R").transitions[0].direction).toBe("R");
     expect(parseTransitions("q0,1 -> q1,0,R\nq0,1 -> q2,1,L").errors).toHaveLength(1);

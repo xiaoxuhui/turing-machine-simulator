@@ -199,9 +199,21 @@ describe("indented rule functions", () => {
     expect(machine.stepCount).toBe(0);
   });
 
-  it.each(["missing", "ordinary", "HALT"])("rejects incomplete ordinary transitions targeting %s", target => {
+  it.each(["missing", "ordinary", "HALT"])("allows ordinary short jumps targeting %s", target => {
     const source = `f(s,end):\n    s,□->end,1,N\nstart,□->${target}\nordinary,□->HALT,2,N`;
-    expect(parseTransitions(source).errors.join()).toContain(`第 3 行：简写调用目标 ${target} 不是已定义函数`);
+    const full = source.replace(`start,□->${target}`, `start,□->${target},□,N`);
+    expect(parseTransitions(source)).toEqual(parseTransitions(full));
+    const result = execute(source, "", "start");
+    expect(result.result?.reason).toBe(target === "missing" ? "missing-transition" : "halt");
+    expect(result.machine.headPosition).toBe(0);
+    expect(result.output).toBe(target === "ordinary" ? "2" : "");
+  });
+  it("uses local and returned states in shortened function rules", () => {
+    const source = `f(s,end):\n    s,□->local\n    local,□->out\n    ret out\nf\nout,□->HALT,2,N`;
+    const result = execute(source, "");
+    expect(result.output).toBe("2");
+    expect(result.machine.stepCount).toBe(3);
+    expect(result.machine.headPosition).toBe(0);
   });
 
   const forwardFunctions = `seed(s,end):

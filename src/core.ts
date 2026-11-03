@@ -168,12 +168,13 @@ export function parseTransitions(source: string, options: ParseOptions = {}): Pa
   source.split(/\r?\n/).forEach((raw, index) => {
     const line = raw.trim();
     if (!line || line.startsWith("#")) return;
-    const match = line.match(/^([^,]+),(.+?)\s*->\s*([^,]+),(.+?),([LRNlrn])$/);
+    const match = line.match(/^([^,]+),(.+?)\s*->\s*([^,]+)(?:,(.+?),([LRNlrn]))?$/);
     if (!match) {
       errors.push(`第 ${index + 1} 行：${transitionFormatError(line)}`);
       return;
     }
-    const [, fromState, readSymbol, toState, writeSymbol, direction] = match.map((value) => value.trim());
+    const fromState = match[1].trim(), readSymbol = match[2].trim(), toState = match[3].trim();
+    const writeSymbol = match[4]?.trim() ?? readSymbol, direction = match[5]?.trim() ?? "N";
     const transition: Transition = {
       fromState,
       readSymbol,
