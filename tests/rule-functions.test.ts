@@ -23,6 +23,65 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it.each(["出口=q1,状态", "出口=q1"])("jumps through a state binding to the real global name: %s", binding => {
+    const source = `f(q0,done,${binding},1,符号):\n    q0,1->出口,*,*\nq1,1->HALT,2,*\nf`;
+    const { parsed, machine, output, result } = execute(source, "1");
+    expect(output).toBe("2");
+    expect(result?.reason).toBe("halt");
+    expect(machine.stepCount).toBe(2);
+    expect(parsed.transitions.some(rule => rule.toState === "q1")).toBe(true);
+    expect(parsed.internalNames?.some(item => item.source === "f.出口" && item.actual === "q1")).toBe(true);
+  });
+  it.each(["动作=child,函数", "动作=child"])("binds function parameters before ordinary states: %s", parameter => {
+    const source = `child(s,end):\n    s,1->end,R,*\nf(q0,done,${parameter},R,符号):\n    q0,1->动作,*,*\n    动作\n    after,R->done,L,*\nf`;
+    const { output, machine, result } = execute(source, "1");
+    expect(output).toBe("L");
+    expect(machine.stepCount).toBe(3);
+    expect(result?.reason).toBe("halt");
+  });
+  it("keeps bound exits global in mixed bodies even when a later local expression has the target name", () => {
+    const source = `child(s,end):\n    s,1->end,1,*\nf(s,end,出口=outside,状态):\n    s,1->出口,*,*\n    child\n    outside,1->end,9,*\noutside,1->HALT,2,*\nf`;
+    expect(execute(source, "1").output).toBe("2");
+  });
+  it("preserves unknown bound states as missing transitions and does not continue unrelated code", () => {
+    const source = "f(s,end,出口=missing,状态):\n    s,1->出口,*,*\nf\nafter,1->HALT,9,*";
+    const result = execute(source, "1");
+    expect(result.machine.currentState).toBe("missing");
+    expect(result.machine.stepCount).toBe(1);
+    expect(result.result?.reason).toBe("missing-transition");
+  });
+  it("allows bound global terminal states", () => {
+    const result = execute("f(s,end,出口=HALT,状态):\n    s,1->出口,*,*\nf", "1");
+    expect(result.result?.reason).toBe("halt");
+    expect(result.machine.stepCount).toBe(1);
+  });
+  it("returns through an explicitly declared bound ret and never prefixes the external name", () => {
+    const source = "f(s,end,出口=outside,状态):\n    s,1->出口,*,*\n    ret 出口\nf\noutside,1->HALT,2,*";
+    expect(execute(source, "1").output).toBe("2");
+  });
+  it("isolates repeated invocations while sharing the declared external exit", () => {
+    const source = "f(s,end,出口=outside,状态):\n    s,1->end,*,R\n    s,□->出口,*,*\noutside,□->HALT,2,*\nf\nf\nf";
+    const result = execute(source, "1");
+    expect(result.output).toBe("12");
+    expect(result.machine.stepCount).toBe(3);
+  });
+  it("resolves a bound exported state and rejects private targets with the header's line number", () => {
+    const source = "g(s,end):\n    s,1->q,*,*\n    q,1->end,2,*\n    导出状态 q\nf(s,end,出口=g.q,状态):\n    s,1->出口,*,*\nf";
+    expect(execute(source, "1").output).toBe("2");
+    expect(parseTransitions(source.replace("    导出状态 q\n", "")).errors.join()).toContain("第 4 行：状态 g.q 未导出");
+  });
+  it.each([
+    ["f(s,end,x=unknown,函数):\n    s,1->x", "未定义子函数"],
+    ["child(s,end):\n    s,1->end\nf(s,end,x=child,状态):\n    s,1->x", "是函数"],
+    ["f(s,end,s=outside,状态):\n    s,1->end", "与状态冲突"],
+    ["f(s,end,x=outside,状态):\n    s,1->x\n    x,1->end", "不能定义函数内"],
+    ["f(s,end,x=outside,状态):\n    s,1->end\n    x", "未定义函数"],
+  ])("reports typed parameter errors with source lines", (source, message) => {
+    const parsed = parseTransitions(source);
+    expect(parsed.errors.join()).toContain(message);
+    expect(parsed.errors.join()).toMatch(/第 \d+ 行/);
+    expect(parsed.transitions).toEqual([]);
+  });
   it("uses star defaults inside functions and when jumping to functions", () => {
     const star = "f(s,end):\n    s,1->end,*,R\nstart,1->f,*,*\nf\nafter,□->HALT,L,*";
     const full = "f(s,end):\n    s,1->end,1,R\nstart,1->f,1,N\nf\nafter,□->HALT,L,N";
