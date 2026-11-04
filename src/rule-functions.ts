@@ -278,6 +278,8 @@ export function parseRuleFunctions(
   let prefix = "__fn.";
   const publicNames = [...functions.values()].flatMap(fn => [...fn.exports.keys()].map(state => `${fn.name}.${state}`));
   while ([...states, ...terminal, ...functions.keys(), ...publicNames].some(state => state.startsWith(prefix))) prefix = `_${prefix}`;
+  let instanceMarker = "FN";
+  while ([...states, ...terminal, ...functions.keys(), ...publicNames].some(state => state.includes(`.${instanceMarker}.`))) instanceMarker += "_";
   const transitions: Transition[] = [];
   const origins: number[] = [];
   interface Context {
@@ -417,7 +419,7 @@ export function parseRuleFunctions(
       contexts.set(key, ctx);
       return entry;
     }
-    const scope = `${prefix}${id}.${path}.`;
+    const scope = parent ? `${parent.path}.${instanceMarker}.${id}.${name}.` : `${name}.${instanceMarker}.${id}.`;
     const entry = publicRef(fn.initial, fn)?.alias ?? `${scope}${fn.initial}`;
     const ctx: Context = { id, path, parentId: parent?.id, callSite, fn, continuation, entry, scope, returns };
     contexts.set(key, ctx);

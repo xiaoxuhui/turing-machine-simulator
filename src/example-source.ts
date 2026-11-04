@@ -65,7 +65,9 @@ export function exampleSource(project: ExampleProject, style: ExampleSourceStyle
     if (/^ret(?:\s|:)/.test(text)) lines.push(`${indent}# 只有到达这里声明的状态，才跳到外部或父函数的对应状态。`);
     if (/^导出状态(?:\s|:)/.test(text)) lines.push(`${indent}# 公开名称供外部补写或选择入口；这条声明本身不要求返回。`);
     const state = text.match(/^([^,\s]+),/)?.[1];
-    const registerFunction = state?.match(/^_+fn\.\d+\.([^.]+)\./)?.[1];
+    const child = state?.match(/\.FN_*\.\d+\.([^.]+)\./)?.[1];
+    const registerFunction = child && registerFunctionNotes[child] ? child
+      : state?.match(/^([^.]+)\.FN_*\.\d+\./)?.[1] ?? state?.match(/^_+fn\.\d+\.([^.]+)\./)?.[1];
     if (registerAdder && registerFunction && registerFunctionNotes[registerFunction] && !notedFunctions.has(registerFunction)) {
       lines.push(`${indent}# ${registerFunctionNotes[registerFunction]}`);
       notedFunctions.add(registerFunction);

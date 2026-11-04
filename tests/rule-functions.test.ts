@@ -24,6 +24,14 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it.each([1, 2])("avoids %s preexisting FN markers without changing user states", count => {
+    const declarations = Array.from({ length: count }, (_, index) => `outside.FN${"_".repeat(index)}.1.q,□->HALT,9,*`).join("\n");
+    const source = `f(s,end):\n    s,□->end,1,*\n${declarations}\nf`;
+    const result = execute(source, "");
+    expect(result.output).toBe("1");
+    expect(resolveInitialState(result.parsed, "f")).toMatch(new RegExp(`^f\\.FN${"_".repeat(count)}\\.\\d+\\.s$`));
+    expect(result.parsed.transitions.some(rule => rule.fromState === "outside.FN.1.q")).toBe(true);
+  });
   it("keeps different call sites separate even within the same parent and continuation", () => {
     const source = "SUCC(s,end):\n    s,->end,1,*\nCOPY(q0,done,SUCC):\n    q0,0->SUCC,*,*\n    q0,1->SUCC,*,*\n    after,1->done,2,*\nCOPY";
     const parsed = parseTransitions(source), initial = resolveInitialState(parsed, "COPY");
@@ -31,7 +39,7 @@ describe("indented rule functions", () => {
     const calls = parsed.transitions.filter(rule => rule.fromState === initial);
     expect(calls).toHaveLength(2);
     expect(calls[0].toState).not.toBe(calls[1].toState);
-    for (const call of calls) expect(call.toState).toMatch(/\.COPY\.SUCC\.s$/);
+    for (const call of calls) expect(call.toState).toMatch(/^COPY\.FN\.\d+\.SUCC\.s$/);
     expect(execute(source, "0").output).toBe("2");
     expect(execute(source, "1").output).toBe("2");
   });
@@ -42,9 +50,9 @@ describe("indented rule functions", () => {
     expect(result.machine.stepCount).toBe(2);
     expect(result.result?.reason).toBe("halt");
     const first = resolveInitialState(result.parsed, "COPY");
-    expect(first).toMatch(/\.COPY\.SUCC\.q0$/);
+    expect(first).toMatch(/^COPY\.FN\.\d+\.SUCC\.q0$/);
     const second = result.parsed.transitions.find(rule => rule.fromState === first)!.toState;
-    expect(second).toMatch(/\.COPY\.SUCC\.q0$/);
+    expect(second).toMatch(/^COPY\.FN\.\d+\.SUCC\.q0$/);
     expect(second).not.toBe(first);
   });
   it("names the same child separately under each composite parent even with identical continuation", () => {
@@ -52,9 +60,9 @@ describe("indented rule functions", () => {
     const parsed = parseTransitions(source);
     expect(parsed.errors).toEqual([]);
     const copy = resolveInitialState(parsed, "COPY"), other = resolveInitialState(parsed, "OTHER"), root = resolveInitialState(parsed, "FUCC");
-    expect(copy).toMatch(/__fn\.\d+\.COPY\.FUCC\.q0$/);
-    expect(other).toMatch(/__fn\.\d+\.OTHER\.FUCC\.q0$/);
-    expect(root).toMatch(/__fn\.\d+\.FUCC\.q0$/);
+    expect(copy).toMatch(/^COPY\.FN\.\d+\.FUCC\.q0$/);
+    expect(other).toMatch(/^OTHER\.FN\.\d+\.FUCC\.q0$/);
+    expect(root).toMatch(/^FUCC\.FN\.\d+\.q0$/);
     expect(new Set([copy, other, root]).size).toBe(3);
     expect(parsed.internalNames?.some(item => item.source === "COPY.FUCC.q0" && item.actual === copy)).toBe(true);
   });
@@ -62,15 +70,15 @@ describe("indented rule functions", () => {
     const source = "FUCC(q0,done):\n    q0,□->middle,1,*\n    middle,1->done,2,*\n    导出状态 middle\nCOPY(q0,done,FUCC):\n    FUCC\nWRAP(q0,done,COPY):\n    COPY\nWRAP";
     const result = execute(source, "", "WRAP");
     expect(result.output).toBe("2");
-    expect(resolveInitialState(result.parsed, "WRAP")).toMatch(/\.WRAP\.COPY\.FUCC\.q0$/);
+    expect(resolveInitialState(result.parsed, "WRAP")).toMatch(/^WRAP\.COPY\.FN\.\d+\.FUCC\.q0$/);
     const rootExport = result.parsed.stateExports?.find(item => item.name === "FUCC.middle")!.state;
-    expect(rootExport).toMatch(/__fn\.\d+\.FUCC\.middle$/);
+    expect(rootExport).toMatch(/^FUCC\.FN\.\d+\.middle$/);
     expect(rootExport).not.toContain("COPY");
   });
   it("does not let parent wildcard rules capture a nested child merely because its path names the parent", () => {
     const source = "FUCC(s,end):\n    s,0->end,1,*\nCOPY(s,end):\n    s,1->FUCC,*,*\n    ,->end,9,*\nCOPY";
     const result = execute(source, "1");
-    expect(result.machine.currentState).toMatch(/\.COPY\.FUCC\.s$/);
+    expect(result.machine.currentState).toMatch(/^COPY\.FN\.\d+\.FUCC\.s$/);
     expect(result.result?.reason).toBe("missing-transition");
     expect(result.output).toBe("1");
     expect(result.machine.stepCount).toBe(1);
@@ -89,7 +97,7 @@ describe("indented rule functions", () => {
     expect(result.output).toBe("12");
     expect(result.machine.stepCount).toBe(3);
     const text = result.parsed.transitions.map(formatTransition).join("\n");
-    expect(text).toMatch(/__fn\.\d+\.f\.\*,\*->/);
+    expect(text).toMatch(/f\.FN\.\d+\.\*,\*->/);
     const copied = parseTransitions(text);
     expect(copied.errors).toEqual([]);
     const machine = new TuringMachine({ blankSymbol: "□", initialState: resolveInitialState(result.parsed, "f"), acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions: copied.transitions }, [[0, "1"]]);
@@ -228,7 +236,7 @@ describe("indented rule functions", () => {
     const call = machine.step();
     expect(call.stopped).toBe(false);
     expect(call.record).toMatchObject({ step: 207, fromState: "0", readSymbol: "|", writeSymbol: "|", direction: "N", headBefore: -2, headAfter: -2 });
-    expect(machine.currentState).toMatch(/\.output\.(s|0)$/);
+    expect(machine.currentState).toMatch(/^output\.FN\.\d+\.(s|0)$/);
     expect(machine.step().reason).toBe("halt");
     expect(machine.tape.entries()).toEqual([]);
   });
@@ -253,7 +261,7 @@ describe("indented rule functions", () => {
     expect(machine.stepCount).toBe(2);
     expect(resolveInitialState(parsed, "q1")).toBe("q1");
     expect(parsed.transitions.some(rule => rule.fromState === "q1")).toBe(true);
-    expect(parsed.transitions.some(rule => rule.fromState.includes(".f.") && rule.toState === "q1")).toBe(true);
+    expect(parsed.transitions.some(rule => /^f\.FN\.\d+\./.test(rule.fromState) && rule.toState === "q1")).toBe(true);
     expect(parsed.internalNames).toContainEqual({ source: "q1", actual: "q1", context: `源码第 ${declaration ? 5 : 4} 行` });
   });
   it("keeps same-named local states separate from a literal outer state", () => {
@@ -261,7 +269,7 @@ describe("indented rule functions", () => {
     const { parsed, output } = execute(source, "");
     expect(output).toBe("129");
     expect(resolveInitialState(parsed, "q1")).toBe("q1");
-    expect(parsed.transitions.some(rule => rule.fromState.endsWith(".f.q1"))).toBe(true);
+    expect(parsed.transitions.some(rule => /^f\.FN\.\d+\.q1$/.test(rule.fromState))).toBe(true);
   });
   it("suffixes repeated outer expressions without taking a user-defined name", () => {
     const source = `f(s,end):\n    s,□->end,1,R\nf\nq1,□->q1,2,R\nq1,□->HALT,3,N\nq1_2,□->HALT,8,N`;
@@ -481,9 +489,9 @@ g(s,end):
       states.push(machine.currentState);
     }
     expect(states[0]).toBe("d1");
-    expect(states[1]).toMatch(/\.r\.q0$/);
+    expect(states[1]).toMatch(/^r\.FN\.\d+\.q0$/);
     expect(states[2]).toBe("d3");
-    expect(states[3]).toMatch(/\.r\.q0$/);
+    expect(states[3]).toMatch(/^r\.FN\.\d+\.q0$/);
     expect(states[4]).toBe("H");
     expect(machine.headPosition).toBe(2);
     expect(machine.tape.entries()).toEqual([]);
@@ -559,7 +567,7 @@ g(s,end):
     }
     expect(trace[0]).toBe("q1");
     expect(trace[1]).toBe("q2");
-    expect(trace[2]).toMatch(/\.r\.q0$/);
+    expect(trace[2]).toMatch(/^r\.FN\.\d+\.q0$/);
     expect(trace[3]).toBe("H");
     expect(machine.headPosition).toBe(2);
     expect(machine.tape.read(1)).toBe("1");

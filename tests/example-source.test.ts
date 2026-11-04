@@ -2,6 +2,7 @@ import { expect, it } from "vitest";
 import { examples } from "../src/examples";
 import { exampleSource } from "../src/example-source";
 import { parseTransitions, resolveInitialState } from "../src/core";
+import { exampleVariant } from "../src/example-variants";
 
 it.each(Object.entries(examples))("keeps the actual program identical for both comment styles: %s", (_id, project) => {
   const options = { haltStates: project.haltStates.split(",").filter(Boolean), acceptStates: project.acceptStates.split(",").filter(Boolean), rejectStates: project.rejectStates.split(",").filter(Boolean) };
@@ -32,4 +33,11 @@ it("places the user's register adder explanations between function definitions",
   expect(source).toContain("# 原稿收尾");
   expect(source).toContain("2,1->3,1,L");
   expect(source.lastIndexOf("# 原稿收尾")).toBeGreaterThan(source.length / 2);
+});
+it("keeps register adder phase explanations after flattening parent-first internal names", () => {
+  const project = exampleVariant(examples.registerAdder, "descriptive", "flat");
+  const source = exampleSource(project, "commented");
+  expect(source).toMatch(/\.FN\.\d+\./);
+  expect(source).toContain("# 原稿收尾");
+  expect(source).toContain("# 寄存器减一");
 });
