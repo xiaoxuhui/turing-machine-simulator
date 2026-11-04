@@ -1,0 +1,82 @@
+{
+  "results": [
+    {
+      "source": "q0,1->HALT",
+      "write": "1",
+      "direction": "N",
+      "head": 0
+    },
+    {
+      "source": "q0,1->HALT,,",
+      "write": "1",
+      "direction": "N",
+      "head": 0
+    },
+    {
+      "source": "q0,1->HALT,2",
+      "write": "2",
+      "direction": "N",
+      "head": 0
+    },
+    {
+      "source": "q0,1->HALT,2,",
+      "write": "2",
+      "direction": "N",
+      "head": 0
+    },
+    {
+      "source": "q0,1->HALT,,R",
+      "write": "1",
+      "direction": "R",
+      "head": 1
+    },
+    {
+      "source": "q0,1->HALT, , l ",
+      "write": "1",
+      "direction": "L",
+      "head": -1
+    },
+    {
+      "source": "q0,1->HALT,R",
+      "write": "R",
+      "direction": "N",
+      "head": 0
+    },
+    {
+      "source": "q0,1->HALT,2,L",
+      "write": "2",
+      "direction": "L",
+      "head": -1
+    },
+    {
+      "source": "q0,1->HALT,*,R",
+      "write": "1",
+      "direction": "R",
+      "head": 1
+    },
+    {
+      "source": "q0,1->HALT,*,*",
+      "write": "1",
+      "direction": "N",
+      "head": 0
+    },
+    {
+      "source": "q0,1->HALT,R,*",
+      "write": "R",
+      "direction": "N",
+      "head": 0
+    },
+    {
+      "source": "q0,1->HALT,L,*",
+      "write": "L",
+      "direction": "N",
+      "head": 0
+    }
+  ],
+  "tableDefaults": true,
+  "tableStarDefaults": true,
+  "functionStarDefaults": true,
+  "compiledSourceMatches": true,
+  "invalidDirectionAndRecovery": true,
+  "errors": []
+}
