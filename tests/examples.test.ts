@@ -34,11 +34,20 @@ describe("built-in examples", () => {
     ["functionMixedContinue", "123", 6],
     ["functionStarDefaults", "RL", 5],
     ["functionTypedParameters", "13", 4],
+    ["functionOmittedFields", "2L", 8],
+    ["functionStarLiterals", "***", 5],
+    ["functionWildcards", "A*", 4],
   ] as const)("runs function tutorial %s with its advertised output and steps", (key, expected, steps) => {
     const { machine, reason } = run(examples[key]);
     expect(reason).toBe("halt");
     expect(output(machine)).toBe(expected);
     expect(machine.stepCount).toBe(steps);
+  });
+  it("demonstrates actual multi-character star cells and an unseen-symbol wildcard branch", () => {
+    expect(run(examples.functionStarLiterals).machine.tape.entries()).toEqual([[0, "*"], [1, "**"]]);
+    const other = run(examples.functionWildcards, "Z");
+    expect(output(other.machine)).toBe("Z");
+    expect(other.machine.stepCount).toBe(2);
   });
 
   it("starts from each documented public entry without a call list overriding it", () => {

@@ -126,11 +126,13 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <p>初始输入填 111，普通停机状态填 HALT，结果是 11111。初始状态框可指定状态、函数或公开入口，留空才默认从首个顶格调用开始。原来的单状态定义仍兼容，默认走到普通停机态就退出；指定退出状态后，其它普通停机态会终止整个程序。此版本不支持递归。</p>
             <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。普通子函数完成后续行，声明 ret 才返回父函数或外部对应状态。</p>
             <p>前两个位置固定为初始状态、退出状态，后面才是参数：组合(q0,done,移动=右移,函数,完成=finish,状态,1,符号):。类型放在对应参数后面，用逗号分隔。函数或外部状态写 内部名=外部名；符号直接填 1,符号，不用另起内部符号名。移动 是函数调用，完成 则直接跳到外部 finish。仍只写 组合 调用，不带括号。未标类型的等号绑定先查函数，否则按外部状态处理；明确标了类型则核对该类型。函数、状态类型也支持 function/fn、state，符号类型支持 symbol/char。外部状态别名也可用于规则来源；合并后的实际规则不能重复。</p>
-            <p>写入处用 * 保留读取符号，移动处用 * 表示不移动，函数里也一样。q0,1-&gt;目标,*,R 保留 1 并右移；q0,1-&gt;目标,R,* 写入字符 R、不移动；q0,1-&gt;目标,*,* 保留符号且不移动。目标可以是普通状态、函数名或停机状态。原有留空、简写和完整写法仍有效；读取处的 * 仍是字面星号。</p>
+            <p>写入处用 * 保留读取符号，移动处用 * 表示不移动，函数里也一样。目标后只剩一项时，R/L 优先表示移动，其它值表示写入：q0,1-&gt;目标,R 保留 1 并右移；q0,1-&gt;目标,R,* 才写入字母 R、不移动。q0,1-&gt;目标,*,* 保留符号且不移动。写入与移动可分别留空。</p>
+            <p>字面星号多写一个：** 表示字符 *，*** 表示两个星号组成的符号，依此类推。读取、写入和符号参数采用相同转义；N 在单字段简写中是写入字符，不是方向，明确不移动可写 *,N 或 *,*。</p>
+            <p>读取项留空或 * 表示任意符号，如 q0,-&gt;q1,*,*；当前状态留空或 * 表示任意状态，如 ,1-&gt;q1,*,*；两项都留空可写 ,-&gt;q1,*,*。逗号仍需保留。明确状态/符号规则优先，然后是明确状态/任意符号，再是任意状态/明确符号，最后两者任意。函数内任意状态只匹配本次调用的局部状态，展开规则里的内部名称前缀.* 表示这个范围。</p>
             <p>顶层表达式跳到函数时，先找后面最近的同名裸调用：有就跳到那一行，执行后继续它下面；没有则在当前表达式处调用，完成后继续下一行。同状态、不同读取符号的分支可以分开写，仍共用状态入口；相同状态和读取符号再次出现，才开始下一个独立表达式。</p>
             <p>函数体也可混写规则和裸调用：状态跳到子函数时，先找当前函数体下面最近的同名或同一绑定函数的调用；没有则就地调用后续行。裸调用完成后执行下面的表达式或调用。函数头指定初始状态，普通局部状态仍可循环。</p>
             <p>复用公共规则块时可在顶层写“入口状态: 公共函数 -&gt; 续接状态”。它直接把入口连接到函数，完成后转到指定状态，不增加额外读写或移动步骤。多个入口可复用一个函数并分别续接。</p>
-            <p>正常执行完函数就继续下一行。函数内写“ret q1”，执行到 q1 才跳到外面对应的状态；兼容中文“返回状态 q1”。写“导出状态 inside”则公开为“主函数.inside”，用于补写规则或选择入口。示例菜单的“函数教程”分组提供 12 课，包含星号默认值以及符号、状态与函数参数；“返回外部状态”可比较保留和删除 ret 的不同结果。</p>
+            <p>正常执行完函数就继续下一行。函数内写“ret q1”，执行到 q1 才跳到外面对应的状态；兼容中文“返回状态 q1”。写“导出状态 inside”则公开为“主函数.inside”，用于补写规则或选择入口。示例菜单的“函数教程”分组提供 15 课，含参数、所有省略字段、R/L 简写、星号转义和任意状态/符号；“返回外部状态”可比较保留和删除 ret 的不同结果。</p>
             <p>外部状态转换后保留原名，例如 q1 仍叫 q1，不加内部前缀。同名独立表达式再次出现时使用 q1_2 等后缀区分，避开已有名称；函数内部状态仍按调用实例隔离。</p>
           </details>
           <div id="functionStatus" class="hint" role="status"></div>
@@ -518,10 +520,10 @@ function renderRuleTable(): void {
   byId("ruleCount").textContent = `共 ${parsed.transitions.length} 条 · 向下滚动查看全部规则`;
   host.innerHTML = `<div class="rule-row rule-head"><span>当前状态</span><span>读取</span><span>下一状态</span><span>写入</span><span>移动</span><span></span></div>` +
     parsed.transitions.map((rule, index) => `<div class="rule-row rule-data-row" data-index="${index}">
-      <input aria-label="规则 ${index + 1} 当前状态" value="${escapeAttribute(rule.fromState)}" />
-      <input aria-label="规则 ${index + 1} 读取符号" title="字面星号用 **，两个星号用 ***" value="${escapeAttribute(encodeRuleSymbol(rule.readSymbol))}" />
+      <input aria-label="规则 ${index + 1} 当前状态" placeholder="* 任意状态" title="留空或 *：任意状态" value="${escapeAttribute(rule.fromState || "*")}" />
+      <input aria-label="规则 ${index + 1} 读取符号" placeholder="* 任意符号" title="留空或 *：任意符号；**：字面星号，***：两个星号" value="${escapeAttribute(rule.readSymbol ? encodeRuleSymbol(rule.readSymbol) : "*")}" />
       <input aria-label="规则 ${index + 1} 下一状态" value="${escapeAttribute(rule.toState)}" />
-      <input aria-label="规则 ${index + 1} 写入符号" placeholder="* 保持读取符号" title="* 保持符号；** 写入字面星号，*** 写入两个星号" value="${escapeAttribute(encodeRuleSymbol(rule.writeSymbol))}" />
+      <input aria-label="规则 ${index + 1} 写入符号" placeholder="* 保持读取符号" title="* 保持符号；** 写入字面星号，*** 写入两个星号" value="${escapeAttribute(rule.writeSymbol ? encodeRuleSymbol(rule.writeSymbol) : "*")}" />
       <select aria-label="规则 ${index + 1} 移动方向"><option value="">默认：不移动</option><option value="*">*：不移动</option><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
       <button class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
     </div>`).join("");

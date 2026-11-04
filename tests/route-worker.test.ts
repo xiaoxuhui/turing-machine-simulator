@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import type { MachineDefinition } from "../src/core";
+import { parseTransitions, type MachineDefinition } from "../src/core";
 import type { RouteComplete, RouteRequest } from "../src/route-controller";
 
 let worker: { onmessage?: (event: MessageEvent<RouteRequest>) => void; postMessage: ReturnType<typeof vi.fn> };
@@ -30,4 +30,11 @@ it("retains initial input symbols but excludes blank writes", () => {
 it("does not include writes past the requested step limit", () => {
   const rules = [rule("q0", "1", "q1", "X"), rule("q1", "X", "HALT", "Y")];
   expect(generate(rules, [[0, "1"]], 1).symbols).toEqual(["1", "X"]);
+});
+it("executes wildcard rules using the actual unknown symbol and records literal star output", () => {
+  const transitions = parseTransitions("q0,->next,*,R\n,->HALT,***,*").transitions;
+  const result = generate(transitions, [[0, "未列出"]], 10);
+  expect(result.reason).toBe("halt");
+  expect(result.frames.at(-1)).toMatchObject({ step: 2, state: "HALT", head: 1, cells: [[0, "未列出"], [1, "**"]] });
+  expect(result.symbols).toEqual(["未列出", "**"]);
 });
