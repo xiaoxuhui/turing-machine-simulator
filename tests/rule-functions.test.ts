@@ -24,6 +24,18 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("executes the user's 0.2->succ without changing the read symbol or head", () => {
+    const source = "succ(s,end):\n    s,->end,1,*\n0.2->succ\nafter,1->HALT,2,*";
+    const result = execute(source, "Z", "0.2");
+    expect(result.output).toBe("2");
+    expect(result.machine.stepCount).toBe(3);
+    expect(result.machine.headPosition).toBe(0);
+    expect(result.result?.reason).toBe("halt");
+  });
+  it("supports unconditional arrows to bound children inside a function", () => {
+    const source = "succ(s,end):\n    s,->end,1,*\nf(0.2,done,动作=succ,函数):\n    0.2->动作\n    after,1->done,2,*\nf";
+    expect(execute(source, "Z").output).toBe("2");
+  });
   it.each([1, 2])("avoids %s preexisting FN markers without changing user states", count => {
     const declarations = Array.from({ length: count }, (_, index) => `outside.FN${"_".repeat(index)}.1.q,□->HALT,9,*`).join("\n");
     const source = `f(s,end):\n    s,□->end,1,*\n${declarations}\nf`;

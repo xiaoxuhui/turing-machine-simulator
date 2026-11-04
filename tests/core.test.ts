@@ -14,6 +14,16 @@ describe("Tape", () => {
 });
 
 describe("transition parser", () => {
+  it.each(["0.2->succ", " 0.2 -> succ ", "q0->HALT", "*->HALT"])("accepts an unconditional state arrow: %s", source => {
+    const [from, to] = source.trim().split("->").map(value => value.trim());
+    expect(parseTransitions(source)).toEqual(parseTransitions(`${from},*->${to},*,*`));
+    const parsed = parseTransitions(source);
+    const machine = new TuringMachine({ blankSymbol: "□", initialState: from === "*" ? "unknown" : from, acceptStates: [], rejectStates: [], haltStates: [to], transitions: parsed.transitions }, [[0, "未列出"]]);
+    expect(machine.step().record).toMatchObject({ readSymbol: "未列出", writeSymbol: "未列出", headAfter: 0 });
+  });
+  it.each(["->next", "q0->", "q0->q1->q2", "entry: f -> HALT"])("keeps malformed or named-call syntax out of the unconditional parser: %s", source => {
+    expect(parseTransitions(source).errors.join()).toContain("第 1 行");
+  });
   it.each(["q0,1->q1", " q0, | -> q1 ", "q0,C1->HALT"])("expands an ordinary short jump without writing or moving: %s", source => {
     const [from, rest] = source.trim().split(",");
     const [read, to] = rest.split("->").map(value => value.trim());

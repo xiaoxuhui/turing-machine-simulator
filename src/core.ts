@@ -1,5 +1,5 @@
 import { transitionFormatError } from "./rule-error";
-import { decodeRuleSymbol } from "./rule-format";
+import { decodeRuleSymbol, expandImplicitRead } from "./rule-format";
 
 export type Direction = "L" | "R" | "N";
 
@@ -182,7 +182,7 @@ export function parseTransitions(source: string, options: ParseOptions = {}): Pa
   source.split(/\r?\n/).forEach((raw, index) => {
     const line = raw.trim();
     if (!line || line.startsWith("#")) return;
-    const match = line.match(/^([^,]*),([^,]*?)\s*->\s*([^,]+)(?:,([^,]*)(?:,\s*([LRNlrn*]?)\s*)?)?$/);
+    const match = expandImplicitRead(line).match(/^([^,]*),([^,]*?)\s*->\s*([^,]+)(?:,([^,]*)(?:,\s*([LRNlrn*]?)\s*)?)?$/);
     if (!match || !match[3].trim()) {
       errors.push(`第 ${index + 1} 行：${transitionFormatError(line)}`);
       return;

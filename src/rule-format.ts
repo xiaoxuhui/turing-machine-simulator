@@ -13,6 +13,13 @@ export function encodeRuleSymbol(symbol: string): string {
   return /^\*+$/.test(symbol) ? `*${symbol}` : symbol;
 }
 
+/** Omitting the read field and its comma means an unconditional rule. */
+export function expandImplicitRead(source: string): string {
+  if (source.split("->").length !== 2) return source;
+  const match = source.match(/^([^,():\s]+)\s*->\s*(.+)$/u);
+  return match ? `${match[1]},*->${match[2]}` : source;
+}
+
 /** Emit complete, copyable source rather than ambiguous shorthand. */
 export function formatTransition(rule: Transition): string {
   return `${rule.fromState || "*"},${rule.readSymbol ? encodeRuleSymbol(rule.readSymbol) : "*"}->${rule.toState},${rule.writeSymbol ? encodeRuleSymbol(rule.writeSymbol) : "*"},${rule.direction}`;

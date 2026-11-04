@@ -3,7 +3,7 @@ import { exampleSource } from "./example-source";
 import type { ExampleProject } from "./examples";
 import { extractSharedFunctions } from "./shared-functions";
 import { functionParameterType, parseFunctionParameters } from "./function-parameters";
-import { formatTransition } from "./rule-format";
+import { expandImplicitRead, formatTransition } from "./rule-format";
 
 export type ExampleNames = "descriptive" | "numeric";
 export type ExampleStructure = "original" | "flat" | "functions";
@@ -75,10 +75,12 @@ function numericStates(project: ExampleProject): ExampleProject {
     if (named) return `${rename(named[1])}: ${named[2]} -> ${rename(named[3])}`;
     const exported = text.match(/^(ret|返回状态|导出状态)(?:\s+|:\s*)(.*)$/u);
     if (exported) return indent + exported[1] + " " + exported[2].split(",").map(value => rename(value, owner)).join(",");
-    const rule = text.match(/^([^,]*),([^,]*?)->([^,]+)(,.*)?$/);
+    const normalized = expandImplicitRead(text);
+    const rule = normalized.match(/^([^,]*),([^,]*?)->([^,]+)(,.*)?$/);
     if (!rule) return line;
     const [, from, read, to, fields = ""] = rule;
-    return `${indent}${!from.trim() || from.trim() === "*" ? from : rename(from, owner)},${read}->${rename(to, owner)}${fields}`;
+    const state = !from.trim() || from.trim() === "*" ? from : rename(from, owner);
+    return `${indent}${state}${normalized === text ? `,${read}` : ""}->${rename(to, owner)}${fields}`;
   });
   const initialState = project.initialState ? rename(project.initialState) : "";
   const mapping = [...names].slice(0, 40).map(([from, to]) => `# 状态 ${from} → ${to}`);
