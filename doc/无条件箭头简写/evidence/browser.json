@@ -1,0 +1,38 @@
+{
+  "trace": [
+    {
+      "state": "succ.FN.1.s",
+      "read": "Z",
+      "head": "0"
+    },
+    {
+      "state": "after",
+      "read": "1",
+      "head": "0"
+    },
+    {
+      "state": "HALT",
+      "read": "2",
+      "head": "0"
+    }
+  ],
+  "expandedRulesMatch": true,
+  "variants": [
+    {
+      "names": "descriptive",
+      "style": "plain",
+      "steps": 8
+    },
+    {
+      "names": "descriptive",
+      "style": "commented",
+      "steps": 8
+    },
+    {
+      "names": "numeric",
+      "style": "plain",
+      "steps": 8
+    }
+  ],
+  "errors": []
+}
