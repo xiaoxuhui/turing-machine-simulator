@@ -1,0 +1,145 @@
+{
+  "results": [
+    {
+      "names": "descriptive",
+      "structure": "original",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "__fn.5.COPY.SUCC.q0",
+          "head": "0"
+        },
+        {
+          "state": "__fn.3.COPY.after",
+          "head": "1"
+        },
+        {
+          "state": "__fn.4.COPY.SUCC.q0",
+          "head": "1"
+        },
+        {
+          "state": "__fn.2.OTHER.SUCC.q0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "descriptive",
+      "structure": "original",
+      "style": "commented",
+      "trace": [
+        {
+          "state": "__fn.5.COPY.SUCC.q0",
+          "head": "0"
+        },
+        {
+          "state": "__fn.3.COPY.after",
+          "head": "1"
+        },
+        {
+          "state": "__fn.4.COPY.SUCC.q0",
+          "head": "1"
+        },
+        {
+          "state": "__fn.2.OTHER.SUCC.q0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "numeric",
+      "structure": "original",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "__fn.5.COPY.SUCC.0",
+          "head": "0"
+        },
+        {
+          "state": "__fn.3.COPY.2",
+          "head": "1"
+        },
+        {
+          "state": "__fn.4.COPY.SUCC.0",
+          "head": "1"
+        },
+        {
+          "state": "__fn.2.OTHER.SUCC.0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "numeric",
+      "structure": "flat",
+      "style": "commented",
+      "trace": [
+        {
+          "state": "3",
+          "head": "0"
+        },
+        {
+          "state": "2",
+          "head": "1"
+        },
+        {
+          "state": "1",
+          "head": "1"
+        },
+        {
+          "state": "0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "descriptive",
+      "structure": "functions",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "__fn.5.COPY.SUCC.q0",
+          "head": "0"
+        },
+        {
+          "state": "__fn.3.COPY.after",
+          "head": "1"
+        },
+        {
+          "state": "__fn.4.COPY.SUCC.q0",
+          "head": "1"
+        },
+        {
+          "state": "__fn.2.OTHER.SUCC.q0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    }
+  ],
+  "sameParentSameContinuationDifferentSites": [
+    "__fn.2.COPY.SUCC.s",
+    "__fn.3.COPY.SUCC.s"
+  ],
+  "mappingShowsOwnerAndCallLine": true,
+  "errors": []
+}
