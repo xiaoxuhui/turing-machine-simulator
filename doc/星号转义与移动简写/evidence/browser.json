@@ -1,0 +1,286 @@
+{
+  "cases": [
+    {
+      "rules": "q0,1->HALT,R",
+      "input": "1",
+      "initialState": "q0",
+      "write": "1",
+      "head": 1
+    },
+    {
+      "rules": "q0,1->HALT,L",
+      "input": "1",
+      "initialState": "q0",
+      "write": "1",
+      "head": -1
+    },
+    {
+      "rules": "q0,1->HALT,R,*",
+      "input": "1",
+      "initialState": "q0",
+      "write": "R",
+      "head": 0
+    },
+    {
+      "rules": "q0,1->HALT,L,*",
+      "input": "1",
+      "initialState": "q0",
+      "write": "L",
+      "head": 0
+    },
+    {
+      "rules": "q0,1->HALT,N",
+      "input": "1",
+      "initialState": "q0",
+      "write": "N",
+      "head": 0
+    },
+    {
+      "rules": "q0,1->HALT,**",
+      "input": "1",
+      "initialState": "q0",
+      "write": "*",
+      "head": 0
+    },
+    {
+      "rules": "q0,1->HALT,***",
+      "input": "1",
+      "initialState": "q0",
+      "write": "**",
+      "head": 0
+    },
+    {
+      "rules": "q0,->HALT,*,*",
+      "input": "Z",
+      "initialState": "q0",
+      "write": "Z",
+      "head": 0
+    },
+    {
+      "rules": ",Z->HALT,*,R",
+      "input": "Z",
+      "initialState": "unknown",
+      "write": "Z",
+      "head": 1
+    },
+    {
+      "rules": "*,*->HALT,**,*",
+      "input": "Z",
+      "initialState": "unknown",
+      "write": "*",
+      "head": 0
+    },
+    {
+      "rules": "q0,**->HALT,R",
+      "input": "*",
+      "initialState": "q0",
+      "write": "*",
+      "head": 1
+    }
+  ],
+  "lessons": [
+    {
+      "id": "functionOmittedFields",
+      "names": "descriptive",
+      "structure": "original",
+      "style": "plain",
+      "final": {
+        "step": 8,
+        "state": "HALT",
+        "head": 0,
+        "cells": [
+          [
+            0,
+            "2"
+          ],
+          [
+            1,
+            "L"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionOmittedFields",
+      "names": "descriptive",
+      "structure": "original",
+      "style": "commented",
+      "final": {
+        "step": 8,
+        "state": "HALT",
+        "head": 0,
+        "cells": [
+          [
+            0,
+            "2"
+          ],
+          [
+            1,
+            "L"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionOmittedFields",
+      "names": "numeric",
+      "structure": "flat",
+      "style": "plain",
+      "final": {
+        "step": 8,
+        "state": "HALT",
+        "head": 0,
+        "cells": [
+          [
+            0,
+            "2"
+          ],
+          [
+            1,
+            "L"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionStarLiterals",
+      "names": "descriptive",
+      "structure": "original",
+      "style": "plain",
+      "final": {
+        "step": 5,
+        "state": "HALT",
+        "head": 1,
+        "cells": [
+          [
+            0,
+            "*"
+          ],
+          [
+            1,
+            "**"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionStarLiterals",
+      "names": "descriptive",
+      "structure": "original",
+      "style": "commented",
+      "final": {
+        "step": 5,
+        "state": "HALT",
+        "head": 1,
+        "cells": [
+          [
+            0,
+            "*"
+          ],
+          [
+            1,
+            "**"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionStarLiterals",
+      "names": "numeric",
+      "structure": "flat",
+      "style": "plain",
+      "final": {
+        "step": 5,
+        "state": "HALT",
+        "head": 1,
+        "cells": [
+          [
+            0,
+            "*"
+          ],
+          [
+            1,
+            "**"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionWildcards",
+      "names": "descriptive",
+      "structure": "original",
+      "style": "plain",
+      "final": {
+        "step": 4,
+        "state": "HALT",
+        "head": 1,
+        "cells": [
+          [
+            0,
+            "A"
+          ],
+          [
+            1,
+            "*"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionWildcards",
+      "names": "descriptive",
+      "structure": "original",
+      "style": "commented",
+      "final": {
+        "step": 4,
+        "state": "HALT",
+        "head": 1,
+        "cells": [
+          [
+            0,
+            "A"
+          ],
+          [
+            1,
+            "*"
+          ]
+        ]
+      }
+    },
+    {
+      "id": "functionWildcards",
+      "names": "numeric",
+      "structure": "flat",
+      "style": "plain",
+      "final": {
+        "step": 4,
+        "state": "HALT",
+        "head": 1,
+        "cells": [
+          [
+            0,
+            "A"
+          ],
+          [
+            1,
+            "*"
+          ]
+        ]
+      }
+    }
+  ],
+  "unknownInput": {
+    "step": 2,
+    "state": "HALT",
+    "head": 0,
+    "cells": [
+      [
+        0,
+        "Z"
+      ]
+    ]
+  },
+  "tableEditingAndCopyingLossless": true,
+  "emptyTableFieldsMatchUnknownStateAndSymbol": true,
+  "errors": []
+}
