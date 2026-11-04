@@ -1,0 +1,169 @@
+{
+  "groupVisible": true,
+  "selectionKeepsDraft": true,
+  "results": [
+    {
+      "names": "descriptive",
+      "structure": "original",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "ready",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "__fn.1.写R.q0",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "after",
+          "head": "0",
+          "read": "R"
+        },
+        {
+          "state": "writeL",
+          "head": "1",
+          "read": "□"
+        },
+        {
+          "state": "HALT",
+          "head": "1",
+          "read": "L"
+        }
+      ]
+    },
+    {
+      "names": "descriptive",
+      "structure": "original",
+      "style": "commented",
+      "trace": [
+        {
+          "state": "ready",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "__fn.1.写R.q0",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "after",
+          "head": "0",
+          "read": "R"
+        },
+        {
+          "state": "writeL",
+          "head": "1",
+          "read": "□"
+        },
+        {
+          "state": "HALT",
+          "head": "1",
+          "read": "L"
+        }
+      ]
+    },
+    {
+      "names": "numeric",
+      "structure": "original",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "3",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "__fn.1.写R.0",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "4",
+          "head": "0",
+          "read": "R"
+        },
+        {
+          "state": "5",
+          "head": "1",
+          "read": "□"
+        },
+        {
+          "state": "HALT",
+          "head": "1",
+          "read": "L"
+        }
+      ]
+    },
+    {
+      "names": "numeric",
+      "structure": "flat",
+      "style": "commented",
+      "trace": [
+        {
+          "state": "1",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "2",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "3",
+          "head": "0",
+          "read": "R"
+        },
+        {
+          "state": "4",
+          "head": "1",
+          "read": "□"
+        },
+        {
+          "state": "HALT",
+          "head": "1",
+          "read": "L"
+        }
+      ]
+    },
+    {
+      "names": "descriptive",
+      "structure": "functions",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "ready",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "__fn.1.写R.q0",
+          "head": "0",
+          "read": "1"
+        },
+        {
+          "state": "after",
+          "head": "0",
+          "read": "R"
+        },
+        {
+          "state": "writeL",
+          "head": "1",
+          "read": "□"
+        },
+        {
+          "state": "HALT",
+          "head": "1",
+          "read": "L"
+        }
+      ]
+    }
+  ],
+  "campaignLessonVisible": true,
+  "starterIncomplete": true,
+  "errors": []
+}
