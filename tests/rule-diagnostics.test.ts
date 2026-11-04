@@ -13,13 +13,13 @@ it("locates blank lines and CRLF without selecting the newline", () => {
   expect(sourceLineRange("abc\r\n\r\ndef", 3)).toEqual({ start: 7, end: 10 });
   expect(sourceLineRange("a\n", 99)).toEqual({ start: 2, end: 2 });
 });
-it("explains the user's dot typo on line 100 in flat and function programs", () => {
-  const line = "0,l->1,l.L";
+it("reports invalid movement on line 100 in flat and function programs", () => {
+  const line = "0,l->1,l,Q";
   const flat = "\n".repeat(99) + line;
-  expect(parseTransitions(flat).errors[0]).toContain("第 100 行：写入符号和移动方向之间要用逗号");
+  expect(parseTransitions(flat).errors[0]).toContain("第 100 行：格式错误");
   const source = "f(s,end):\n    s,1->end,1,N\n" + "\n".repeat(97) + line;
-  expect(parseTransitions(source).errors[0]).toContain("第 100 行：写入符号和移动方向之间要用逗号");
-  expect(parseTransitions(source.replace("l.L", "l,L")).errors).toEqual([]);
+  expect(parseTransitions(source).errors[0]).toContain("第 100 行：格式错误");
+  expect(parseTransitions(source.replace("l,Q", "l,L")).errors).toEqual([]);
 });
 it("removes diagnostics after correction and accepts direct function calls", () => {
   const source = "f(s,end):\n    s,1->end,1,N\nstart,1->f";

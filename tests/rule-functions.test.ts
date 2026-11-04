@@ -23,6 +23,15 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("expands independently omitted fields identically to full rules inside functions and calls", () => {
+    const shorthand = "f(s,end):\n    s,1->end,,R\nstart,1->f,\nf\nafter,□->HALT,2";
+    const full = "f(s,end):\n    s,1->end,1,R\nstart,1->f,1,N\nf\nafter,□->HALT,2,N";
+    const a = execute(shorthand, "1", "start"), b = execute(full, "1", "start");
+    expect(a.parsed.transitions).toEqual(b.parsed.transitions);
+    expect(a.output).toBe("12");
+    expect(a.machine.headPosition).toBe(1);
+    expect(a.result?.reason).toBe("halt");
+  });
   it("keeps a scan self-loop when a later same-named expression only handles another symbol", () => {
     const f = "f(s,end):\n    s,|->end,|,N\n";
     const local = `${f}scan(s,end):\n    s,1->s,1,R\n    s,|->end,□,N\n    f\n    s,|->end,9,N\nscan`;

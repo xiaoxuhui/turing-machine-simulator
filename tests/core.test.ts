@@ -20,7 +20,22 @@ describe("transition parser", () => {
     expect(result.errors).toEqual([]);
     expect(result.transitions).toEqual(parseTransitions(`${from.trim()},${read}->${to},${read},N`).transitions);
   });
-  it.each(["q0,1->q1,1", "q0,1->q1,1,Q", "q0,1->"])("still rejects an incomplete or invalid full rule: %s", source => {
+  it.each([
+    ["q0,1->q1,", "1", "N"], ["q0,1->q1,,", "1", "N"],
+    ["q0,1->q1,0", "0", "N"], ["q0,1->q1,0,", "0", "N"],
+    ["q0,1->q1,,R", "1", "R"], ["q0,C1->q1,  , l ", "C1", "L"],
+    ["q0,1->q1,R", "R", "N"], ["q0,l->q1,l.L", "l.L", "N"],
+    ["q0,1->q1,0,L", "0", "L"],
+  ])("defaults each optional field independently: %s", (source, writeSymbol, direction) => {
+    const parsed = parseTransitions(source);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.transitions[0]).toMatchObject({ writeSymbol, direction });
+    const machine = new TuringMachine({ blankSymbol: "□", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: [], transitions: parsed.transitions }, [[0, parsed.transitions[0].readSymbol]]);
+    const result = machine.step();
+    expect(result.record).toMatchObject({ writeSymbol, direction, headAfter: direction === "L" ? -1 : direction === "R" ? 1 : 0 });
+    expect(machine.tape.read(0)).toBe(writeSymbol);
+  });
+  it.each(["q0,1->q1,1,Q", "q0,1->", "q0,1-> ,0,R", "q0,1->q1,0,R,extra", "q0, ->q1"])("still rejects an invalid rule: %s", source => {
     expect(parseTransitions(source).errors[0]).toContain("第 1 行");
   });
   it("parses rules and rejects duplicate keys", () => {
