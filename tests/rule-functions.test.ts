@@ -24,6 +24,57 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("keeps different call sites separate even within the same parent and continuation", () => {
+    const source = "SUCC(s,end):\n    s,->end,1,*\nCOPY(q0,done,SUCC):\n    q0,0->SUCC,*,*\n    q0,1->SUCC,*,*\n    after,1->done,2,*\nCOPY";
+    const parsed = parseTransitions(source), initial = resolveInitialState(parsed, "COPY");
+    expect(parsed.errors).toEqual([]);
+    const calls = parsed.transitions.filter(rule => rule.fromState === initial);
+    expect(calls).toHaveLength(2);
+    expect(calls[0].toState).not.toBe(calls[1].toState);
+    for (const call of calls) expect(call.toState).toMatch(/\.COPY\.SUCC\.s$/);
+    expect(execute(source, "0").output).toBe("2");
+    expect(execute(source, "1").output).toBe("2");
+  });
+  it("allows two calls to the same child inside COPY with distinct actual instance names", () => {
+    const source = "SUCC(q0,done):\n    q0,□->done,1,R\nCOPY(q0,done,SUCC):\n    SUCC\n    SUCC\nCOPY";
+    const result = execute(source, "");
+    expect(result.output).toBe("11");
+    expect(result.machine.stepCount).toBe(2);
+    expect(result.result?.reason).toBe("halt");
+    const first = resolveInitialState(result.parsed, "COPY");
+    expect(first).toMatch(/\.COPY\.SUCC\.q0$/);
+    const second = result.parsed.transitions.find(rule => rule.fromState === first)!.toState;
+    expect(second).toMatch(/\.COPY\.SUCC\.q0$/);
+    expect(second).not.toBe(first);
+  });
+  it("names the same child separately under each composite parent even with identical continuation", () => {
+    const source = "FUCC(q0,done):\n    q0,□->done,1,*\nCOPY(q0,done,FUCC):\n    FUCC\nOTHER(q0,done,FUCC):\n    FUCC";
+    const parsed = parseTransitions(source);
+    expect(parsed.errors).toEqual([]);
+    const copy = resolveInitialState(parsed, "COPY"), other = resolveInitialState(parsed, "OTHER"), root = resolveInitialState(parsed, "FUCC");
+    expect(copy).toMatch(/__fn\.\d+\.COPY\.FUCC\.q0$/);
+    expect(other).toMatch(/__fn\.\d+\.OTHER\.FUCC\.q0$/);
+    expect(root).toMatch(/__fn\.\d+\.FUCC\.q0$/);
+    expect(new Set([copy, other, root]).size).toBe(3);
+    expect(parsed.internalNames?.some(item => item.source === "COPY.FUCC.q0" && item.actual === copy)).toBe(true);
+  });
+  it("keeps all ancestors in a multi-level nested call and retains the child's root export", () => {
+    const source = "FUCC(q0,done):\n    q0,□->middle,1,*\n    middle,1->done,2,*\n    导出状态 middle\nCOPY(q0,done,FUCC):\n    FUCC\nWRAP(q0,done,COPY):\n    COPY\nWRAP";
+    const result = execute(source, "", "WRAP");
+    expect(result.output).toBe("2");
+    expect(resolveInitialState(result.parsed, "WRAP")).toMatch(/\.WRAP\.COPY\.FUCC\.q0$/);
+    const rootExport = result.parsed.stateExports?.find(item => item.name === "FUCC.middle")!.state;
+    expect(rootExport).toMatch(/__fn\.\d+\.FUCC\.middle$/);
+    expect(rootExport).not.toContain("COPY");
+  });
+  it("does not let parent wildcard rules capture a nested child merely because its path names the parent", () => {
+    const source = "FUCC(s,end):\n    s,0->end,1,*\nCOPY(s,end):\n    s,1->FUCC,*,*\n    ,->end,9,*\nCOPY";
+    const result = execute(source, "1");
+    expect(result.machine.currentState).toMatch(/\.COPY\.FUCC\.s$/);
+    expect(result.result?.reason).toBe("missing-transition");
+    expect(result.output).toBe("1");
+    expect(result.machine.stepCount).toBe(1);
+  });
   it.each([",", "*,*"])("limits any-state/any-symbol rules to each function instance: %s", fields => {
     const source = `f(s,end):\n    ${fields}->end,1,*\ng(s,end):\n    ${fields}->end,2,*\nf\ng`;
     const result = execute(source, "Z");

@@ -281,6 +281,7 @@ export function parseRuleFunctions(
   const transitions: Transition[] = [];
   const origins: number[] = [];
   interface Context {
+    id: number; path: string; parentId?: number; callSite?: number;
     fn: RuleFunction; continuation: string; entry: string; scope?: string; returns: Map<string, string>;
     labels?: Map<string, string>; body?: { items: Statement[]; entries: Map<number, string> };
   }
@@ -331,7 +332,7 @@ export function parseRuleFunctions(
   };
   const sequence = (items: Call[], continuation: string, owner?: RuleFunction, parent?: Context): string => {
     let entry = continuation;
-    for (let index = items.length - 1; index >= 0; index--) entry = compile(callee(owner, items[index].name)!.name, entry, parent);
+    for (let index = items.length - 1; index >= 0; index--) entry = compile(callee(owner, items[index].name)!.name, entry, parent, items[index].line);
     return entry;
   };
   const exits = (fn: RuleFunction, state: string) => fn.exit ? state === fn.exit : halt.has(state) && !accept.has(state) && !reject.has(state);
@@ -352,7 +353,7 @@ export function parseRuleFunctions(
   const callFrom = (ctx: Context, called: RuleFunction, line: number): string => {
     const currentState = ctx.fn.rules.find(item => item.line === line)?.rule.fromState;
     const next = ctx.fn.rules.find(item => item.line > line && item.rule.fromState !== currentState);
-    return compile(called.name, next ? localState(ctx, next.rule.fromState) : ctx.continuation, ctx);
+    return compile(called.name, next ? localState(ctx, next.rule.fromState) : ctx.continuation, ctx, line);
   };
   const compileMixed = (ctx: Context): void => {
     const { fn } = ctx;
@@ -375,7 +376,7 @@ export function parseRuleFunctions(
     for (let index = items.length - 1; index >= 0; index--) {
       const item = items[index];
       if (item.kind === "call") {
-        entries.set(index, compile(callee(fn, item.call.name)!.name, nextEntry(index + 1), ctx));
+        entries.set(index, compile(callee(fn, item.call.name)!.name, nextEntry(index + 1), ctx, item.call.line));
         continue;
       }
       for (const { rule, line } of item.rules) {
@@ -387,7 +388,7 @@ export function parseRuleFunctions(
         else if (terminal.has(rule.toState)) target = rule.toState;
         else if (called) {
           const forward = items.findIndex((statement, position) => position > index && statement.kind === "call" && callee(fn, statement.call.name) === called);
-          target = forward < 0 ? compile(called.name, nextEntry(index + 1), ctx) : entries.get(forward)!;
+          target = forward < 0 ? compile(called.name, nextEntry(index + 1), ctx, line) : entries.get(forward)!;
         } else {
           const self = rule.toState === rule.fromState;
           const forward = items.findIndex((statement, position) => position > index && statement.kind === "rules" && statement.state === rule.toState && (!self || statement.rules.some(branch => branch.rule.readSymbol === rule.readSymbol)));
@@ -397,27 +398,28 @@ export function parseRuleFunctions(
       }
     }
   };
-  const compile = (name: string, continuation: string, parent?: Context): string => {
+  const compile = (name: string, continuation: string, parent?: Context, callSite?: number): string => {
     const fn = functions.get(name)!;
     const returns = new Map([...fn.returns].map(state => {
       const known = parent && (state === parent.fn.exit || parent.fn.rules.some(item => item.rule.fromState === state));
       return [state, fn.stateBindings.has(state) ? outerReturn(fn, fn.stateBindings.get(state)!) : known ? localState(parent!, state) : outerReturn(fn, state)] as const;
     }));
-    const key = JSON.stringify([name, continuation, [...returns]]);
+    const key = JSON.stringify([name, continuation, [...returns], parent?.id, callSite]);
     const cached = contexts.get(key);
     if (cached) return cached.entry;
     if (++instances > 10_000) throw new Error("函数展开超过 10000 个实例，请减少重复调用");
+    const id = instances, path = parent ? `${parent.path}.${name}` : name;
     if (fn.calls.length && !fn.rules.length) {
-      const ctx: Context = { fn, continuation, entry: "", returns };
+      const ctx: Context = { id, path, parentId: parent?.id, callSite, fn, continuation, entry: "", returns };
       const end = fn.exit && returns.has(fn.exit) ? returns.get(fn.exit)! : continuation;
       const entry = sequence(fn.calls, end, fn, ctx);
       ctx.entry = entry;
       contexts.set(key, ctx);
       return entry;
     }
-    const scope = `${prefix}${instances}.${name}.`;
+    const scope = `${prefix}${id}.${path}.`;
     const entry = publicRef(fn.initial, fn)?.alias ?? `${scope}${fn.initial}`;
-    const ctx: Context = { fn, continuation, entry, scope, returns };
+    const ctx: Context = { id, path, parentId: parent?.id, callSite, fn, continuation, entry, scope, returns };
     contexts.set(key, ctx);
     if (fn.calls.length) {
       compileMixed(ctx);
@@ -473,14 +475,14 @@ export function parseRuleFunctions(
       const statement = statements[index];
       if (statement.kind === "call") {
         const fn = functions.get(statement.call.name)!;
-        scriptEntries.set(index, compile(fn.name, statement.call.next ?? afterCall(index + 1, fn)));
+        scriptEntries.set(index, compile(fn.name, statement.call.next ?? afterCall(index + 1, fn), undefined, statement.call.line));
         continue;
       }
       const entry = scriptEntries.get(index)!;
       for (const { rule, line } of statement.rules) {
         const called = functions.get(rule.toState);
         const target = terminal.has(rule.toState) ? rule.toState
-          : called ? forwardCall(index + 1, called.name) ?? compile(called.name, afterCall(index + 1, called))
+          : called ? forwardCall(index + 1, called.name) ?? compile(called.name, afterCall(index + 1, called), undefined, line)
           : scriptTarget(index + 1, rule.toState, rule);
         append({ ...rule, fromState: rule.fromState ? entry : "", toState: target }, line);
       }
@@ -492,7 +494,7 @@ export function parseRuleFunctions(
     for (const { rule, line } of declarations) {
       if (publicRef(rule.fromState)) continue;
       const next = declarations.find(item => item.line > line && item.rule.fromState !== rule.fromState && !publicRef(item.rule.fromState));
-      append({ ...rule, toState: functions.has(rule.toState) ? forwardCall(0, rule.toState) ?? compile(rule.toState, next?.rule.fromState ?? initialState ?? finalState) : rule.toState }, line);
+      append({ ...rule, toState: functions.has(rule.toState) ? forwardCall(0, rule.toState) ?? compile(rule.toState, next?.rule.fromState ?? initialState ?? finalState, undefined, line) : rule.toState }, line);
     }
     const functionEntries = [...functions.keys()].map(name => ({ name, state: compile(name, finalState) }));
     // Extend each isolated invocation, not just one copy of an exported state.
@@ -513,7 +515,7 @@ export function parseRuleFunctions(
     const aliases = new Map<string, string>();
     for (const [index, statement] of statements.entries()) if (statement.kind === "call" && statement.call.label) aliases.set(statement.call.label, scriptEntries.get(index)!);
     for (const fn of functions.values()) {
-      const ctx = [...contexts.values()].find(item => item.fn === fn && item.continuation === finalState)!;
+      const ctx = [...contexts.values()].find(item => item.fn === fn && item.continuation === finalState && item.parentId === undefined && item.callSite === undefined)!;
       for (const local of fn.exports.keys()) aliases.set(`${fn.name}.${local}`, local === fn.initial ? ctx.entry : localState(ctx, local));
     }
     // Ordinary outer states already use their literal names. A later repeated
@@ -531,14 +533,21 @@ export function parseRuleFunctions(
       for (const alias of path) resolved.set(alias, state);
       return state;
     };
-    const keys = new Set<string>();
-    const expanded = transitions.map((rule, index) => {
+    const keys = new Map<string, { rule: Transition; line: number }>();
+    const expanded = transitions.flatMap((rule, index) => {
       const fromState = resolve(rule.fromState), toState = resolve(rule.toState);
       if (terminal.has(fromState)) throw new Error(`第 ${origins[index]} 行：不能为全局终态定义导出转移规则`);
       const key = JSON.stringify([fromState, rule.readSymbol]);
-      if (keys.has(key)) throw new Error(`第 ${origins[index]} 行：导出状态合并后与已有规则重复，不能覆盖同名转移`);
-      keys.add(key);
-      return { ...rule, fromState, toState };
+      const compiled = { ...rule, fromState, toState }, previous = keys.get(key);
+      if (previous) {
+        // Distinct invocations may emit the same source rule for a bound global
+        // state. Share that identical rule; never hide different source rules
+        // or invocation-specific continuations that conflict on the global key.
+        if (previous.line === origins[index] && previous.rule.toState === toState && previous.rule.writeSymbol === rule.writeSymbol && previous.rule.direction === rule.direction) return [];
+        throw new Error(`第 ${origins[index]} 行：导出状态合并后与已有规则重复，不能覆盖同名转移`);
+      }
+      keys.set(key, { rule: compiled, line: origins[index] });
+      return [compiled];
     });
     const stateExports = publicNames.map(name => ({ name, state: resolve(name) }));
     const sourceEntries: Array<{ name: string; state: string }> = [];
@@ -554,13 +563,14 @@ export function parseRuleFunctions(
       if (!seenNames.has(key)) { seenNames.add(key); internalNames.push(item); }
     };
     for (const ctx of contexts.values()) {
-      recordName(ctx.fn.name, ctx.entry, `实例入口 ${resolve(ctx.entry)}`);
+      const context = `${ctx.callSite === undefined ? "独立入口" : "调用路径"} ${ctx.path}${ctx.callSite === undefined ? "" : `；调用处第 ${ctx.callSite} 行`}；实例入口 ${resolve(ctx.entry)}`;
+      recordName(ctx.path, ctx.entry, context);
       const locals = new Set([ctx.fn.initial, ...(ctx.fn.exit ? [ctx.fn.exit] : []), ...ctx.fn.exports.keys(), ...ctx.fn.returns, ...ctx.fn.rules.flatMap(({ rule }) => [rule.fromState, rule.toState])]);
-      for (const state of locals) if (!callee(ctx.fn, state)) recordName(`${ctx.fn.name}.${state}`, localState(ctx, state), `实例入口 ${resolve(ctx.entry)}`);
+      for (const state of locals) if (!callee(ctx.fn, state)) recordName(`${ctx.path}.${state || "*"}`, localState(ctx, state), context);
       if (ctx.body) for (const [index, item] of ctx.body.items.entries()) {
         const name = item.kind === "call" ? item.call.name : item.state;
         const line = item.kind === "call" ? item.call.line : item.rules[0].line;
-        recordName(`${ctx.fn.name}.${name}`, ctx.body.entries.get(index)!, `函数内源码第 ${line} 行；实例 ${resolve(ctx.entry)}`);
+        recordName(`${ctx.path}.${name || "*"}`, ctx.body.entries.get(index)!, `函数内源码第 ${line} 行；${context}`);
       }
     }
     for (const [index, statement] of statements.entries()) {
