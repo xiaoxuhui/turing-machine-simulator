@@ -149,4 +149,20 @@ copy`,
 
 组合`,
   },
+  functionStarDefaults: {
+    ...defaults, name: "函数：星号默认值与原地跳转", input: "1", initialState: "start",
+    description: "第 11 课：写入处 * 保留读取符号，移动处 * 不移动。start 的目标 ready 是普通状态，只切换状态；ready 的目标 写R 是函数名，原地调用。函数内 R,* 写入字符 R，外部 *,R 保留 R 并右移，再用 L,* 写入字符 L。输入 1，5 步输出 RL，读写头停在位置 1。",
+    rules: `写R(q0,done):
+    # 写入的是字符 R；移动处 * 表示原地不动。
+    q0,1->done,R,*
+
+# 两个 * 保持符号、不移动，目标 ready 是普通状态。
+start,1->ready,*,*
+# 目标 写R 是函数名，在当前位置调用。
+ready,1->写R,*,*
+# 函数正常完成后续行：保留 R，向右一格。
+after,R->writeL,*,R
+# 写入字符 L，原地停机。
+writeL,□->HALT,L,*`,
+  },
 };

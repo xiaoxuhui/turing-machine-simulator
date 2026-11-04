@@ -50,10 +50,10 @@ function numericStates(project: ExampleProject): ExampleProject {
     if (named) return `${rename(named[1])}: ${named[2]} -> ${rename(named[3])}`;
     const exported = text.match(/^(ret|返回状态|导出状态)(?:\s+|:\s*)(.*)$/u);
     if (exported) return indent + exported[1] + " " + exported[2].split(",").map(value => rename(value, owner)).join(",");
-    const rule = text.match(/^([^,]+),(.+?)->([^,]+)(?:,(.+?),([LRNlrn]))?$/);
+    const rule = text.match(/^([^,]+),([^,]+?)->([^,]+)(,.*)?$/);
     if (!rule) return line;
-    const [, from, read, to, write, direction] = rule;
-    return `${indent}${rename(from, owner)},${read}->${rename(to, owner)}${direction ? `,${write},${direction}` : ""}`;
+    const [, from, read, to, fields = ""] = rule;
+    return `${indent}${rename(from, owner)},${read}->${rename(to, owner)}${fields}`;
   });
   const initialState = project.initialState ? rename(project.initialState) : "";
   const mapping = [...names].slice(0, 40).map(([from, to]) => `# 状态 ${from} → ${to}`);

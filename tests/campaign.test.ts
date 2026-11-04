@@ -79,6 +79,14 @@ describe("campaign verification", () => {
       }).passed).toBe(false);
     }
   });
+  it("teaches ordinary star jumps before function calls and verifies both branches in four steps", () => {
+    const index = campaignLevels.findIndex(level => level.id === "function-conditional");
+    const level = campaignLevels[index];
+    expect(level.lesson.explanation).toContain("普通状态");
+    expect(level.starter.rules).toContain("start,1->ready,*,*");
+    expect(level.starter.rules).toContain("ready,1->flip,*,*");
+    expect(verifyLevel(level, definitionFor(index)).cases.map(item => item.steps)).toEqual([4, 4]);
+  });
 
   it("reports the first observable wrong output", () => {
     const result = verifyLevel(campaignLevels[1], definitionFor(0));

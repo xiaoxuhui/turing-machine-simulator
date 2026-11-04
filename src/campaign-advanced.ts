@@ -37,12 +37,12 @@ export const advancedCampaignLevels: CampaignLevel[] = [
     objective: "翻转输入的单个二进制位，再在右侧写 1。",
     concept: "条件规则调用普通函数，完成后回到调用位置续行。",
     lesson: {
-      explanation: "把函数名写在下一状态位置同样可以调用，不要求函数带 ret。条件规则先完成本次读写，再进入函数；函数正常完成后执行调用位置下面的阶段。",
-      steps: ["flip 的 0 分支已写好。", "补上读取 1 时写 0、右移并进入 done 的分支。", "外部同样使用 done，完成后在右侧空白格写出末尾 1。"],
-      syntax: ["start,1 -> flip,1,N", "普通函数可以出现在下一状态列"],
-      workedExample: { title: "输入 1", stages: ["start 调用 flip", "flip 把 1 改成 0、右移并正常完成", "回到调用后面的 done → 写 1 → 输出 01"] },
+      explanation: "写入处的 * 保留读取符号，移动处的 * 表示不移动，函数里也一样。两个都是 * 时，目标 ready 是普通状态就只切换状态，目标 flip 是函数名才调用函数。函数正常完成后继续调用位置下面的阶段，不要求写 ret。写入 R/L 时可用 R,* 或 L,*，字符不会被当成方向。",
+      steps: ["跟踪 start 到 ready：保持符号、不移动，只切换普通状态。", "ready 用 *,* 在原地调用 flip；flip 的 0 分支已写好。", "补上 flip 读取 1 时写 0、右移并进入 done 的分支。", "函数完成后外部 done 在右侧空白格写出末尾 1。"],
+      syntax: ["start,1->ready,*,*：只切换普通状态", "ready,1->flip,*,*：原地调用函数", "q0,1->done,*,R：保持符号、右移", "q0,1->done,R,*：写入字符 R、不移动"],
+      workedExample: { title: "输入 1：四步跟踪", stages: ["第 1 步 start → ready：符号 1、位置 0 都不变", "第 2 步 ready → flip：原地调用，进入函数 q0", "第 3 步 flip 把 1 改成 0、右移并正常完成", "第 4 步外部 done 写 1 → 输出 01"] },
     },
-    starter: starter("条件调用", "1", "start", "flip(q0,done):\n    q0,0 -> done,1,R\n\nstart,0 -> flip,0,N\nstart,1 -> flip,1,N\ndone,□ -> HALT,1,N"),
+    starter: starter("条件调用", "1", "start", "flip(q0,done):\n    q0,0->done,1,R\n\nstart,0->ready,*,*\nstart,1->ready,*,*\nready,0->flip,*,*\nready,1->flip,*,*\ndone,□->HALT,1,*"),
     cases: [{ input: "0", expectedOutput: "11" }, { input: "1", expectedOutput: "01" }], maxSteps: 10,
   },
   {
