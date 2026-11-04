@@ -37,6 +37,7 @@ describe("built-in examples", () => {
     ["functionOmittedFields", "2L", 8],
     ["functionStarLiterals", "***", 5],
     ["functionWildcards", "A*", 4],
+    ["functionNestedNames", "111", 5],
   ] as const)("runs function tutorial %s with its advertised output and steps", (key, expected, steps) => {
     const { machine, reason } = run(examples[key]);
     expect(reason).toBe("halt");

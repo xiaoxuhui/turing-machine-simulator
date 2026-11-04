@@ -236,4 +236,26 @@ finish,2->HALT,3,*
     *,*->done,*,*
 通配`,
   },
+  functionNestedNames: {
+    ...defaults, name: "函数：重复子调用与所属路径", initialState: "COPY",
+    description: "第 16 课：COPY 在两个不同位置调用同一个 SUCC，OTHER 也调用 SUCC。两次同名调用合法，内部实际名称都含 COPY.SUCC，但实例编号不同；OTHER 的含 OTHER.SUCC。映射还会注明调用行，多层调用继续保留完整路径。空输入 5 步输出 111；单独选择 SUCC 仍有独立入口。",
+    rules: `SUCC(q0,done):
+    # 定义一次，供不同位置重复调用。
+    q0,□->done,1,R
+
+COPY(q0,done,SUCC):
+    # 第一处调用：子状态名称包含 COPY.SUCC。
+    q0,□->SUCC,*,*
+    SUCC
+    # 回到 COPY 的 after，再从第二个位置调用同一个 SUCC。
+    after,□->SUCC,*,*
+    SUCC
+
+OTHER(q0,done,SUCC):
+    # 组合函数也保留归属，子状态名称包含 OTHER.SUCC。
+    SUCC
+
+COPY
+OTHER`,
+  },
 };
