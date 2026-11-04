@@ -26,7 +26,7 @@ Hosted on GitHub Pages: [https://xiaoxuhui.github.io/turing-machine-simulator/](
 - Sparse tape that extends left and right, with head-following view
 - Step, run, pause, reset, speed up to 1000 steps/s, real speed display, and finite or Max (no fixed step limit) mode
 - Plain-text and structured rule-table editing
-- 39 grouped examples: 11 function tutorials in a dedicated group, unary arithmetic (the user's original register adder, addition through pentation, six floored inverses and Fibonacci generation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
+- 40 grouped examples: 12 function tutorials in a dedicated group, unary arithmetic (the user's original register adder, addition through pentation, six floored inverses and Fibonacci generation), basic programs, multi-state/multi-symbol busy beavers, and per-input Goldbach/Collatz checks
 - Gijswijt's sequence: fast direct calculation or compiled, editable single-tape Turing-machine rules
 - Local autosave, project JSON import/export, and execution-log CSV export with editable filenames
 - Clear accept / reject / halt / missing-rule feedback
@@ -82,9 +82,11 @@ Generated rules are editable in one continuously scrolling table, with a fixed h
 
 ## Example Programs
 
-The selector groups 39 programs into unary arithmetic, function tutorials, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
+The selector groups 40 programs into unary arithmetic, function tutorials, basic examples, busy beavers, and conjecture checks. Unary inputs use the count of `1` symbols; empty operands mean zero. Examples include addition (`111+11`), subtraction (`11111-11`, negative results reject), multiplication (`111*11`), comparison (`111?11`), and divisibility by 2. All execute ordinary single-tape transition rules.
 
-The 11 function tutorials progress from a single call through returns, exports, mixed rule/call bodies and local aliases to explicit star defaults: the new example writes RL in five steps while distinguishing ordinary state jumps from function calls. All 39 examples offer plain and commented source; plain is the default. Comments explain arithmetic phases between rules, including register increments, decrements, zero branches, parsing and cleanup for higher operations. Switching styles preserves the editor until Load is clicked. `ret` controls return flow, while `导出状态` publishes names.
+The 12 function tutorials progress from a single call through returns, exports, mixed bodies, aliases, star defaults and typed bindings. The star example writes RL in five steps; the typed binding example writes 13 in four. All 40 examples offer plain and commented source; plain is the default. Comments explain arithmetic phases between rules, including register increments, decrements, zero branches, parsing and cleanup for higher operations. Switching styles preserves the editor until Load is clicked. `ret` controls return flow, while `导出状态` publishes names.
+
+Typed arguments come after the initial and exit states: `f(q0,done,move=right,function,out=finish,state,1,symbol):`. The first two fields remain unchanged. Function aliases call the bound function; state aliases jump directly to the actual outer state without an internal prefix or an extra ret. Symbols are supplied directly, including multi-character symbols such as C1. Invoke with the bare function name as before. Untyped equal bindings first look for a function, then become outer state bindings; explicit types are checked. State aliases can be sources or targets; conflicting transitions after merging into actual global states are rejected. Chinese types 函数、状态、符号 and English function/fn, state, symbol/char are supported.
 
 The user's original register adder is preserved in full, including `2,1->3,1,L`. With blank `0` and initial state `go`, its default `1+11` produces `111` in 146 steps. The unchanged original produces `1` for `11+`; this arithmetic discrepancy is documented in its preview for further debugging. Scan self-loops stay at their current entry when a later expression only handles another read symbol.
 

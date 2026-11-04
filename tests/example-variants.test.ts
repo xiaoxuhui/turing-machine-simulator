@@ -44,6 +44,13 @@ it("keeps local aliases, returns, exported paths, symbols and terminals when num
   expect(machine.currentState).toBe("HALT");
   expect(machine.tape.entries().map(([, symbol]) => symbol).join("")).toBe("12");
 });
+it("numbers direct external state parameters without changing their internal alias or symbol values", () => {
+  const project = { ...examples.functionTypedParameters, rules: "f(s,end,outside,状态,C1,符号):\n    s,C1->outside,*,*\noutside,C1->HALT,2,*\nf", input: "", initialState: "f" };
+  const numeric = exampleVariant(project, "numeric", "original");
+  expect(numeric.rules).toMatch(/outside=\d+,状态,C1,符号/);
+  expect(numeric.rules).toContain(",C1->outside,*,*");
+  expect(compile(numeric).parsed.errors).toEqual([]);
+});
 
 it("actually shares duplicate rules and keeps each call site's continuation", () => {
   const project: ExampleProject = { ...examples.unary, input: "11", initialState: "left", rules: `left,1->left,1,R\nleft,□->after,□,N\nafter,□->right,2,L\nright,1->right,1,R\nright,□->HALT,□,N` };

@@ -33,6 +33,7 @@ describe("built-in examples", () => {
     ["functionMixed", "11", 6],
     ["functionMixedContinue", "123", 6],
     ["functionStarDefaults", "RL", 5],
+    ["functionTypedParameters", "13", 4],
   ] as const)("runs function tutorial %s with its advertised output and steps", (key, expected, steps) => {
     const { machine, reason } = run(examples[key]);
     expect(reason).toBe("halt");

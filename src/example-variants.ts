@@ -2,6 +2,7 @@ import { parseTransitions, resolveInitialState } from "./core";
 import { exampleSource } from "./example-source";
 import type { ExampleProject } from "./examples";
 import { extractSharedFunctions } from "./shared-functions";
+import { functionParameterType, parseFunctionParameters } from "./function-parameters";
 
 export type ExampleNames = "descriptive" | "numeric";
 export type ExampleStructure = "original" | "flat" | "functions";
@@ -15,7 +16,8 @@ function numericStates(project: ExampleProject): ExampleProject {
   for (const line of source.split("\n")) {
     const match = line.trim().match(header);
     if (!match) continue;
-    functions.set(match[1], new Set(match[2].split(",").slice(2).map(value => value.trim().split("=")[0])));
+    const parameters = parseFunctionParameters(match[2].split(",").slice(2)).parameters;
+    functions.set(match[1], new Set(parameters.filter(item => item.type !== "symbol").map(item => item.alias)));
   }
   const names = new Map<string, string>();
   let next = 0;
@@ -43,7 +45,16 @@ function numericStates(project: ExampleProject): ExampleProject {
     if (definition) {
       owner = definition[1];
       const params = definition[2].split(",").map(value => value.trim());
-      return `${owner}(${params.map((value, index) => index < 2 ? rename(value, owner) : value).join(",")}):`;
+      const converted = params.slice(0, 2).map(value => rename(value, owner));
+      for (let index = 2; index < params.length; index++) {
+        const field = params[index], typeName = params[index + 1];
+        const type = functionParameterType(typeName ?? "");
+        const [parameter] = parseFunctionParameters(type ? [field, typeName] : [field]).parameters;
+        if (parameter && (parameter.type === "state" || (parameter.type === "auto" && !functions.has(parameter.value)))) converted.push(`${parameter.alias}=${rename(parameter.value)}`);
+        else converted.push(field);
+        if (type) { converted.push(typeName); index++; }
+      }
+      return `${owner}(${converted.join(",")}):`;
     }
     if (!indent) owner = undefined;
     const named = text.match(/^([^,():\s]+)\s*:\s*([^,():\s]+)\s*->\s*([^,():\s]+)$/u);
