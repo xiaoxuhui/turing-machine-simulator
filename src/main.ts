@@ -1,5 +1,5 @@
 import "./styles.css";
-import { compactRuleArrows } from "./rule-format";
+import { compactRuleArrows, encodeRuleSymbol, formatTransition } from "./rule-format";
 import { exampleSource, type ExampleSourceStyle } from "./example-source";
 import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, resolveInitialState, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
@@ -496,7 +496,7 @@ function renderCompiledProgram(parsed: ReturnType<typeof parseTransitions>): voi
   mapping.value = parsed.internalNames?.length
     ? parsed.internalNames.map(item => `${item.source} → ${item.actual}  [${item.context}]`).join("\n")
     : [...new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]))].map(state => `${state} → ${state}`).join("\n");
-  source.value = parsed.transitions.map(rule => `${rule.fromState},${rule.readSymbol}->${rule.toState},${rule.writeSymbol},${rule.direction}`).join("\n");
+  source.value = parsed.transitions.map(formatTransition).join("\n");
 }
 
 function renderRuleTable(): void {
@@ -519,9 +519,9 @@ function renderRuleTable(): void {
   host.innerHTML = `<div class="rule-row rule-head"><span>当前状态</span><span>读取</span><span>下一状态</span><span>写入</span><span>移动</span><span></span></div>` +
     parsed.transitions.map((rule, index) => `<div class="rule-row rule-data-row" data-index="${index}">
       <input aria-label="规则 ${index + 1} 当前状态" value="${escapeAttribute(rule.fromState)}" />
-      <input aria-label="规则 ${index + 1} 读取符号" value="${escapeAttribute(rule.readSymbol)}" />
+      <input aria-label="规则 ${index + 1} 读取符号" title="字面星号用 **，两个星号用 ***" value="${escapeAttribute(encodeRuleSymbol(rule.readSymbol))}" />
       <input aria-label="规则 ${index + 1} 下一状态" value="${escapeAttribute(rule.toState)}" />
-      <input aria-label="规则 ${index + 1} 写入符号" placeholder="* 保持读取符号" title="* 或留空：保持读取符号" value="${escapeAttribute(rule.writeSymbol)}" />
+      <input aria-label="规则 ${index + 1} 写入符号" placeholder="* 保持读取符号" title="* 保持符号；** 写入字面星号，*** 写入两个星号" value="${escapeAttribute(encodeRuleSymbol(rule.writeSymbol))}" />
       <select aria-label="规则 ${index + 1} 移动方向"><option value="">默认：不移动</option><option value="*">*：不移动</option><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
       <button class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
     </div>`).join("");

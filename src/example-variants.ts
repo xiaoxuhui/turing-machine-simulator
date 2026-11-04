@@ -3,6 +3,7 @@ import { exampleSource } from "./example-source";
 import type { ExampleProject } from "./examples";
 import { extractSharedFunctions } from "./shared-functions";
 import { functionParameterType, parseFunctionParameters } from "./function-parameters";
+import { formatTransition } from "./rule-format";
 
 export type ExampleNames = "descriptive" | "numeric";
 export type ExampleStructure = "original" | "flat" | "functions";
@@ -79,7 +80,7 @@ export function exampleVariant(project: ExampleProject, names: ExampleNames, str
     if (parsed.errors.length) throw new Error(parsed.errors[0]);
     const initialState = resolveInitialState(parsed, project.initialState);
     const rules = parsed.hasFunctions
-      ? parsed.transitions.map(rule => `${rule.fromState},${rule.readSymbol}->${rule.toState},${rule.writeSymbol},${rule.direction}`).join("\n")
+      ? parsed.transitions.map(formatTransition).join("\n")
       : exampleSource(project, "commented", false);
     variant = { ...project, initialState, rules };
   }

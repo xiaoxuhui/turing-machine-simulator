@@ -1,6 +1,7 @@
 import { parseTransitions, resolveInitialState, type Transition } from "./core";
 import { exampleSource } from "./example-source";
 import type { ExampleProject } from "./examples";
+import { formatTransition } from "./rule-format";
 
 /** Extract repeated one-entry, one-exit scanning blocks with independent continuations. */
 export function extractSharedFunctions(project: ExampleProject): ExampleProject {
@@ -32,7 +33,7 @@ export function extractSharedFunctions(project: ExampleProject): ExampleProject 
     let name = `${direction}${index + 1}`;
     while (used.has(name)) name += "_";
     used.add(name);
-    const body = first.rules.map(rule => `    0,${rule.readSymbol}->${rule.toState === first.state ? "0" : "1"},${rule.writeSymbol},${rule.direction}`).join("\n");
+    const body = first.rules.map(rule => `    ${formatTransition({ ...rule, fromState: "0", toState: rule.toState === first.state ? "0" : "1" })}`).join("\n");
     definitions.push(`# 此规则块定义一次，被 ${group.length} 个入口复用；每处完成后进入各自的续接状态。\n${name}(0,1):\n${body}`);
     for (const item of group) calls.set(item.state, `${item.state}: ${name} -> ${item.next}`);
     removed += (group.length - 1) * first.rules.length;
@@ -49,7 +50,7 @@ export function extractSharedFunctions(project: ExampleProject): ExampleProject 
   for (const [state, rules] of blocks) {
     flow.push(...(comments.get(state) ?? []));
     if (calls.has(state)) flow.push(calls.get(state)!);
-    else for (const rule of rules) flow.push(`${rule.fromState},${rule.readSymbol}->${rule.toState},${rule.writeSymbol},${rule.direction}`);
+    else for (const rule of rules) flow.push(formatTransition(rule));
   }
   let fallback = "自动结束";
   while (used.has(fallback)) fallback += "_";

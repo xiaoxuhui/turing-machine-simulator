@@ -51,6 +51,18 @@ it("numbers direct external state parameters without changing their internal ali
   expect(numeric.rules).toContain(",C1->outside,*,*");
   expect(compile(numeric).parsed.errors).toEqual([]);
 });
+it("keeps literal star writes intact when factoring shared functions or numbering states", () => {
+  const project = { ...examples.unary, blankSymbol: "0", input: "", initialState: "a", rules: "a,0->a,**,*\na,**->b,*,*\nb,**->b,0,*\nb,0->c,*,*\nc,0->c,**,*\nc,**->HALT,*,*" };
+  for (const names of ["descriptive", "numeric"] as const) for (const structure of ["original", "flat", "functions"] as const) {
+    const variant = exampleVariant(project, names, structure), { parsed, definition } = compile(variant);
+    if (structure === "functions") expect(parsed.hasFunctions).toBe(true);
+    const machine = new TuringMachine(definition, []);
+    for (let step = 0; step < 6; step++) machine.step();
+    expect(machine.currentState).toBe("HALT");
+    expect(machine.tape.entries()).toEqual([[0, "*"]]);
+    expect(machine.stepCount).toBe(6);
+  }
+});
 
 it("actually shares duplicate rules and keeps each call site's continuation", () => {
   const project: ExampleProject = { ...examples.unary, input: "11", initialState: "left", rules: `left,1->left,1,R\nleft,□->after,□,N\nafter,□->right,2,L\nright,1->right,1,R\nright,□->HALT,□,N` };

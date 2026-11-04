@@ -14,6 +14,11 @@ it("retains legacy functions and infers untyped equal bindings after function lo
     { alias: "写一", value: "写一", type: "function" }, { alias: "首", value: "写二", type: "auto" },
   ]);
 });
+it("decodes direct star symbol arguments without turning them into bindings", () => {
+  expect(parseFunctionParameters(["**", "符号", "***", "symbol"]).parameters).toEqual([
+    { alias: "*", value: "*", type: "symbol" }, { alias: "**", value: "**", type: "symbol" },
+  ]);
+});
 it.each([["x=f", "函数", "x=q", "状态"], ["=q", "state"], ["a=b=c", "fn"], ["", "symbol"]])("rejects invalid or repeated arguments: %s", (...fields) => {
   expect(parseFunctionParameters(fields).errors.length).toBeGreaterThan(0);
 });

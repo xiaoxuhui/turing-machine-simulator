@@ -23,7 +23,7 @@ export function parseFunctionParameters(fields: string[]): { parameters: Functio
     if (declaredType) index++;
     if (declaredType === "symbol") {
       if (!field || /[,():\s]/u.test(field)) errors.push("符号参数必须直接填写一个非空符号，例如 1,符号 或 C1,符号");
-      else parameters.push({ alias: field, value: field, type: "symbol" });
+      else parameters.push({ alias: decodeRuleSymbol(field), value: decodeRuleSymbol(field), type: "symbol" });
       continue;
     }
     const parts = field.split("=").map(part => part.trim());
@@ -38,3 +38,5 @@ export function parseFunctionParameters(fields: string[]): { parameters: Functio
   }
   return { parameters, errors };
 }
+import { decodeRuleSymbol } from "./rule-format";
+

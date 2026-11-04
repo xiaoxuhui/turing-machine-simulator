@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { inputToTape, parseTransitions, Tape, tapeWindowCenter, panFromDragDelta, isHeadInWindow, effectiveTapeScroll, headFollowShift, slideDurationMs, TuringMachine, type MachineDefinition } from "../src/core";
+import { encodeRuleSymbol, formatTransition } from "../src/rule-format";
 
 describe("Tape", () => {
   it("reads blank cells and supports negative positions", () => {
@@ -24,7 +25,9 @@ describe("transition parser", () => {
     ["q0,1->q1,", "1", "N"], ["q0,1->q1,,", "1", "N"],
     ["q0,1->q1,0", "0", "N"], ["q0,1->q1,0,", "0", "N"],
     ["q0,1->q1,,R", "1", "R"], ["q0,C1->q1,  , l ", "C1", "L"],
-    ["q0,1->q1,R", "R", "N"], ["q0,l->q1,l.L", "l.L", "N"],
+    ["q0,1->q1,R", "1", "R"], ["q0,l->q1,l.L", "l.L", "N"],
+    ["q0,1->q1,L", "1", "L"], ["q0,C1->q1, r ", "C1", "R"],
+    ["q0,1->q1,N", "N", "N"], ["q0,1->q1,R,", "R", "N"],
     ["q0,1->q1,0,L", "0", "L"],
     ["q0,1->q1,*,R", "1", "R"], ["q0,C1->q1, * , * ", "C1", "N"],
     ["q0,1->q1,R,*", "R", "N"], ["q0,1->q1,L,*", "L", "N"],
@@ -51,6 +54,28 @@ describe("transition parser", () => {
     const machine = new TuringMachine({ blankSymbol: "0", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions }, [[0, "1"]]);
     expect(machine.step().reason).toBe("missing-transition");
     expect(machine.stepCount).toBe(0);
+  });
+  it("reads, writes and round-trips any tested length of literal stars", () => {
+    for (let length = 1; length <= 24; length++) {
+      const symbol = "*".repeat(length), encoded = encodeRuleSymbol(symbol);
+      const source = `q0,0->q1,${encoded},*\nq1,${encoded}->HALT,R`;
+      const parsed = parseTransitions(source);
+      expect(parsed.errors).toEqual([]);
+      expect(parsed.transitions[0].writeSymbol).toBe(symbol);
+      expect(parsed.transitions[1]).toMatchObject({ readSymbol: symbol, writeSymbol: symbol, direction: "R" });
+      expect(parseTransitions(parsed.transitions.map(formatTransition).join("\n")).transitions).toEqual(parsed.transitions);
+      const machine = new TuringMachine({ blankSymbol: "0", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions: parsed.transitions }, []);
+      machine.step();
+      expect(machine.tape.read(0)).toBe(symbol);
+      expect(machine.step().reason).toBe("halt");
+      expect(machine.headPosition).toBe(1);
+      expect(machine.tape.read(0)).toBe(symbol);
+      expect(parseTransitions(`q0,0->HALT,${encoded}`).transitions[0].writeSymbol).toBe(symbol);
+    }
+  });
+  it("detects duplicate keys after decoding stars and rejects escaped stars as movement", () => {
+    expect(parseTransitions("q0,*->HALT\nq0,**->HALT").errors.join()).toContain("重复");
+    expect(parseTransitions("q0,1->HALT,*,**").errors.join()).toContain("第 1 行");
   });
 });
 

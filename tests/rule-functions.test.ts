@@ -23,6 +23,17 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("uses star literals and compact movement when calling and returning from functions", () => {
+    const source = "f(s,end,**,符号,***,符号):\n    s,1->two,**,*\n    two,**->end,***,*\nstart,1->f,R\nafter,**->HALT,L";
+    const a = execute(source.replace("start,1->f,R", "start,1->f,*").replace("after,**", "after,***"), "1", "start");
+    expect(a.output).toBe("**");
+    expect(a.machine.headPosition).toBe(-1);
+    expect(a.machine.stepCount).toBe(4);
+    expect(a.result?.reason).toBe("halt");
+    const b = execute("f(s,end):\n    s,□->end,*,*\nstart,1->f,R\nafter,□->HALT,L,*", "1", "start");
+    expect(b.output).toBe("1L");
+    expect(b.machine.headPosition).toBe(1);
+  });
   it.each(["出口=q1,状态", "出口=q1"])("jumps through a state binding to the real global name: %s", binding => {
     const source = `f(q0,done,${binding},1,符号):\n    q0,1->出口,*,*\nq1,1->HALT,2,*\nf`;
     const { parsed, machine, output, result } = execute(source, "1");

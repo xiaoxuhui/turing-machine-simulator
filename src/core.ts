@@ -1,4 +1,5 @@
 import { transitionFormatError } from "./rule-error";
+import { decodeRuleSymbol } from "./rule-format";
 
 export type Direction = "L" | "R" | "N";
 
@@ -173,10 +174,11 @@ export function parseTransitions(source: string, options: ParseOptions = {}): Pa
       errors.push(`第 ${index + 1} 行：${transitionFormatError(line)}`);
       return;
     }
-    const fromState = match[1].trim(), readSymbol = match[2].trim(), toState = match[3].trim();
+    const fromState = match[1].trim(), readSymbol = decodeRuleSymbol(match[2].trim()), toState = match[3].trim();
     const writeField = match[4]?.trim(), directionField = match[5]?.trim();
-    const writeSymbol = !writeField || writeField === "*" ? readSymbol : writeField;
-    const direction = !directionField || directionField === "*" ? "N" : directionField;
+    const shortMove = match[5] === undefined && /^[RLrl]$/.test(writeField ?? "");
+    const writeSymbol = shortMove || !writeField || writeField === "*" ? readSymbol : decodeRuleSymbol(writeField);
+    const direction = shortMove ? writeField! : !directionField || directionField === "*" ? "N" : directionField;
     const transition: Transition = {
       fromState,
       readSymbol,
