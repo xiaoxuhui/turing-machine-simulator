@@ -74,13 +74,23 @@ describe("indented rule functions", () => {
     ["f(s,end,x=unknown,函数):\n    s,1->x", "未定义子函数"],
     ["child(s,end):\n    s,1->end\nf(s,end,x=child,状态):\n    s,1->x", "是函数"],
     ["f(s,end,s=outside,状态):\n    s,1->end", "与状态冲突"],
-    ["f(s,end,x=outside,状态):\n    s,1->x\n    x,1->end", "不能定义函数内"],
+    ["f(s,end,x=outside,状态,x=another,状态):\n    s,1->x", "重复"],
     ["f(s,end,x=outside,状态):\n    s,1->end\n    x", "未定义函数"],
   ])("reports typed parameter errors with source lines", (source, message) => {
     const parsed = parseTransitions(source);
     expect(parsed.errors.join()).toContain(message);
     expect(parsed.errors.join()).toMatch(/第 \d+ 行/);
     expect(parsed.transitions).toEqual([]);
+  });
+  it.each([false, true])("uses bound states in both source and target positions in mixed=%s", mixed => {
+    const source = `child(s,end):\n    s,1->end,*,*\nf(s,end,x=outside,状态):\n    s,1->x,*,*\n    x,1->end,2,*${mixed ? "\n    child" : ""}\nf`;
+    const result = execute(source, "1");
+    expect(result.output).toBe("2");
+    expect(result.parsed.transitions.find(rule => rule.fromState === "outside")).toMatchObject({ writeSymbol: "2", toState: "HALT" });
+  });
+  it("rejects conflicting rules that a bound state would merge into an existing global rule", () => {
+    const source = "f(s,end,x=outside,状态):\n    s,1->x,*,*\n    x,1->end,2,*\noutside,1->HALT,9,*\nf";
+    expect(parseTransitions(source).errors.join()).toContain("合并后与已有规则重复");
   });
   it("uses star defaults inside functions and when jumping to functions", () => {
     const star = "f(s,end):\n    s,1->end,*,R\nstart,1->f,*,*\nf\nafter,□->HALT,L,*";

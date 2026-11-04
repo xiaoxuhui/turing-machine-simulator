@@ -188,7 +188,6 @@ export function parseRuleFunctions(
       if (terminal.has(rule.fromState)) fail(line, "终态不能再定义转移规则");
       if (rule.fromState === fn.exit) fail(line, "退出状态不能再定义转移规则");
       if (callee(fn, rule.fromState)) fail(line, "函数内局部状态不能与函数名或子函数别名重名");
-      if (fn.stateBindings.has(rule.fromState)) fail(line, "外部状态参数用于跳转目标，不能定义函数内转移规则");
     }
     const knownStates = new Set([fn.initial, ...(fn.exit ? [fn.exit] : []), ...fn.rules.flatMap(({ rule }) => [rule.fromState, rule.toState]).filter(state => !callee(fn, state))]);
     for (const { rule } of rules) for (const state of [rule.fromState, rule.toState]) {
@@ -363,7 +362,8 @@ export function parseRuleFunctions(
     for (const [index, item] of items.entries()) if (item.kind === "rules") {
       const shared = branches.get(index)!;
       if (shared !== index) { entries.set(index, entries.get(shared)!); continue; }
-      const entry = labels.has(item.state) ? `${ctx.scope}line.${index}.${item.state}` : `${ctx.scope}${item.state}`;
+      const entry = fn.stateBindings.has(item.state) ? localState(ctx, item.state)
+        : labels.has(item.state) ? `${ctx.scope}line.${index}.${item.state}` : `${ctx.scope}${item.state}`;
       entries.set(index, entry);
       if (!labels.has(item.state)) labels.set(item.state, entry);
     }
