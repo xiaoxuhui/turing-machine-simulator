@@ -1,0 +1,145 @@
+{
+  "results": [
+    {
+      "names": "descriptive",
+      "structure": "original",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "COPY.FN.5.SUCC.q0",
+          "head": "0"
+        },
+        {
+          "state": "COPY.FN.3.after",
+          "head": "1"
+        },
+        {
+          "state": "COPY.FN.4.SUCC.q0",
+          "head": "1"
+        },
+        {
+          "state": "OTHER.FN.2.SUCC.q0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "descriptive",
+      "structure": "original",
+      "style": "commented",
+      "trace": [
+        {
+          "state": "COPY.FN.5.SUCC.q0",
+          "head": "0"
+        },
+        {
+          "state": "COPY.FN.3.after",
+          "head": "1"
+        },
+        {
+          "state": "COPY.FN.4.SUCC.q0",
+          "head": "1"
+        },
+        {
+          "state": "OTHER.FN.2.SUCC.q0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "numeric",
+      "structure": "original",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "COPY.FN.5.SUCC.0",
+          "head": "0"
+        },
+        {
+          "state": "COPY.FN.3.2",
+          "head": "1"
+        },
+        {
+          "state": "COPY.FN.4.SUCC.0",
+          "head": "1"
+        },
+        {
+          "state": "OTHER.FN.2.SUCC.0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "numeric",
+      "structure": "flat",
+      "style": "commented",
+      "trace": [
+        {
+          "state": "3",
+          "head": "0"
+        },
+        {
+          "state": "2",
+          "head": "1"
+        },
+        {
+          "state": "1",
+          "head": "1"
+        },
+        {
+          "state": "0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    },
+    {
+      "names": "descriptive",
+      "structure": "functions",
+      "style": "plain",
+      "trace": [
+        {
+          "state": "COPY.FN.5.SUCC.q0",
+          "head": "0"
+        },
+        {
+          "state": "COPY.FN.3.after",
+          "head": "1"
+        },
+        {
+          "state": "COPY.FN.4.SUCC.q0",
+          "head": "1"
+        },
+        {
+          "state": "OTHER.FN.2.SUCC.q0",
+          "head": "2"
+        },
+        {
+          "state": "HALT",
+          "head": "3"
+        }
+      ]
+    }
+  ],
+  "sameParentSameContinuationDifferentSites": [
+    "COPY.FN.2.SUCC.s",
+    "COPY.FN.3.SUCC.s"
+  ],
+  "mappingShowsOwnerAndCallLine": true,
+  "errors": []
+}
