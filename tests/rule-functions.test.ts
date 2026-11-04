@@ -23,6 +23,15 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("uses star defaults inside functions and when jumping to functions", () => {
+    const star = "f(s,end):\n    s,1->end,*,R\nstart,1->f,*,*\nf\nafter,□->HALT,L,*";
+    const full = "f(s,end):\n    s,1->end,1,R\nstart,1->f,1,N\nf\nafter,□->HALT,L,N";
+    const a = execute(star, "1", "start"), b = execute(full, "1", "start");
+    expect(a.parsed.transitions).toEqual(b.parsed.transitions);
+    expect(a.output).toBe("1L");
+    expect(a.machine.headPosition).toBe(1);
+    expect(a.result?.reason).toBe("halt");
+  });
   it("expands independently omitted fields identically to full rules inside functions and calls", () => {
     const shorthand = "f(s,end):\n    s,1->end,,R\nstart,1->f,\nf\nafter,□->HALT,2";
     const full = "f(s,end):\n    s,1->end,1,R\nstart,1->f,1,N\nf\nafter,□->HALT,2,N";

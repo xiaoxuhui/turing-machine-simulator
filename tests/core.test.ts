@@ -26,6 +26,10 @@ describe("transition parser", () => {
     ["q0,1->q1,,R", "1", "R"], ["q0,C1->q1,  , l ", "C1", "L"],
     ["q0,1->q1,R", "R", "N"], ["q0,l->q1,l.L", "l.L", "N"],
     ["q0,1->q1,0,L", "0", "L"],
+    ["q0,1->q1,*,R", "1", "R"], ["q0,C1->q1, * , * ", "C1", "N"],
+    ["q0,1->q1,R,*", "R", "N"], ["q0,1->q1,L,*", "L", "N"],
+    ["q0,1->q1,*", "1", "N"], ["q0,1->q1,,*", "1", "N"],
+    ["q0,*->q1,*,R", "*", "R"], ["q0,1->q1,C*,*", "C*", "N"],
   ])("defaults each optional field independently: %s", (source, writeSymbol, direction) => {
     const parsed = parseTransitions(source);
     expect(parsed.errors).toEqual([]);
@@ -41,6 +45,12 @@ describe("transition parser", () => {
   it("parses rules and rejects duplicate keys", () => {
     expect(parseTransitions("q0,1 -> q1,0,R").transitions[0].direction).toBe("R");
     expect(parseTransitions("q0,1 -> q1,0,R\nq0,1 -> q2,1,L").errors).toHaveLength(1);
+  });
+  it("keeps the read star literal rather than making it a wildcard", () => {
+    const transitions = parseTransitions("q0,*->HALT,*,*").transitions;
+    const machine = new TuringMachine({ blankSymbol: "0", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions }, [[0, "1"]]);
+    expect(machine.step().reason).toBe("missing-transition");
+    expect(machine.stepCount).toBe(0);
   });
 });
 

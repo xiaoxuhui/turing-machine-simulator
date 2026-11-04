@@ -125,7 +125,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 追加</pre>
             <p>初始输入填 111，普通停机状态填 HALT，结果是 11111。初始状态框可指定状态、函数或公开入口，留空才默认从首个顶格调用开始。原来的单状态定义仍兼容，默认走到普通停机态就退出；指定退出状态后，其它普通停机态会终止整个程序。此版本不支持递归。</p>
             <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。普通子函数完成后续行，声明 ret 才返回父函数或外部对应状态。</p>
-            <p>写入留空默认保留读取符号，移动留空默认 N（不移动），两项可以分别省略。q0,1-&gt;目标 等价于 q0,1-&gt;目标,1,N；q0,1-&gt;目标,0 默认写 0 不移动；q0,1-&gt;目标,,R 默认保留 1 并右移。目标可以是普通状态、函数名或停机状态；写全的规则仍执行指定的写入和移动。</p>
+            <p>写入处用 * 保留读取符号，移动处用 * 表示不移动，函数里也一样。q0,1-&gt;目标,*,R 保留 1 并右移；q0,1-&gt;目标,R,* 写入字符 R、不移动；q0,1-&gt;目标,*,* 保留符号且不移动。目标可以是普通状态、函数名或停机状态。原有留空、简写和完整写法仍有效；读取处的 * 仍是字面星号。</p>
             <p>顶层表达式跳到函数时，先找后面最近的同名裸调用：有就跳到那一行，执行后继续它下面；没有则在当前表达式处调用，完成后继续下一行。同状态、不同读取符号的分支可以分开写，仍共用状态入口；相同状态和读取符号再次出现，才开始下一个独立表达式。</p>
             <p>函数体也可混写规则和裸调用：状态跳到子函数时，先找当前函数体下面最近的同名或同一绑定函数的调用；没有则就地调用后续行。裸调用完成后执行下面的表达式或调用。函数头指定初始状态，普通局部状态仍可循环。</p>
             <p>复用公共规则块时可在顶层写“入口状态: 公共函数 -&gt; 续接状态”。它直接把入口连接到函数，完成后转到指定状态，不增加额外读写或移动步骤。多个入口可复用一个函数并分别续接。</p>
@@ -520,8 +520,8 @@ function renderRuleTable(): void {
       <input aria-label="规则 ${index + 1} 当前状态" value="${escapeAttribute(rule.fromState)}" />
       <input aria-label="规则 ${index + 1} 读取符号" value="${escapeAttribute(rule.readSymbol)}" />
       <input aria-label="规则 ${index + 1} 下一状态" value="${escapeAttribute(rule.toState)}" />
-      <input aria-label="规则 ${index + 1} 写入符号" placeholder="留空保持读取符号" title="留空保持读取符号" value="${escapeAttribute(rule.writeSymbol)}" />
-      <select aria-label="规则 ${index + 1} 移动方向"><option value="">默认：不移动</option><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
+      <input aria-label="规则 ${index + 1} 写入符号" placeholder="* 保持读取符号" title="* 或留空：保持读取符号" value="${escapeAttribute(rule.writeSymbol)}" />
+      <select aria-label="规则 ${index + 1} 移动方向"><option value="">默认：不移动</option><option value="*">*：不移动</option><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
       <button class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
     </div>`).join("");
   if (parsed.hasFunctions) {
