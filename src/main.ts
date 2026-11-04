@@ -497,7 +497,7 @@ function renderCompiledProgram(parsed: ReturnType<typeof parseTransitions>): voi
   if (parsed.errors.length) { mapping.value = ""; source.value = ""; return; }
   mapping.value = parsed.internalNames?.length
     ? parsed.internalNames.map(item => `${item.source} → ${item.actual}  [${item.context}]`).join("\n")
-    : [...new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]))].map(state => `${state} → ${state}`).join("\n");
+    : [...new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]))].map(state => `${state || "*（任意状态）"} → ${state || "*（任意状态）"}`).join("\n");
   source.value = parsed.transitions.map(formatTransition).join("\n");
 }
 
