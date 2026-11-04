@@ -11,7 +11,14 @@ it.each(["descriptive", "numeric"] as const)("preserves each tape step with %s n
     const project = fibonacciSourceVariant(naming, structure);
     const parsed = parseTransitions(exampleSource(project, style), { haltStates: project.haltStates ? [project.haltStates] : [], acceptStates: [], rejectStates: [] });
     expect(parsed.errors).toEqual([]);
-    expect(parsed.transitions).toHaveLength(54);
+    if (structure === "flat") expect(parsed.transitions).toHaveLength(54);
+    else {
+      // Separate call sites now keep distinct private instances. Duplicated
+      // transition bodies may increase the compiled count; tape operations and
+      // every executed step must still match the unchanged 54-rule original.
+      const operations = (rules: MachineDefinition["transitions"]) => new Set(rules.map(rule => JSON.stringify([rule.readSymbol, rule.writeSymbol, rule.direction])));
+      expect(operations(parsed.transitions)).toEqual(operations(original.transitions));
+    }
     const a = new TuringMachine({ blankSymbol: "0", initialState: "0.0", haltStates: [], acceptStates: [], rejectStates: [], transitions: original.transitions }, []);
     const b = new TuringMachine({ blankSymbol: "0", initialState: resolveInitialState(parsed, project.initialState), haltStates: project.haltStates ? [project.haltStates] : [], acceptStates: [], rejectStates: [], transitions: parsed.transitions }, []);
     for (let step = 0; step < 10000; step++) {
