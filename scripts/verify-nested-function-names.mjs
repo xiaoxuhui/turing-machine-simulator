@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const { chromium } = createRequire(import.meta.url)(process.argv[2] || "playwright");
 const browser = await chromium.launch({ headless: true, ...(process.argv[3] ? { executablePath: process.argv[3] } : {}) });
-const directory = new URL("../doc/嵌套函数归属名称/evidence/", import.meta.url);
+const directory = new URL(process.argv[4] === "parent-first" ? "../doc/父函数在前的名称/evidence/" : "../doc/嵌套函数归属名称/evidence/", import.meta.url);
 await mkdir(directory, { recursive: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
@@ -34,10 +34,10 @@ try {
     assert.deepEqual(trace.map(item => item.head), ["0", "1", "1", "2", "3"]);
     assert.equal(trace[4].state, "HALT");
     if (structure !== "flat") {
-      assert.match(trace[0].state, /\.COPY\.SUCC\./);
-      assert.match(trace[2].state, /\.COPY\.SUCC\./);
+      assert.match(trace[0].state, /^COPY\.FN\.\d+\.SUCC\./);
+      assert.match(trace[2].state, /^COPY\.FN\.\d+\.SUCC\./);
       assert.notEqual(trace[0].state, trace[2].state);
-      assert.match(trace[3].state, /\.OTHER\.SUCC\./);
+      assert.match(trace[3].state, /^OTHER\.FN\.\d+\.SUCC\./);
     }
     results.push({ names, structure, style, trace });
   }
@@ -52,7 +52,7 @@ try {
   assert.match(mapping, /COPY\.SUCC\.q0 →/);
   assert.match(mapping, /OTHER\.SUCC\.q0 →/);
   assert.match(mapping, /调用处第 \d+ 行/);
-  assert.match(await page.inputValue("#compiledRuleSource"), /\.COPY\.SUCC\.q0/);
+  assert.match(await page.inputValue("#compiledRuleSource"), /COPY\.FN\.\d+\.SUCC\.q0/);
   await page.click("#step");
   await page.locator("#compiledProgram").scrollIntoViewIfNeeded();
   await page.screenshot({ path: fileURLToPath(new URL("nested-names.png", directory)) });
@@ -62,7 +62,7 @@ try {
     await edit({ rules: branchSource, input, initialState: "COPY", blankSymbol: "□" });
     await page.click("#apply"); await page.click("#step");
     const target = await page.textContent("#currentState");
-    assert.match(target, /\.COPY\.SUCC\.s$/);
+    assert.match(target, /^COPY\.FN\.\d+\.SUCC\.s$/);
     branchTargets.push(target);
     await page.click("#step"); await page.click("#step");
     assert.equal(await page.textContent("#currentState"), "HALT");
