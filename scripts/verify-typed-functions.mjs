@@ -53,13 +53,13 @@ try {
   await edit({ rules: original });
   assert.match(await page.inputValue("#internalNameMap"), /组合\.完成 → finish/);
   assert.match(await page.inputValue("#compiledRuleSource"), /->finish,2,N/);
-  const fnSource = original.replace("完成=finish,状态", "完成=finish,函数");
+  const fnSource = original.replaceAll("完成=finish,状态", "完成=finish,函数");
   await edit({ rules: fnSource });
   assert.match(await page.textContent("#errors"), /第 \d+ 行.*未定义子函数 finish/);
   await edit({ rules: original });
   assert.equal(await page.textContent("#errors"), "");
   // Untyped equal bindings must look for a real function before using an outer state.
-  await edit({ rules: original.replace("移动=右移,函数", "移动=右移").replace("完成=finish,状态", "完成=finish") });
+  await edit({ rules: original.replaceAll("移动=右移,函数", "移动=右移").replaceAll("完成=finish,状态", "完成=finish") });
   await page.click("#apply");
   for (let step = 0; step < 4; step++) await page.click("#step");
   assert.equal(await page.textContent("#currentState"), "HALT");
