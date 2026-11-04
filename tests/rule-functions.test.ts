@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import mixedCallProgram from "./fixtures/function-calls-no-ret.tm?raw";
 import { inputToTape, parseTransitions, resolveInitialState, TuringMachine, type ParseOptions } from "../src/core";
+import { formatTransition } from "../src/rule-format";
 
 const append = `追加(q0):
     q0,1 -> q0,1,R
@@ -23,6 +24,34 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it.each([",", "*,*"])("limits any-state/any-symbol rules to each function instance: %s", fields => {
+    const source = `f(s,end):\n    ${fields}->end,1,*\ng(s,end):\n    ${fields}->end,2,*\nf\ng`;
+    const result = execute(source, "Z");
+    expect(result.output).toBe("2");
+    expect(result.machine.stepCount).toBe(2);
+    expect(result.result?.reason).toBe("halt");
+    expect(execute(source, "Z", "outside").result?.reason).toBe("missing-transition");
+  });
+  it("keeps exact function rules above local wildcard defaults and serializes the scope", () => {
+    const source = "f(s,end):\n    s,1->next,R\n    ,->end,*,*\nf\nafter,->HALT,2,*";
+    const result = execute(source, "1");
+    expect(result.output).toBe("12");
+    expect(result.machine.stepCount).toBe(3);
+    const text = result.parsed.transitions.map(formatTransition).join("\n");
+    expect(text).toMatch(/__fn\.\d+\.f\.\*,\*->/);
+    const copied = parseTransitions(text);
+    expect(copied.errors).toEqual([]);
+    const machine = new TuringMachine({ blankSymbol: "□", initialState: resolveInitialState(result.parsed, "f"), acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions: copied.transitions }, [[0, "1"]]);
+    for (let step = 0; step < 3; step++) machine.step();
+    expect(machine.tape.entries()).toEqual(result.machine.tape.entries());
+    expect(machine.currentState).toBe("HALT");
+  });
+  it("preserves mixed function continuation through wildcard expressions", () => {
+    const source = "child(s,end):\n    s,->end,1,*\nf(s,end,x=child,函数):\n    s,->x,*,*\n    x\n    ,->end,2,*\nf";
+    const result = execute(source, "Z");
+    expect(result.output).toBe("2");
+    expect(result.result?.reason).toBe("halt");
+  });
   it("uses star literals and compact movement when calling and returning from functions", () => {
     const source = "f(s,end,**,符号,***,符号):\n    s,1->two,**,*\n    two,**->end,***,*\nstart,1->f,R\nafter,**->HALT,L";
     const a = execute(source.replace("start,1->f,R", "start,1->f,*").replace("after,**", "after,***"), "1", "start");

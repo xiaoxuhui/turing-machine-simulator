@@ -63,6 +63,20 @@ it("keeps literal star writes intact when factoring shared functions or numberin
     expect(machine.stepCount).toBe(6);
   }
 });
+it.each([
+  "f(s,end):\n    s,1->next,R\n    ,->end,*,*\nf\nafter,->HALT,2,*",
+  "s,1->next,R\n,->HALT,2,*",
+])("keeps global and function-scope wildcard behavior in every variant", rules => {
+  const project = { ...examples.functionTypedParameters, initialState: rules.startsWith("f(") ? "f" : "s", rules };
+  for (const names of ["descriptive", "numeric"] as const) for (const structure of ["original", "flat", "functions"] as const) {
+    const variant = exampleVariant(project, names, structure), { definition } = compile(variant);
+    const machine = new TuringMachine(definition, [[0, "1"]]);
+    let result;
+    for (let step = 0; step < 10; step++) { result = machine.step(); if (result.stopped) break; }
+    expect(result?.reason).toBe("halt");
+    expect(machine.tape.entries()).toEqual([[0, "1"], [1, "2"]]);
+  }
+});
 
 it("actually shares duplicate rules and keeps each call site's continuation", () => {
   const project: ExampleProject = { ...examples.unary, input: "11", initialState: "left", rules: `left,1->left,1,R\nleft,□->after,□,N\nafter,□->right,2,L\nright,1->right,1,R\nright,□->HALT,□,N` };

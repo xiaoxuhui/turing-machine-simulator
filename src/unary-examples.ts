@@ -49,17 +49,17 @@ sub.clean,□ -> HALT,□,N`,
     description: "格式 1^a*1^b：111*11 表示 3×2。逐次复制得到 111111，结果留在原输入右侧，操作数和标记清除；任一空操作数表示乘以 0。",
     input: "111*11", initialState: "mul.init", blankSymbol: "□", acceptStates: "", rejectStates: "", haltStates: "HALT",
     rules: `mul.init,1 -> mul.init,1,R
-mul.init,* -> mul.init,*,R
+mul.init,** -> mul.init,*,R
 mul.init,□ -> mul.rewind,=,L
 mul.rewind,1 -> mul.rewind,1,L
-mul.rewind,* -> mul.rewind,*,L
+mul.rewind,** -> mul.rewind,*,L
 mul.rewind,□ -> mul.pickA,□,R
 mul.pickA,X -> mul.pickA,X,R
 mul.pickA,1 -> mul.seek,X,R
-mul.pickA,* -> mul.cleanLeft,*,L
+mul.pickA,** -> mul.cleanLeft,*,L
 mul.seek,1 -> mul.seek,1,R
 mul.seek,X -> mul.seek,X,R
-mul.seek,* -> mul.pickB,*,R
+mul.seek,** -> mul.pickB,*,R
 mul.pickB,Y -> mul.pickB,Y,R
 mul.pickB,1 -> mul.end,Y,R
 mul.pickB,= -> mul.restore,=,L
@@ -70,9 +70,9 @@ mul.end,□ -> mul.back,1,L
 mul.back,1 -> mul.back,1,L
 mul.back,Y -> mul.back,Y,L
 mul.back,= -> mul.back,=,L
-mul.back,* -> mul.pickB,*,R
+mul.back,** -> mul.pickB,*,R
 mul.restore,Y -> mul.restore,1,L
-mul.restore,* -> mul.backA,*,L
+mul.restore,** -> mul.backA,*,L
 mul.backA,1 -> mul.backA,1,L
 mul.backA,X -> mul.backA,X,L
 mul.backA,□ -> mul.pickA,□,R
@@ -80,7 +80,7 @@ mul.cleanLeft,X -> mul.cleanLeft,X,L
 mul.cleanLeft,□ -> mul.clean,□,R
 mul.clean,X -> mul.clean,□,R
 mul.clean,1 -> mul.clean,□,R
-mul.clean,* -> mul.clean,□,R
+mul.clean,** -> mul.clean,□,R
 mul.clean,= -> HALT,□,R`,
   },
   unaryCompare: {

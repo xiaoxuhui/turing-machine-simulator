@@ -21,12 +21,25 @@ function numericStates(project: ExampleProject): ExampleProject {
     functions.set(match[1], new Set(parameters.filter(item => item.type !== "symbol").map(item => item.alias)));
   }
   const names = new Map<string, string>();
+  const scopes = [...new Set(source.split("\n").map(line => line.trim().match(/^([^,]+),/)?.[1]).filter((state): state is string => Boolean(state?.endsWith(".*"))).map(state => state.slice(0, -1)))].sort((a, b) => b.length - a.length);
+  const scopeNames = new Map<string, string>();
   let next = 0;
   const local = (state: string): string => {
     if (terminal.has(state)) return state;
     if (!names.has(state)) {
-      while (terminal.has(String(next))) next++;
-      names.set(state, String(next++));
+      const scope = scopes.find(prefix => state.startsWith(prefix));
+      if (scope) {
+        if (!scopeNames.has(scope)) {
+          while ([...terminal].some(item => item === String(next) || item.startsWith(`${next}.`))) next++;
+          scopeNames.set(scope, String(next++));
+        }
+        let value = `${scopeNames.get(scope)}.${state === `${scope}*` ? "*" : next++}`;
+        while (terminal.has(value)) value = `${scopeNames.get(scope)}.${next++}`;
+        names.set(state, value);
+      } else {
+        while (terminal.has(String(next))) next++;
+        names.set(state, String(next++));
+      }
     }
     return names.get(state)!;
   };
@@ -62,10 +75,10 @@ function numericStates(project: ExampleProject): ExampleProject {
     if (named) return `${rename(named[1])}: ${named[2]} -> ${rename(named[3])}`;
     const exported = text.match(/^(ret|返回状态|导出状态)(?:\s+|:\s*)(.*)$/u);
     if (exported) return indent + exported[1] + " " + exported[2].split(",").map(value => rename(value, owner)).join(",");
-    const rule = text.match(/^([^,]+),([^,]+?)->([^,]+)(,.*)?$/);
+    const rule = text.match(/^([^,]*),([^,]*?)->([^,]+)(,.*)?$/);
     if (!rule) return line;
     const [, from, read, to, fields = ""] = rule;
-    return `${indent}${rename(from, owner)},${read}->${rename(to, owner)}${fields}`;
+    return `${indent}${!from.trim() || from.trim() === "*" ? from : rename(from, owner)},${read}->${rename(to, owner)}${fields}`;
   });
   const initialState = project.initialState ? rename(project.initialState) : "";
   const mapping = [...names].slice(0, 40).map(([from, to]) => `# 状态 ${from} → ${to}`);

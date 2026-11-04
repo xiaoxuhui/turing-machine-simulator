@@ -15,6 +15,6 @@ export function encodeRuleSymbol(symbol: string): string {
 
 /** Emit complete, copyable source rather than ambiguous shorthand. */
 export function formatTransition(rule: Transition): string {
-  return `${rule.fromState},${encodeRuleSymbol(rule.readSymbol)}->${rule.toState},${encodeRuleSymbol(rule.writeSymbol)},${rule.direction}`;
+  return `${rule.fromState || "*"},${rule.readSymbol ? encodeRuleSymbol(rule.readSymbol) : "*"}->${rule.toState},${rule.writeSymbol ? encodeRuleSymbol(rule.writeSymbol) : "*"},${rule.direction}`;
 }
 

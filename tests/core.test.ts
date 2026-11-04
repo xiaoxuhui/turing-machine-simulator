@@ -32,7 +32,7 @@ describe("transition parser", () => {
     ["q0,1->q1,*,R", "1", "R"], ["q0,C1->q1, * , * ", "C1", "N"],
     ["q0,1->q1,R,*", "R", "N"], ["q0,1->q1,L,*", "L", "N"],
     ["q0,1->q1,*", "1", "N"], ["q0,1->q1,,*", "1", "N"],
-    ["q0,*->q1,*,R", "*", "R"], ["q0,1->q1,C*,*", "C*", "N"],
+    ["q0,**->q1,*,R", "*", "R"], ["q0,1->q1,C*,*", "C*", "N"],
   ])("defaults each optional field independently: %s", (source, writeSymbol, direction) => {
     const parsed = parseTransitions(source);
     expect(parsed.errors).toEqual([]);
@@ -42,7 +42,7 @@ describe("transition parser", () => {
     expect(result.record).toMatchObject({ writeSymbol, direction, headAfter: direction === "L" ? -1 : direction === "R" ? 1 : 0 });
     expect(machine.tape.read(0)).toBe(writeSymbol);
   });
-  it.each(["q0,1->q1,1,Q", "q0,1->", "q0,1-> ,0,R", "q0,1->q1,0,R,extra", "q0, ->q1"])("still rejects an invalid rule: %s", source => {
+  it.each(["q0,1->q1,1,Q", "q0,1->", "q0,1-> ,0,R", "q0,1->q1,0,R,extra"])("still rejects an invalid rule: %s", source => {
     expect(parseTransitions(source).errors[0]).toContain("第 1 行");
   });
   it("parses rules and rejects duplicate keys", () => {
@@ -50,7 +50,7 @@ describe("transition parser", () => {
     expect(parseTransitions("q0,1 -> q1,0,R\nq0,1 -> q2,1,L").errors).toHaveLength(1);
   });
   it("keeps the read star literal rather than making it a wildcard", () => {
-    const transitions = parseTransitions("q0,*->HALT,*,*").transitions;
+    const transitions = parseTransitions("q0,**->HALT,*,*").transitions;
     const machine = new TuringMachine({ blankSymbol: "0", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions }, [[0, "1"]]);
     expect(machine.step().reason).toBe("missing-transition");
     expect(machine.stepCount).toBe(0);
@@ -74,8 +74,38 @@ describe("transition parser", () => {
     }
   });
   it("detects duplicate keys after decoding stars and rejects escaped stars as movement", () => {
-    expect(parseTransitions("q0,*->HALT\nq0,**->HALT").errors.join()).toContain("重复");
+    expect(parseTransitions("q0,->HALT\nq0,*->HALT").errors.join()).toContain("重复");
     expect(parseTransitions("q0,1->HALT,*,**").errors.join()).toContain("第 1 行");
+  });
+  it.each(["q0,->HALT,*,*", "q0,*->HALT,*,*", ",->HALT,*,*", "*,*->HALT,*,*"])("matches unknown symbols, preserving their actual value and logging actual state: %s", source => {
+    for (const symbol of ["1", "R", "*", "**", "C1", "□", "未见过"]) {
+      const parsed = parseTransitions(source);
+      expect(parsed.errors).toEqual([]);
+      const machine = new TuringMachine({ blankSymbol: "□", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions: parsed.transitions }, [[0, symbol]]);
+      const result = machine.step();
+      expect(result.reason).toBe("halt");
+      expect(result.record).toMatchObject({ fromState: "q0", readSymbol: symbol, writeSymbol: symbol, headAfter: 0 });
+      expect(machine.tape.read(0)).toBe(symbol);
+    }
+  });
+  it.each([",1->HALT,2,*", "*,1->HALT,2,*"])("matches previously undeclared current states: %s", source => {
+    const parsed = parseTransitions(source);
+    for (const state of ["q0", "未知状态", "__fn.42.f.q0"]) {
+      const machine = new TuringMachine({ blankSymbol: "□", initialState: state, acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions: parsed.transitions }, [[0, "1"]]);
+      expect(machine.step().record).toMatchObject({ fromState: state, readSymbol: "1", writeSymbol: "2" });
+    }
+  });
+  it("uses exact state/symbol, exact state/any symbol, any state/exact symbol, then both wildcards", () => {
+    const source = "*,*->HALT,D,*\n*,1->HALT,C,*\nq0,*->HALT,B,*\nq0,1->HALT,A,*";
+    const transitions = parseTransitions(source).transitions;
+    for (const [state, symbol, expected] of [["q0", "1", "A"], ["q0", "2", "B"], ["q1", "1", "C"], ["q1", "2", "D"]]) {
+      const machine = new TuringMachine({ blankSymbol: "□", initialState: state, acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions }, [[0, symbol]]);
+      expect(machine.step().record?.writeSymbol).toBe(expected);
+    }
+    const halted = new TuringMachine({ blankSymbol: "□", initialState: "HALT", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions }, []);
+    expect(halted.step().record).toBeUndefined();
+    expect(halted.stepCount).toBe(0);
+    expect(parseTransitions(transitions.map(formatTransition).join("\n")).transitions).toEqual(transitions);
   });
 });
 

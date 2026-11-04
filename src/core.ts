@@ -70,6 +70,7 @@ export class TuringMachine {
   headPosition: number;
   stepCount = 0;
   private readonly index = new Map<string, Map<string, Transition>>();
+  private readonly scopedStates: string[];
   private readonly initialTape: Array<[number, string]>;
   private readonly initialHeadPosition: number;
 
@@ -94,6 +95,7 @@ export class TuringMachine {
       }
       row.set(transition.readSymbol, transition);
     }
+    this.scopedStates = [...this.index.keys()].filter(state => state.endsWith(".*")).sort((a, b) => b.length - a.length);
   }
 
   reset(): void {
@@ -115,11 +117,19 @@ export class TuringMachine {
     if (terminal) return { stopped: true, reason: terminal };
 
     const readSymbol = this.tape.read(this.headPosition);
-    const transition = this.index.get(this.currentState)?.get(readSymbol);
+    const match = (state: string) => this.index.get(state)?.get(readSymbol) ?? this.index.get(state)?.get("");
+    let transition = match(this.currentState);
+    if (!transition) for (const scope of this.scopedStates) {
+      if (this.currentState.startsWith(scope.slice(0, -1))) transition = match(scope);
+      if (transition) break;
+    }
+    transition ??= match("");
     if (!transition) return { stopped: true, reason: "missing-transition" };
 
     const headBefore = this.headPosition;
-    this.tape.write(this.headPosition, transition.writeSymbol);
+    const fromState = this.currentState;
+    const writeSymbol = transition.writeSymbol || readSymbol;
+    this.tape.write(this.headPosition, writeSymbol);
     if (transition.direction === "L") this.headPosition -= 1;
     if (transition.direction === "R") this.headPosition += 1;
     this.currentState = transition.toState;
@@ -127,6 +137,9 @@ export class TuringMachine {
 
     const record: StepRecord = {
       ...transition,
+      fromState,
+      readSymbol,
+      writeSymbol,
       step: this.stepCount,
       headBefore,
       headAfter: this.headPosition,
@@ -169,12 +182,15 @@ export function parseTransitions(source: string, options: ParseOptions = {}): Pa
   source.split(/\r?\n/).forEach((raw, index) => {
     const line = raw.trim();
     if (!line || line.startsWith("#")) return;
-    const match = line.match(/^([^,]+),([^,]+?)\s*->\s*([^,]+)(?:,([^,]*)(?:,\s*([LRNlrn*]?)\s*)?)?$/);
-    if (!match || !match[1].trim() || !match[2].trim() || !match[3].trim()) {
+    const match = line.match(/^([^,]*),([^,]*?)\s*->\s*([^,]+)(?:,([^,]*)(?:,\s*([LRNlrn*]?)\s*)?)?$/);
+    if (!match || !match[3].trim()) {
       errors.push(`第 ${index + 1} 行：${transitionFormatError(line)}`);
       return;
     }
-    const fromState = match[1].trim(), readSymbol = decodeRuleSymbol(match[2].trim()), toState = match[3].trim();
+    const fromField = match[1].trim(), readField = match[2].trim();
+    const fromState = fromField === "*" ? "" : fromField;
+    const readSymbol = readField === "*" ? "" : decodeRuleSymbol(readField);
+    const toState = match[3].trim();
     const writeField = match[4]?.trim(), directionField = match[5]?.trim();
     const shortMove = match[5] === undefined && /^[RLrl]$/.test(writeField ?? "");
     const writeSymbol = shortMove || !writeField || writeField === "*" ? readSymbol : decodeRuleSymbol(writeField);

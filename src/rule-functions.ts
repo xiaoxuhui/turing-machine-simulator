@@ -183,7 +183,7 @@ export function parseRuleFunctions(
     }
     if (!fn.rules.length && !fn.calls.length) fail(fn.line, `函数 ${fn.name} 的函数体不能为空`);
     const locals = new Set(fn.rules.map(item => item.rule.fromState));
-    if (fn.rules.length && !locals.has(fn.initial)) fail(fn.line, `函数 ${fn.name} 的初始状态 ${fn.initial} 没有定义`);
+    if (fn.rules.length && !locals.has(fn.initial) && !locals.has("")) fail(fn.line, `函数 ${fn.name} 的初始状态 ${fn.initial} 没有定义`);
     for (const { rule, line } of fn.rules) {
       if (terminal.has(rule.fromState)) fail(line, "终态不能再定义转移规则");
       if (rule.fromState === fn.exit) fail(line, "退出状态不能再定义转移规则");
@@ -301,6 +301,7 @@ export function parseRuleFunctions(
   for (const [index, statement] of statements.entries()) {
     if (statement.kind !== "rules") continue;
     const state = statement.state;
+    if (!state) { scriptEntries.set(index, `${prefix}script.${index}.any`); continue; }
     const shared = scriptBranches.get(index)!;
     if (shared === -1) { scriptEntries.set(index, state); continue; }
     if (shared !== index) { scriptEntries.set(index, scriptEntries.get(shared)!); continue; }
@@ -335,6 +336,7 @@ export function parseRuleFunctions(
   };
   const exits = (fn: RuleFunction, state: string) => fn.exit ? state === fn.exit : halt.has(state) && !accept.has(state) && !reject.has(state);
   const localState = (ctx: Context, state: string): string => {
+    if (!state) return `${ctx.scope}*`;
     if (ctx.fn.stateBindings.has(state)) return outerReturn(ctx.fn, ctx.fn.stateBindings.get(state)!);
     if (ctx.fn.returns.has(state)) return ctx.returns.get(state)!;
     if (state === ctx.fn.initial && !ctx.scope) return ctx.entry;
@@ -391,7 +393,7 @@ export function parseRuleFunctions(
           const forward = items.findIndex((statement, position) => position > index && statement.kind === "rules" && statement.state === rule.toState && (!self || statement.rules.some(branch => branch.rule.readSymbol === rule.readSymbol)));
           target = forward >= 0 ? entries.get(forward)! : self ? entries.get(index)! : localState(ctx, rule.toState);
         }
-        append({ ...rule, fromState: entries.get(index)!, toState: target }, line);
+        append({ ...rule, fromState: rule.fromState ? entries.get(index)! : `${ctx.scope}*`, toState: target }, line);
       }
     }
   };
@@ -480,7 +482,7 @@ export function parseRuleFunctions(
         const target = terminal.has(rule.toState) ? rule.toState
           : called ? forwardCall(index + 1, called.name) ?? compile(called.name, afterCall(index + 1, called))
           : scriptTarget(index + 1, rule.toState, rule);
-        append({ ...rule, fromState: entry, toState: target }, line);
+        append({ ...rule, fromState: rule.fromState ? entry : "", toState: target }, line);
       }
     }
     return scriptEntry(0, undefined, finalState);

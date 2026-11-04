@@ -14,13 +14,15 @@ it.each(Object.entries(examples))("looks up every compiled transition of %s by i
   expect(actual.transitions).toEqual(parsed.transitions);
   const machine = new TuringMachine({ blankSymbol: project.blankSymbol, initialState: resolveInitialState(parsed, project.initialState), ...terminal, transitions: parsed.transitions }, []);
   for (const rule of actual.transitions) {
-    machine.currentState = rule.fromState;
+    const fromState = rule.fromState.endsWith(".*") ? `${rule.fromState.slice(0, -1)}probe` : rule.fromState || "probe";
+    const readSymbol = rule.readSymbol || "未列出的符号", writeSymbol = rule.writeSymbol || readSymbol;
+    machine.currentState = fromState;
     machine.headPosition = 0;
     machine.stepCount = 0;
-    machine.tape.reset([[0, rule.readSymbol]]);
+    machine.tape.reset([[0, readSymbol]]);
     const result = machine.step();
-    expect(result.record, `${rule.fromState},${rule.readSymbol}`).toEqual({ ...rule, step: 1, headBefore: 0, headAfter: rule.direction === "R" ? 1 : rule.direction === "L" ? -1 : 0 });
+    expect(result.record, `${rule.fromState},${rule.readSymbol}`).toEqual({ ...rule, fromState, readSymbol, writeSymbol, step: 1, headBefore: 0, headAfter: rule.direction === "R" ? 1 : rule.direction === "L" ? -1 : 0 });
     expect(machine.currentState).toBe(rule.toState);
-    expect(machine.tape.read(0)).toBe(rule.writeSymbol);
+    expect(machine.tape.read(0)).toBe(writeSymbol);
   }
 });

@@ -81,7 +81,7 @@ export const advancedCampaignLevels: CampaignLevel[] = [
       syntax: ["X 标记左操作数；Y 标记当前右操作数", "最终输出不能残留工作符号"],
       workedExample: { title: "3 × 2 的数值原理", stages: ["结果先为 0", "加第一份 3 → 3", "加第二份 3 → 6", "111*11 → 111111"] },
     },
-    starter: starter("重复相加", "111*11", "mul.init", "mul.init,1 -> mul.init,1,R\nmul.init,* -> mul.init,*,R"),
+    starter: starter("重复相加", "111*11", "mul.init", "mul.init,1 -> mul.init,1,R\nmul.init,** -> mul.init,*,R"),
     cases: pairs("*", [[0, 2, 0], [1, 2, 2], [2, 2, 4], [3, 2, 6]]), maxSteps: 1000,
   },
   {
@@ -107,7 +107,7 @@ export const advancedCampaignLevels: CampaignLevel[] = [
       syntax: ["a×0=0，0×b=0", "输出应只有连续的 1"],
       workedExample: { title: "2 × 3", stages: ["0 → 加一份 2 → 2", "2 → 再加 2 → 4", "4 → 再加 2 → 6"] },
     },
-    starter: starter("通用一进制乘法", "11*111", "mul.init", "mul.init,1 -> mul.init,1,R\nmul.init,* -> mul.init,*,R"),
+    starter: starter("通用一进制乘法", "11*111", "mul.init", "mul.init,1 -> mul.init,1,R\nmul.init,** -> mul.init,*,R"),
     cases: pairs("*", [[0, 3, 0], [3, 0, 0], [1, 4, 4], [2, 3, 6], [3, 2, 6]]), maxSteps: 3000,
   },
   {

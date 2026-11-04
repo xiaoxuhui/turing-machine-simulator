@@ -16,6 +16,7 @@ export function extractSharedFunctions(project: ExampleProject): ExampleProject 
   }
   const groups = new Map<string, Array<{ state: string; rules: Transition[]; next: string }>>();
   for (const [state, rules] of blocks) {
+    if (!state || state.endsWith(".*")) continue;
     const exits = new Set(rules.filter(rule => rule.toState !== state).map(rule => rule.toState));
     if (rules.length < 2 || exits.size !== 1) continue;
     const signature = JSON.stringify([...rules].sort((a, b) => a.readSymbol.localeCompare(b.readSymbol)).map(rule => [rule.readSymbol, rule.writeSymbol, rule.direction, rule.toState === state ? "self" : "exit"]));
