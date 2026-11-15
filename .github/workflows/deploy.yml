@@ -1,8 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [main]
+  # 自动部署已暂停；保留手动工作流以备维护。
   workflow_dispatch:
 
 # 允许 GITHUB_TOKEN 读取仓库并部署 Pages
