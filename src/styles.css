@@ -61,6 +61,12 @@ body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }
 .compiled-program summary { cursor: pointer; font-weight: 700; color: #28597c; }
 .compiled-program label { margin-top: 10px; }
 .compiled-program textarea { width: 100%; min-height: 130px; font-family: Consolas, "Microsoft YaHei", monospace; white-space: pre; overflow: auto; }
+.name-table .rule-row { grid-template-columns: minmax(0, 2fr) 3em 3em minmax(0, 1fr) minmax(5em, 1.5fr); min-width: 340px; font-size: 13px; }
+.name-table .rule-table-virtual-body { min-width: 340px; }
+.name-table [role="cell"] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name-table [role="cell"]:first-child { font-family: Consolas, monospace; }
+.name-table input { width: 100%; }
+.name-table-status:empty { display: none; }
 .download-dialog { width:min(420px, calc(100vw - 32px)); max-height:calc(100vh - 32px); overflow:auto; padding:24px; border:1px solid #ccd5e1; border-radius:12px; color:#1d2939; }
 .download-dialog::backdrop { background:rgb(20 35 50 / 35%); }
 .download-dialog h2 { margin:0 0 18px; font-size:18px; }
@@ -87,6 +93,8 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .rule-row { display:grid; grid-template-columns:1.2fr .7fr 1.2fr .7fr 72px 40px; gap:6px; align-items:center; padding:6px; border-bottom:1px solid #edf0f4; min-width:620px; }
 .rule-row:last-child { border-bottom:0; }
 .rule-head { position:sticky; top:0; z-index:1; background:#f6f8fb; color:#697588; font-size:11px; padding-block:8px; }
+.rule-table-virtual-body { position:relative; min-width:620px; }
+.rule-table-virtual-body > .rule-row { position:absolute; inset-inline:0; }
 .rule-row input,.rule-row select { min-width:0; padding:6px 7px; font-size:12px; }
 .delete-rule { border:0; background:transparent; color:#a73535; font-size:20px; border-radius:6px; }
 .delete-rule:hover { background:#fff0f0; }
@@ -143,6 +151,7 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .sequence-cell strong { font-size: 17px; }
 .sequence-cell.unwritten { color: #8c98a7; background: #edf0f4; }
 #directOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
+.lambda-output { min-height: 64px; }
 .converter-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
 .converter-heading h2 { margin: 0 0 6px; font-size: 18px; }
 .converter-heading p { margin: 0; color: #697588; font-size: 13px; max-width: 720px; }

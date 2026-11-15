@@ -1,0 +1,149 @@
+import type { ExampleProject } from "./examples";
+import { stackTapeBlank, TapeStackProgram, type TapeStack } from "./tape-stack-program";
+
+const bits = ["0", "1"] as const;
+const reject = "REJECT";
+
+// Each arithmetic stack has its least significant bit on top unless explicitly reversed.
+class BinaryProgram extends TapeStackProgram {
+  constructor() { super("binary", "B", "HALT", reject); }
+
+  digits(name = this.label()): TapeStack { return { name, values: bits }; }
+
+  copy(source: TapeStack, target: TapeStack, next: string): string {
+    const reverse = this.digits();
+    const loop = this.label();
+    this.take(reverse, bit => this.push(source, bit, this.push(target, bit, loop)), next, loop);
+    return this.move(source, reverse, loop);
+  }
+
+  transfer(source: TapeStack, target: TapeStack, next: string): string {
+    const reverse = this.digits();
+    return this.move(source, reverse, this.move(reverse, target, next));
+  }
+
+  hasOne(source: TapeStack, yes: string, no: string, skipLowBit = false): string {
+    const saved = this.digits(), check = this.label();
+    const found = this.move(saved, source, yes);
+    this.take(source, bit => this.push(saved, bit, bit === "1" ? found : check), this.move(saved, source, no), check);
+    return skipLowBit ? this.take(source, bit => this.push(saved, bit, check), no) : check;
+  }
+
+  // Consume both operands. The finite control holds only one carry or borrow bit.
+  combine(left: TapeStack, right: TapeStack, output: TapeStack, subtract: boolean, next: string, negative = reject): string {
+    const reversed = this.digits();
+    const plain = this.label(), carried = this.label();
+    const done = this.move(reversed, output, next);
+    const overflow = subtract ? this.clear(reversed, negative) : this.push(reversed, "1", done);
+    for (const [carry, from] of [plain, carried].entries()) {
+      const digit = (a: number, b: number) => {
+        const value = subtract ? a - b - carry : a + b + carry;
+        return this.push(reversed, String(value & 1), value < 0 || value > 1 ? carried : plain);
+      };
+      const missingLeft = this.take(right, bit => digit(0, Number(bit)), carry ? overflow : done);
+      this.take(left, bit => this.take(right, other => digit(Number(bit), Number(other)), digit(Number(bit), 0)), missingLeft, from);
+    }
+    return plain;
+  }
+
+  multiply(left: TapeStack, right: TapeStack, result: TapeStack, next: string): string {
+    const copy = this.digits(), sum = this.digits(), loop = this.label();
+    const shift = this.push(left, "0", loop);
+    const add = this.combine(result, copy, sum, false, this.transfer(sum, result, shift));
+    return this.take(right, bit => bit === "1" ? this.copy(left, copy, add) : shift, next, loop);
+  }
+
+  power(base: TapeStack, exponent: TapeStack, result: TapeStack, next: string): string {
+    const incoming = this.digits(), currentBit = this.digits(), product = this.digits();
+    const loop = this.label();
+    const multiplyResult = (factor: TapeStack, resume: string) => {
+      const copy = this.digits();
+      const replace = this.clear(result, this.transfer(product, result, resume));
+      return this.copy(factor, copy, this.multiply(result, copy, product, replace));
+    };
+    // Reading the exponent from left to right doubles the accumulated exponent,
+    // then adds the incoming bit. Squaring and multiplying implement those operations.
+    const multiplyByBase = multiplyResult(base, loop);
+    const finishBit = this.take(currentBit, bit => bit === "1" ? multiplyByBase : loop, next);
+    const square = multiplyResult(result, finishBit);
+    return this.push(result, "1", this.move(exponent, incoming,
+      this.take(incoming, bit => this.push(currentBit, bit, square), next, loop)));
+  }
+
+  // Binary long division. Consume the dividend from the most significant end.
+  // Try remainder - divisor after appending each bit. Its sign gives the next quotient bit.
+  divide(dividend: TapeStack, divisor: TapeStack, quotient: TapeStack, next: string): string {
+    const incoming = this.digits(), remainder = this.digits();
+    const remainderCopy = this.digits(), divisorCopy = this.digits(), difference = this.digits();
+    const loop = this.label();
+    const success = this.clear(remainder, this.transfer(difference, remainder, this.push(quotient, "1", loop)));
+    const failure = this.push(quotient, "0", loop);
+    const subtract = this.combine(remainderCopy, divisorCopy, difference, true, success, failure);
+    const test = this.copy(remainder, remainderCopy, this.copy(divisor, divisorCopy, subtract));
+    this.take(incoming, bit => this.push(remainder, bit, test), this.clear(remainder, next), loop);
+    return this.move(dividend, incoming, loop);
+  }
+
+  logarithm(base: TapeStack, value: TapeStack, result: TapeStack, next: string): string {
+    const quotient = this.digits(), one = this.digits(), sum = this.digits();
+    const loop = this.label();
+    const increment = this.push(one, "1", this.combine(result, one, sum, false, this.transfer(sum, result, loop)));
+    const test = this.hasOne(quotient, this.transfer(quotient, value, increment), next);
+    this.jump(loop, this.divide(value, base, quotient, test));
+    return this.hasOne(base, this.hasOne(value, loop, reject), reject, true);
+  }
+
+  print(result: TapeStack): string {
+    const reversed = this.digits(), write = this.label(), first = this.label();
+    this.take(reversed, bit => this.emit(bit, write), this.end, write);
+    this.take(reversed, bit => bit === "0" ? first : this.emit(bit, write), this.emit("0", this.end), first);
+    return this.move(result, reversed, first);
+  }
+
+  readOperands(operator: string, left: TapeStack, right: TapeStack, next: string): void {
+    const raw = { name: "raw", values: [...bits, operator] };
+    const input = { ...raw, name: "input" };
+    const startRight = this.label(), readRight = this.label();
+    this.take(input, bit => bit === operator ? reject : this.push(right, bit, readRight), next, readRight);
+    this.take(input, bit => bit === operator ? reject : this.push(right, bit, readRight), reject, startRight);
+    const startLeft = this.label(), readLeft = this.label();
+    this.take(input, bit => bit === operator ? startRight : this.push(left, bit, readLeft), reject, readLeft);
+    this.take(input, bit => bit === operator ? reject : this.push(left, bit, readLeft), reject, startLeft);
+    this.readInput(raw, this.move(raw, input, startLeft));
+  }
+}
+
+type Operator = "+" | "-" | "*" | "/" | "^" | "@";
+
+function binaryExample(operator: Operator, name: string, description: string, input: string): ExampleProject {
+  const program = new BinaryProgram();
+  const left = program.digits("left"), right = program.digits("right"), result = program.digits("result");
+  program.note(description);
+  program.note("每个操作数只写 0 和 1，零写作 0。接受前导零。停机后从位置 0 开始留下二进制结果。");
+  const print = program.print(result);
+  let calculate: string;
+  switch (operator) {
+    case "+": calculate = program.combine(left, right, result, false, print); break;
+    case "-": calculate = program.combine(left, right, result, true, print); break;
+    case "*": calculate = program.multiply(left, right, result, print); break;
+    case "/": calculate = program.hasOne(right, program.divide(left, right, result, print), reject); break;
+    case "^": calculate = program.power(left, right, result, print); break;
+    case "@": calculate = program.logarithm(left, right, result, print); break;
+  }
+  program.readOperands(operator, left, right, calculate);
+  return {
+    category: "二进制运算", name, input, initialState: program.start, blankSymbol: stackTapeBlank,
+    acceptStates: "", rejectStates: reject, haltStates: "HALT", maxSteps: null,
+    description: description + " 两边都填二进制数，零写 0。停机时纸带只留下二进制结果。",
+    rules: program.finish(),
+  };
+}
+
+export const binaryExamples = {
+  binaryAdd: binaryExample("+", "二进制加法", "从低位逐位相加并进位。例如 101+11 得到 1000（5 加 3）。", "101+11"),
+  binarySubtract: binaryExample("-", "二进制减法", "从低位逐位相减并借位。例如 1000-11 得到 101（8 减 3）。负结果进入 REJECT。", "1000-11"),
+  binaryMultiply: binaryExample("*", "二进制乘法", "乘数每遇到一位 1，就加上移位后的被乘数。例如 101*11 得到 1111（5 乘 3）。", "101*11"),
+  binaryDivide: binaryExample("/", "二进制除法（取商）", "用逐位长除法求整数商。例如 1101/11 得到 100（13 除以 3，余数舍去）。除数为 0 时进入 REJECT。", "1101/11"),
+  binaryPower: binaryExample("^", "二进制乘方", "从高位读取指数，每位先平方，读到 1 再乘底数。例如 11^11 得到 11011（3 的三次方）。指数为 0 输出 1。", "11^11"),
+  binaryLog: binaryExample("@", "二进制对数（取整）", "左边填底数，右边填真数。反复做整数除法，数能除出非零商的次数。例如 10@1101 得到 11（以 2 为底的 13 的对数取整为 3）。底数须至少为 2，真数须至少为 1。", "10@1101"),
+};

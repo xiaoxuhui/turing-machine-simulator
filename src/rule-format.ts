@@ -1,15 +1,38 @@
-/** Compact arrow padding without changing function indentation or comment text. */
-export function compactRuleArrows(source: string): string {
-  return source.replace(/^[^\r\n]*/gm, line => /^\s*#/.test(line) ? line : line.replace(/[ \t]*(->|→)[ \t]*/g, "$1"));
-}
+import { normalizeAnnotationEscapes, protectSymbolAnnotations } from "./symbol-annotations";
 import type { Transition } from "./core";
 
-/** A run of literal stars is written with one extra star in source code. */
+/** Compact arrow padding without changing function indentation or comment text. */
+export function compactRuleArrows(source: string): string {
+  return source.replace(/^[^\r\n]*/gm, line => {
+    if (/^\s*#/.test(line)) return line;
+    const { text, restore } = protectSymbolAnnotations(line);
+    return restore(text.replace(/[ \t]*(->|→)[ \t]*/g, "$1"));
+  });
+}
+
+const whitespaceByEscape = new Map([
+  ["s", " "],
+  ["t", "\t"],
+  ["u00a0", "\u00a0"],
+  ["u3000", "\u3000"],
+]);
+
+const whitespaceEscapes = new Map([...whitespaceByEscape].map(([escape, symbol]) => [symbol, escape]));
+const escapedWhitespace = /^(\\+)(s|t|u00a0|u3000)$/i;
+
+/** Escape a literal star run or a whitespace symbol in a rule field. */
 export function decodeRuleSymbol(source: string): string {
-  return /^\*{2,}$/.test(source) ? source.slice(1) : source;
+  if (source.length > 1 && /^[\\/]+[-#]?$/.test(source)) return source.slice(1);
+  const match = source.match(escapedWhitespace);
+  if (match) return match[1].length === 1 ? whitespaceByEscape.get(match[2].toLowerCase())! : source.slice(1);
+  return /^\*{2,}$/.test(source) ? source.slice(1) : normalizeAnnotationEscapes(source);
 }
 
 export function encodeRuleSymbol(symbol: string): string {
+  if (/^[\\/]+[-#]?$/.test(symbol)) return symbol[0] + symbol;
+  const whitespace = whitespaceEscapes.get(symbol);
+  if (whitespace) return "\\" + whitespace;
+  if (escapedWhitespace.test(symbol)) return "\\" + symbol;
   return /^\*+$/.test(symbol) ? `*${symbol}` : symbol;
 }
 

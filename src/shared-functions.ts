@@ -25,6 +25,11 @@ export function extractSharedFunctions(project: ExampleProject): ExampleProject 
   }
   const reusable = [...groups.values()].filter(group => group.length > 1);
   if (!reusable.length) return { ...project, description: project.description + " 本例没有可安全提取的重复规则块，保留普通规则。" };
+  const instances = reusable.reduce((total, group) => total + group.length + 1, 0);
+  const extraRules = reusable.reduce((total, group) => total + group[0].rules.length, 0);
+  if (instances > 10_000 || parsed.transitions.length + extraRules > 100_000) {
+    return { ...project, description: project.description + " 提取后的程序会超过函数展开上限，保留普通规则。" };
+  }
   const used = new Set(parsed.transitions.flatMap(rule => [rule.fromState, rule.toState]));
   const definitions: string[] = [], calls = new Map<string, string>();
   let removed = 0;

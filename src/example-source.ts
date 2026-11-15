@@ -1,4 +1,5 @@
 import type { ExampleProject } from "./examples";
+import { functionHeader } from "./function-parameters";
 import { compactRuleArrows } from "./rule-format";
 
 export type ExampleSourceStyle = "plain" | "commented";
@@ -57,8 +58,9 @@ export function exampleSource(project: ExampleProject, style: ExampleSourceStyle
   for (const line of compactRuleArrows(project.rules).split(/\r?\n/)) {
     const text = line.trim();
     const indent = line.slice(0, line.length - line.trimStart().length);
-    if (/^[^,():\s]+\([^()]*\):$/.test(text)) {
-      const name = text.slice(0, text.indexOf("("));
+    const definition = functionHeader(text);
+    if (definition) {
+      const { name } = definition;
       lines.push(`# 定义 ${name}：括号前两个值是函数入口与正常完成状态。`);
       if (registerAdder && registerFunctionNotes[name]) { lines.push(`# ${registerFunctionNotes[name]}`); notedFunctions.add(name); }
     }

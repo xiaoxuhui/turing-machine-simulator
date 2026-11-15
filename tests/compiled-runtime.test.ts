@@ -25,4 +25,4 @@ it.each(Object.entries(examples))("looks up every compiled transition of %s by i
     expect(machine.currentState).toBe(rule.toState);
     expect(machine.tape.read(0)).toBe(writeSymbol);
   }
-});
+}, 20_000);

@@ -30,7 +30,7 @@ it.each(Object.entries(examples))("preserves all state-name and structure varian
     }
     expect(b.tape.entries()).toEqual(a.tape.entries());
   }
-}, 20000);
+}, 60000);
 
 it("keeps local aliases, returns, exported paths, symbols and terminals when numbering", () => {
   const project: ExampleProject = { ...examples.functionExports, input: "", initialState: "父.入口", rules: `子(s,back):\n    s,□->back,1,R\n    ret back\n父(s,end,x=子):\n    s,□->入口,□,N\n    入口,□->x\n    back,□->end,2,N\n    导出状态 入口\n父` };

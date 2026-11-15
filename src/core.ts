@@ -1,5 +1,6 @@
 import { transitionFormatError } from "./rule-error";
 import { decodeRuleSymbol, expandImplicitRead } from "./rule-format";
+import { protectSymbolAnnotations, splitInputSymbols } from "./symbol-annotations";
 
 export type Direction = "L" | "R" | "N";
 
@@ -182,18 +183,19 @@ export function parseTransitions(source: string, options: ParseOptions = {}): Pa
   source.split(/\r?\n/).forEach((raw, index) => {
     const line = raw.trim();
     if (!line || line.startsWith("#")) return;
-    const match = expandImplicitRead(line).match(/^([^,]*),([^,]*?)\s*->\s*([^,]+)(?:,([^,]*)(?:,\s*([LRNlrn*]?)\s*)?)?$/);
+    const { text, restore } = protectSymbolAnnotations(line);
+    const match = expandImplicitRead(text).match(/^([^,]*),([^,]*?)\s*->\s*([^,]+)(?:,([^,]*)(?:,\s*([LRNlrn*]?)\s*)?)?$/);
     if (!match || !match[3].trim()) {
       errors.push(`第 ${index + 1} 行：${transitionFormatError(line)}`);
       return;
     }
     const fromField = match[1].trim(), readField = match[2].trim();
-    const fromState = fromField === "*" ? "" : fromField;
-    const readSymbol = readField === "*" ? "" : decodeRuleSymbol(readField);
-    const toState = match[3].trim();
+    const fromState = fromField === "*" ? "" : restore(fromField);
+    const readSymbol = readField === "*" ? "" : decodeRuleSymbol(restore(readField));
+    const toState = restore(match[3].trim());
     const writeField = match[4]?.trim(), directionField = match[5]?.trim();
     const shortMove = match[5] === undefined && /^[RLrl]$/.test(writeField ?? "");
-    const writeSymbol = shortMove || !writeField || writeField === "*" ? readSymbol : decodeRuleSymbol(writeField);
+    const writeSymbol = shortMove || !writeField || writeField === "*" ? readSymbol : decodeRuleSymbol(restore(writeField));
     const direction = shortMove ? writeField! : !directionField || directionField === "*" ? "N" : directionField;
     const transition: Transition = {
       fromState,
@@ -213,7 +215,7 @@ export function parseTransitions(source: string, options: ParseOptions = {}): Pa
 }
 
 export function inputToTape(input: string, blankSymbol: string): Array<[number, string]> {
-  return Array.from(input).flatMap((symbol, position) =>
+  return splitInputSymbols(input).flatMap((symbol, position) =>
     symbol === blankSymbol ? [] : ([[position, symbol]] as Array<[number, string]>),
   );
 }

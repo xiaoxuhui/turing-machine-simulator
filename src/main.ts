@@ -1,5 +1,5 @@
 import "./styles.css";
-import { compactRuleArrows, encodeRuleSymbol, formatTransition } from "./rule-format";
+import { compactRuleArrows, decodeRuleSymbol, encodeRuleSymbol, formatTransition } from "./rule-format";
 import { exampleSource, type ExampleSourceStyle } from "./example-source";
 import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, resolveInitialState, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
@@ -15,7 +15,13 @@ import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./
 import { shuffled } from "./shuffle";
 import { compileGijswijtMachine, readGijswijtOutput } from "./gijswijt-tm";
 import { editRuleSource } from "./rule-source";
+import { renderRuleRows } from "./rule-table";
+import { collectProjectSymbols, renameProjectSymbol } from "./project-symbols";
+import { attachNameTable } from "./name-table";
+import { collectProjectStates, renameProjectState } from "./project-states";
+import { visibleTapeSymbol } from "./symbol-annotations";
 import { attachDirectGijswijt } from "./gijswijt-direct";
+import { attachLambdaCalculator } from "./lambda-direct";
 import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
 import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
 import { attachSpaceIndentation } from "./text-insertion";
@@ -101,6 +107,21 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <label for="directOutput">完整数列</label><textarea id="directOutput" readonly rows="3" spellcheck="false"></textarea>
         </div>
       </section>
+      <section id="lambdaCalculator" class="panel gijswijt-converter" aria-labelledby="lambdaTitle">
+        <div class="sequence-mode-bar"><h2 id="lambdaTitle">λ 表达式归约</h2><label for="lambdaMode">计算模式<select id="lambdaMode"><option value="direct">直接计算</option><option value="tm">图灵机计算</option></select></label></div>
+        <form id="lambdaForm">
+          <label for="lambdaInput">λ 表达式<input id="lambdaInput" spellcheck="false" autocomplete="off" /></label>
+          <div id="lambdaDirectMode">
+            <div class="direct-actions"><button id="lambdaCalculate" class="btn primary" type="submit">直接归约</button><button id="lambdaStep" class="btn" type="button">单步归约</button><button id="lambdaCancel" class="btn" type="button" disabled>取消</button></div>
+            <p id="lambdaStatus" class="converter-status" role="status"></p>
+            <label for="lambdaOutput">归约结果<textarea id="lambdaOutput" class="lambda-output" readonly rows="2" spellcheck="false"></textarea></label>
+          </div>
+          <div id="lambdaTapeMode" hidden>
+            <div class="direct-actions"><button class="btn primary" type="submit">载入图灵机</button></div>
+            <p id="lambdaTapeStatus" class="converter-status" role="status"></p>
+          </div>
+        </form>
+      </section>
       <div class="lower">
         <section class="panel editor">
           <div class="panel-title"><h2>机器定义</h2><small>每行一条规则：状态,符号 → 状态,符号,方向</small></div>
@@ -127,7 +148,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。普通子函数完成后续行，声明 ret 才返回父函数或外部对应状态。</p>
             <p>前两个位置固定为初始状态、退出状态，后面才是参数：组合(q0,done,移动=右移,函数,完成=finish,状态,1,符号):。类型放在对应参数后面，用逗号分隔。函数或外部状态写 内部名=外部名；符号直接填 1,符号，不用另起内部符号名。移动 是函数调用，完成 则直接跳到外部 finish。仍只写 组合 调用，不带括号。未标类型的等号绑定先查函数，否则按外部状态处理；明确标了类型则核对该类型。函数、状态类型也支持 function/fn、state，符号类型支持 symbol/char。外部状态别名也可用于规则来源；合并后的实际规则不能重复。</p>
             <p>写入处用 * 保留读取符号，移动处用 * 表示不移动，函数里也一样。目标后只剩一项时，R/L 优先表示移动，其它值表示写入：q0,1-&gt;目标,R 保留 1 并右移；q0,1-&gt;目标,R,* 才写入字母 R、不移动。q0,1-&gt;目标,*,* 保留符号且不移动。写入与移动可分别留空。</p>
-            <p>字面星号多写一个：** 表示字符 *，*** 表示两个星号组成的符号，依此类推。读取、写入和符号参数采用相同转义；N 在单字段简写中是写入字符，不是方向，明确不移动可写 *,N 或 *,*。</p>
+            <p>字面星号多写一个：** 表示字符 *，*** 表示两个星号组成的符号，依此类推。在读取、写入或符号参数中，用 \\s 表示一个普通空格，例如 q0,\\s-&gt;q1,1,R。N 在单字段简写中是写入字符，不是方向，明确不移动可写 *,N 或 *,*。</p>
+            <p>符号可写成 <code>1#(标记)</code>。纸带显示 <code>1</code>，规则按完整符号匹配。写 <code>/#(文字)</code> 或 <code>\\#(文字)</code> 可以显示字面的 <code>#(文字)</code>。在规则里也可以用 <code>/-</code> 或 <code>\\-</code> 写减号，用 <code>//</code> 写斜杠，用 <code>\\\\</code> 写反斜杠。</p>
             <p>读取项留空或 * 表示任意符号，如 q0,-&gt;q1,*,*；当前状态留空或 * 表示任意状态，如 ,1-&gt;q1,*,*；两项都留空可写 ,-&gt;q1,*,*。来源状态也省略时需保留分隔逗号。明确状态/符号规则优先，然后是明确状态/任意符号，再是任意状态/明确符号，最后两者任意。函数内任意状态只匹配本次调用的局部状态，展开规则里的内部名称前缀.* 表示这个范围。</p>
             <p>只有状态和目标时可直接写 0.2-&gt;succ，等价于 0.2,*-&gt;succ,*,*：任意读取、保持符号、不移动。succ 是函数则调用，否则切换到普通状态。函数内部也支持，第 13 课有示例。</p>
             <p>顶层表达式跳到函数时，先找后面最近的同名裸调用：有就跳到那一行，执行后继续它下面；没有则在当前表达式处调用，完成后继续下一行。同状态、不同读取符号的分支可以分开写，仍共用状态入口；相同状态和读取符号再次出现，才开始下一个独立表达式。</p>
@@ -144,6 +166,18 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <label>原名称 → 实际内部名称<textarea id="internalNameMap" readonly rows="7" spellcheck="false"></textarea></label>
             <label>转换后的实际转移规则<textarea id="compiledRuleSource" readonly rows="10" spellcheck="false"></textarea></label>
           </details>
+          <details id="symbolTable" class="compiled-program">
+            <summary>符号表</summary>
+            <p class="hint">在「改为」栏输入新符号，停顿片刻后自动保存。规则、初始输入和空白符会同步更新，运行会重置。普通空格写作 <code>\\s</code>。</p>
+            <div class="rule-table name-table" role="table" aria-label="符号表"></div>
+            <p class="name-table-status hint" role="status"></p>
+          </details>
+          <details id="stateTable" class="compiled-program">
+            <summary>状态表</summary>
+            <p class="hint">在「改为」栏输入新名称，停顿片刻后自动同步规则和状态设置。函数展开的状态由源码管理。</p>
+            <div class="rule-table name-table" role="table" aria-label="状态表"></div>
+            <p class="name-table-status hint" role="status"></p>
+          </details>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
           <div id="ruleCount" class="hint" role="status"></div>
@@ -154,7 +188,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <section class="panel">
             <div class="panel-title"><h2>示例程序</h2><small>${Object.keys(examples).length} 个</small></div>
             <select id="example" style="width:100%">
-              ${["一进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
+              ${["一进制运算", "二进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
             <label style="margin-top:10px">示例源码<select id="exampleSourceStyle"><option value="plain">无注释</option><option value="commented">有注释</option></select></label>
             <div id="exampleProgramOptions">
@@ -245,12 +279,12 @@ function persistEditorDraft(): void {
   byId("draftStatus").classList.toggle("error", error !== null);
 }
 
-function createMachine(): boolean {
+function createMachine(preparedRules?: ReturnType<typeof parseTransitions>): boolean {
   pause();
   const project = collectProject();
   persistEditorDraft();
   const terminalStates = { acceptStates: splitStates(project.acceptStates), rejectStates: splitStates(project.rejectStates), haltStates: splitStates(project.haltStates) };
-  const parsed = parseTransitions(project.rules, terminalStates);
+  const parsed = preparedRules ?? parseTransitions(project.rules, terminalStates);
   ruleDiagnosticView.update(parsed.errors);
   const errors = [...parsed.errors];
   const initialState = resolveInitialState(parsed, project.initialState);
@@ -284,7 +318,7 @@ function createMachine(): boolean {
   const storageError = saveProject(localStorage, STORAGE_KEY, project);
   if (storageError) byId("errors").textContent = storageError;
   render();
-  renderRuleTable();
+  renderRuleTable(parsed);
   generatePuzzle();
   return true;
 }
@@ -441,7 +475,7 @@ function renderTape(): void {
     cell.className = `cell${position === head ? " head" : ""}`;
     cell.innerHTML = `<span class="cell-index">${position}</span>`;
     const symbol = document.createElement("span");
-    symbol.textContent = machine?.tape.read(position) ?? value("blankSymbol") ?? "□";
+    symbol.textContent = visibleTapeSymbol(machine?.tape.read(position) ?? value("blankSymbol") ?? "□");
     cell.append(symbol);
     tape.append(cell);
   }
@@ -503,9 +537,56 @@ function renderCompiledProgram(parsed: ReturnType<typeof parseTransitions>): voi
   source.value = parsed.transitions.map(formatTransition).join("\n");
 }
 
-function renderRuleTable(): void {
+let stopRuleRows: (() => void) | undefined;
+let tableRules: ReturnType<typeof parseTransitions>;
+const editorParseOptions = () => ({ acceptStates: splitStates(value("acceptStates")), rejectStates: splitStates(value("rejectStates")), haltStates: splitStates(value("haltStates")) });
+const renderSymbolTable = attachNameTable(byId("symbolTable"), () => {
+  const project = collectProject();
+  const invalid = Boolean(tableRules.errors.length);
+  const rows = invalid ? [] : collectProjectSymbols(project, tableRules).map(symbol => ({
+    value: symbol.value,
+    details: [String(symbol.reads), String(symbol.writes),
+      [symbol.blank && "空白符", symbol.input && "初始输入", symbol.parameter && "函数参数"].filter(Boolean).join("、") || "—"],
+  }));
+  return { rows, invalid, revision: machineProjectKey(project) };
+}, (from, to) => {
+  if (from === to) return;
+  const renamed = renameProjectSymbol(collectProject(), tableRules, from, to);
+  const parsed = parseTransitions(renamed.rules, editorParseOptions());
+  if (parsed.errors.length) throw new Error(parsed.errors[0]);
+  if (!resolveInitialState(parsed, value("initialState"))) throw new Error("请先填写初始状态。");
+  if ([...renamed.blankSymbol].length !== 1) throw new Error("空白符必须是一个字符。");
+  byId<HTMLTextAreaElement>("rules").value = renamed.rules;
+  byId<HTMLInputElement>("input").value = renamed.input;
+  byId<HTMLInputElement>("blankSymbol").value = renamed.blankSymbol;
+  createMachine(parsed);
+}, { title: "符号表", field: "符号", columns: ["符号", "读取", "写入", "其它用途", "改为"], encode: encodeRuleSymbol, decode: decodeRuleSymbol });
+
+const renderStateTable = attachNameTable(byId("stateTable"), () => {
+  const project = collectProject();
+  const invalid = Boolean(tableRules.errors.length);
+  const rows = invalid ? [] : collectProjectStates(project, tableRules).map(state => ({
+    value: state.value, editable: !tableRules.hasFunctions,
+    details: [String(state.incoming), String(state.outgoing), state.roles.join("、") || "—"],
+  }));
+  return { rows, invalid, revision: machineProjectKey(project) };
+}, (from, to) => {
+  const project = collectProject();
+  const renamed = renameProjectState(project, tableRules, from, to);
+  const parsed = parseTransitions(renamed.rules);
+  if (parsed.errors.length) throw new Error(parsed.errors[0]);
+  if (!resolveInitialState(parsed, renamed.initialState)) throw new Error("请先填写初始状态。");
+  if ([...project.blankSymbol].length !== 1) throw new Error("空白符必须是一个字符。");
+  for (const [id, text] of Object.entries(renamed)) byId<HTMLInputElement | HTMLTextAreaElement>(id).value = text;
+  createMachine(parsed);
+}, { title: "状态表", field: "状态", columns: ["状态", "进入", "出发", "用途", "改为"] });
+
+function renderRuleTable(parsed = parseTransitions(value("rules"), editorParseOptions())): void {
   const host = byId("ruleTable");
-  const parsed = parseTransitions(value("rules"), { acceptStates: splitStates(value("acceptStates")), rejectStates: splitStates(value("rejectStates")), haltStates: splitStates(value("haltStates")) });
+  stopRuleRows?.();
+  tableRules = parsed;
+  renderSymbolTable();
+  renderStateTable();
   ruleDiagnosticView.update(parsed.errors);
   byId("errors").textContent = parsed.errors.slice(0, 4).join("；");
   renderCompiledProgram(parsed);
@@ -520,31 +601,40 @@ function renderRuleTable(): void {
     return;
   }
   byId("ruleCount").textContent = `共 ${parsed.transitions.length} 条 · 向下滚动查看全部规则`;
-  host.innerHTML = `<div class="rule-row rule-head"><span>当前状态</span><span>读取</span><span>下一状态</span><span>写入</span><span>移动</span><span></span></div>` +
-    parsed.transitions.map((rule, index) => `<div class="rule-row rule-data-row" data-index="${index}">
-      <input aria-label="规则 ${index + 1} 当前状态" placeholder="* 任意状态" title="留空或 *：任意状态" value="${escapeAttribute(rule.fromState || "*")}" />
-      <input aria-label="规则 ${index + 1} 读取符号" placeholder="* 任意符号" title="留空或 *：任意符号；**：字面星号，***：两个星号" value="${escapeAttribute(rule.readSymbol ? encodeRuleSymbol(rule.readSymbol) : "*")}" />
-      <input aria-label="规则 ${index + 1} 下一状态" value="${escapeAttribute(rule.toState)}" />
-      <input aria-label="规则 ${index + 1} 写入符号" placeholder="* 保持读取符号" title="* 保持符号；** 写入字面星号，*** 写入两个星号" value="${escapeAttribute(rule.writeSymbol ? encodeRuleSymbol(rule.writeSymbol) : "*")}" />
-      <select aria-label="规则 ${index + 1} 移动方向"><option value="">默认：不移动</option><option value="*">*：不移动</option><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
-      <button class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
-    </div>`).join("");
-  if (parsed.hasFunctions) {
-    host.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("input,select,button").forEach(field => { field.disabled = true; });
-    return;
-  }
-  host.querySelectorAll("input,select").forEach((field) => field.addEventListener("change", () => {
-    const row = field.closest<HTMLElement>(".rule-data-row")!;
+  const header = `<div class="rule-row rule-head"><span>当前状态</span><span>读取</span><span>下一状态</span><span>写入</span><span>移动</span><span></span></div>`;
+  const disabled = parsed.hasFunctions ? " disabled" : "";
+  stopRuleRows = renderRuleRows(host, header, parsed.transitions.length, index => {
+    const rule = parsed.transitions[index];
+    return `<div class="rule-row rule-data-row" data-index="${index}">
+      <input${disabled} aria-label="规则 ${index + 1} 当前状态" placeholder="* 任意状态" title="留空或 *：任意状态" value="${escapeAttribute(rule.fromState || "*")}" />
+      <input${disabled} aria-label="规则 ${index + 1} 读取符号" placeholder="* 任意符号" title="留空或 *：任意符号；**：字面星号，***：两个星号" value="${escapeAttribute(rule.readSymbol ? encodeRuleSymbol(rule.readSymbol) : "*")}" />
+      <input${disabled} aria-label="规则 ${index + 1} 下一状态" value="${escapeAttribute(rule.toState)}" />
+      <input${disabled} aria-label="规则 ${index + 1} 写入符号" placeholder="* 保持读取符号" title="* 保持符号；** 写入字面星号，*** 写入两个星号" value="${escapeAttribute(rule.writeSymbol ? encodeRuleSymbol(rule.writeSymbol) : "*")}" />
+      <select${disabled} aria-label="规则 ${index + 1} 移动方向"><option value="">默认：不移动</option><option value="*">*：不移动</option><option${rule.direction === "L" ? " selected" : ""}>L</option><option${rule.direction === "R" ? " selected" : ""}>R</option><option${rule.direction === "N" ? " selected" : ""}>N</option></select>
+      <button${disabled} class="delete-rule" aria-label="删除规则 ${index + 1}">×</button>
+    </div>`;
+  });
+}
+
+function attachRuleTableEditing(): void {
+  const host = byId("ruleTable");
+  host.addEventListener("change", event => {
+    const field = event.target;
+    if (!(field instanceof HTMLInputElement || field instanceof HTMLSelectElement) || field.disabled) return;
+    const row = field.closest<HTMLElement>(".rule-data-row");
+    if (!row) return;
     const fields = [...row.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input,select")].map((item) => item.value.trim());
     const replacement = `${fields[0]},${fields[1]} -> ${fields[2]},${fields[3]},${fields[4]}`;
     byId<HTMLTextAreaElement>("rules").value = editRuleSource(value("rules"), Number(row.dataset.index), replacement);
     createMachine();
-  }));
-  host.querySelectorAll<HTMLButtonElement>(".delete-rule").forEach((button) => button.addEventListener("click", () => {
-    const row = button.closest<HTMLElement>(".rule-data-row")!;
+  });
+  host.addEventListener("click", event => {
+    const button = (event.target as Element).closest<HTMLButtonElement>(".delete-rule");
+    const row = button?.closest<HTMLElement>(".rule-data-row");
+    if (!row || button?.disabled) return;
     byId<HTMLTextAreaElement>("rules").value = editRuleSource(value("rules"), Number(row.dataset.index), null);
     createMachine();
-  }));
+  });
 }
 
 function escapeAttribute(raw: string): string {
@@ -693,7 +783,7 @@ function persistTargetSpeed(speed: number): void {
   if (error) byId("errors").textContent = error;
 }
 
-byId("apply").addEventListener("click", createMachine);
+byId("apply").addEventListener("click", () => createMachine());
 byId("compileGijswijt").addEventListener("click", () => {
   try {
     const raw = value("gijswijtThreshold").trim();
@@ -747,7 +837,8 @@ byId("addRule").addEventListener("click", () => {
   handleEditorInput();
 });
 for (const field of editorFields) byId(field).addEventListener("input", handleEditorInput);
-byId("compiledProgram").addEventListener("toggle", renderRuleTable);
+byId("compiledProgram").addEventListener("toggle", () => renderRuleTable());
+attachRuleTableEditing();
 attachSpaceIndentation(byId<HTMLTextAreaElement>("rules"));
 byId("unlimitedSteps").addEventListener("change", () => {
   byId<HTMLInputElement>("maxSteps").disabled = byId<HTMLInputElement>("unlimitedSteps").checked;
@@ -851,6 +942,12 @@ document.addEventListener("keydown", (event) => {
 const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
 const editorDraft = loadEditorDraft(localStorage);
 fillProject({ ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed });
+byId<HTMLInputElement>("lambdaInput").value = value("acceptStates") === examples.lambda.acceptStates
+  ? value("input") : examples.lambda.input;
+attachLambdaCalculator(byId("lambdaCalculator"), input => {
+  const example = examples.lambda;
+  fillProject({ ...example, input, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
+  byId("lambdaTapeStatus").textContent = createMachine() ? "已载入。点击纸带下方的「运行」或「单步」。" : "载入失败，请检查机器定义。";
+});
 previewExample();
-createMachine();
-renderRuleTable();
+if (!createMachine()) renderRuleTable();

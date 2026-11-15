@@ -1,6 +1,6 @@
 import type { ParseOptions, ParseResult, Transition } from "./core";
 import { transitionFormatError } from "./rule-error";
-import { parseFunctionParameters, type FunctionParameter } from "./function-parameters";
+import { functionHeader, parseFunctionParameters, type FunctionParameter } from "./function-parameters";
 
 interface SourceRule { rule: Transition; line: number }
 interface Call { name: string; line: number; label?: string; next?: string }
@@ -57,7 +57,6 @@ interface RuleFunction {
   returns: Set<string>;
 }
 
-const header = /^([^,():\s]+)\(([^()]*)\):$/u;
 const identifier = /^[\p{L}_][\p{L}\p{N}_-]*$/u;
 const stateName = /^[^,():\s=]+$/u;
 
@@ -69,7 +68,7 @@ export function parseRuleFunctions(
   // Preserve the existing fast parser, including indentation, for flat files.
   if (!lines.some(raw => {
     const line = raw.trim();
-    return !line.startsWith("#") && (header.test(line) || identifier.test(line));
+    return !line.startsWith("#") && (functionHeader(line) || identifier.test(line));
   })) return null;
 
   const errors: string[] = [];
@@ -83,11 +82,11 @@ export function parseRuleFunctions(
     if (!line || line.startsWith("#")) continue;
     if (raw.includes("\t")) { fail(number, "函数格式请使用空格缩进，不要混入 Tab"); continue; }
     const indent = raw.length - raw.trimStart().length;
-    const definition = line.match(header);
+    const definition = functionHeader(line);
     if (definition) {
       if (indent) { fail(number, "函数定义必须顶格，不能嵌套定义"); continue; }
-      const [, name, parameters] = definition;
-      const [initial, exit, ...extras] = parameters.split(",").map(part => part.trim());
+      const { name, fields } = definition;
+      const [initial, exit, ...extras] = fields.map(part => part.trim());
       if (!identifier.test(name)) { fail(number, "函数名只能使用字母、汉字、数字、下划线或连字符，且不能以数字开头"); continue; }
       if (!stateName.test(initial) || (exit !== undefined && !stateName.test(exit))) fail(number, "前两个参数必须是初始状态、退出状态，且不能为空");
       const parsedParameters = parseFunctionParameters(extras);

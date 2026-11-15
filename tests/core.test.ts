@@ -59,6 +59,14 @@ describe("transition parser", () => {
     expect(parseTransitions("q0,1 -> q1,0,R").transitions[0].direction).toBe("R");
     expect(parseTransitions("q0,1 -> q1,0,R\nq0,1 -> q2,1,L").errors).toHaveLength(1);
   });
+  it.each([" ", "\t", "\u00a0", "\u3000", "\\s", "\\t", "\\u3000"])("round-trips whitespace and literal escape symbols: %j", symbol => {
+    const encoded = encodeRuleSymbol(symbol);
+    const source = "q0," + encoded + "->q1," + encoded + ",R";
+    const parsed = parseTransitions(source);
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.transitions[0]).toMatchObject({ readSymbol: symbol, writeSymbol: symbol });
+    expect(formatTransition(parsed.transitions[0])).toBe(source);
+  });
   it("keeps the read star literal rather than making it a wildcard", () => {
     const transitions = parseTransitions("q0,**->HALT,*,*").transitions;
     const machine = new TuringMachine({ blankSymbol: "0", initialState: "q0", acceptStates: [], rejectStates: [], haltStates: ["HALT"], transitions }, [[0, "1"]]);

@@ -7,9 +7,11 @@ import { compactRuleArrows } from "./rule-format";
 import { fibonacciExample } from "./fibonacci-example";
 import { inverseOperationExamples } from "./inverse-operation-examples";
 import { registerAdderExample } from "./register-adder-example";
+import { lambdaExample } from "./lambda-example";
+import { binaryExamples } from "./binary-examples";
 
 export interface ExampleProject {
-  category?: "基础示例" | "函数教程" | "一进制运算" | "忙碌海狸" | "猜想验证";
+  category?: "基础示例" | "函数教程" | "一进制运算" | "二进制运算" | "忙碌海狸" | "猜想验证";
   maxSteps?: number | null;
   name: string;
   description: string;
@@ -37,7 +39,7 @@ const exampleDefinitions: Record<string, ExampleProject> = {
     rules: `q0,1 -> q0,1,R\nq0,□ -> HALT,1,N`,
   },
   binary: {
-    category: "基础示例",
+    category: "二进制运算",
     name: "二进制加一",
     description: "先移动到最右端，再从低位处理进位。",
     input: "1011",
@@ -73,8 +75,10 @@ const exampleDefinitions: Record<string, ExampleProject> = {
     rules: `A,0 -> B,1,R\nA,1 -> B,1,L\nB,0 -> A,1,L\nB,1 -> HALT,1,R`,
   },
   ...unaryExamples,
+  ...binaryExamples,
   registerAdder: registerAdderExample,
   fibonacci: fibonacciExample,
+  lambda: lambdaExample,
   ...hyperoperationExamples,
   ...inverseOperationExamples,
   ...busyBeaverExamples,

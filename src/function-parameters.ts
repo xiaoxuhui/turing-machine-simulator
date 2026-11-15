@@ -1,3 +1,12 @@
+import { protectSymbolAnnotations } from "./symbol-annotations";
+
+export function functionHeader(line: string): { name: string; fields: string[] } | undefined {
+  if (!line.endsWith("):")) return undefined;
+  const { text, restore } = protectSymbolAnnotations(line);
+  const match = /^([^,():\s]+)\(([^()]*)\):$/u.exec(text);
+  if (match) return { name: restore(match[1]), fields: match[2].split(",").map(restore) };
+}
+
 export type FunctionParameterType = "function" | "state" | "symbol" | "auto";
 
 export interface FunctionParameter {
@@ -22,7 +31,7 @@ export function parseFunctionParameters(fields: string[]): { parameters: Functio
     const declaredType = functionParameterType(fields[index + 1]?.trim() ?? "");
     if (declaredType) index++;
     if (declaredType === "symbol") {
-      if (!field || /[,():\s]/u.test(field)) errors.push("符号参数必须直接填写一个非空符号，例如 1,符号 或 C1,符号");
+      if (!field || /[,():\s]/u.test(protectSymbolAnnotations(field).text)) errors.push("符号参数必须直接填写一个非空符号，例如 1,符号 或 C1,符号");
       else parameters.push({ alias: decodeRuleSymbol(field), value: decodeRuleSymbol(field), type: "symbol" });
       continue;
     }

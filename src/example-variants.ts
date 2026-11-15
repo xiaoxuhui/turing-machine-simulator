@@ -2,7 +2,8 @@ import { parseTransitions, resolveInitialState } from "./core";
 import { exampleSource } from "./example-source";
 import type { ExampleProject } from "./examples";
 import { extractSharedFunctions } from "./shared-functions";
-import { functionParameterType, parseFunctionParameters } from "./function-parameters";
+import { functionHeader, functionParameterType, parseFunctionParameters } from "./function-parameters";
+import { protectSymbolAnnotations } from "./symbol-annotations";
 import { expandImplicitRead, formatTransition } from "./rule-format";
 
 export type ExampleNames = "descriptive" | "numeric";
@@ -13,12 +14,11 @@ function numericStates(project: ExampleProject): ExampleProject {
   const terminal = new Set([...split(project.haltStates), ...split(project.acceptStates), ...split(project.rejectStates)]);
   const functions = new Map<string, Set<string>>();
   const source = exampleSource(project, "commented", false);
-  const header = /^([^,():\s]+)\(([^()]*)\):$/u;
   for (const line of source.split("\n")) {
-    const match = line.trim().match(header);
+    const match = functionHeader(line.trim());
     if (!match) continue;
-    const parameters = parseFunctionParameters(match[2].split(",").slice(2)).parameters;
-    functions.set(match[1], new Set(parameters.filter(item => item.type !== "symbol").map(item => item.alias)));
+    const parameters = parseFunctionParameters(match.fields.slice(2)).parameters;
+    functions.set(match.name, new Set(parameters.filter(item => item.type !== "symbol").map(item => item.alias)));
   }
   const names = new Map<string, string>();
   const scopes = [...new Set(source.split("\n").map(line => line.trim().match(/^([^,]+),/)?.[1]).filter((state): state is string => Boolean(state?.endsWith(".*"))).map(state => state.slice(0, -1)))].sort((a, b) => b.length - a.length);
@@ -55,10 +55,10 @@ function numericStates(project: ExampleProject): ExampleProject {
     const text = line.trim();
     if (!text || text.startsWith("#")) return line;
     const indent = line.slice(0, line.length - line.trimStart().length);
-    const definition = text.match(header);
+    const definition = functionHeader(text);
     if (definition) {
-      owner = definition[1];
-      const params = definition[2].split(",").map(value => value.trim());
+      owner = definition.name;
+      const params = definition.fields.map(value => value.trim());
       const converted = params.slice(0, 2).map(value => rename(value, owner));
       for (let index = 2; index < params.length; index++) {
         const field = params[index], typeName = params[index + 1];
@@ -75,12 +75,13 @@ function numericStates(project: ExampleProject): ExampleProject {
     if (named) return `${rename(named[1])}: ${named[2]} -> ${rename(named[3])}`;
     const exported = text.match(/^(ret|返回状态|导出状态)(?:\s+|:\s*)(.*)$/u);
     if (exported) return indent + exported[1] + " " + exported[2].split(",").map(value => rename(value, owner)).join(",");
-    const normalized = expandImplicitRead(text);
+    const { text: protectedText, restore } = protectSymbolAnnotations(text);
+    const normalized = expandImplicitRead(protectedText);
     const rule = normalized.match(/^([^,]*),([^,]*?)->([^,]+)(,.*)?$/);
     if (!rule) return line;
     const [, from, read, to, fields = ""] = rule;
-    const state = !from.trim() || from.trim() === "*" ? from : rename(from, owner);
-    return `${indent}${state}${normalized === text ? `,${read}` : ""}->${rename(to, owner)}${fields}`;
+    const state = !from.trim() || from.trim() === "*" ? from : rename(restore(from), owner);
+    return restore(`${indent}${state}${normalized === protectedText ? `,${read}` : ""}->${rename(restore(to), owner)}${fields}`);
   });
   const initialState = project.initialState ? rename(project.initialState) : "";
   const mapping = [...names].slice(0, 40).map(([from, to]) => `# 状态 ${from} → ${to}`);
