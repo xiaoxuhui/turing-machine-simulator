@@ -21,25 +21,44 @@ function numericStates(project: ExampleProject): ExampleProject {
     functions.set(match.name, new Set(parameters.filter(item => item.type !== "symbol").map(item => item.alias)));
   }
   const names = new Map<string, string>();
-  const scopes = [...new Set(source.split("\n").map(line => line.trim().match(/^([^,]+),/)?.[1]).filter((state): state is string => Boolean(state?.endsWith(".*"))).map(state => state.slice(0, -1)))].sort((a, b) => b.length - a.length);
-  const scopeNames = new Map<string, string>();
-  let next = 0;
+  const sections = new Map<string, string>();
+  const counters = new Map<string, number>();
+  const reserved = new Set(terminal);
+  for (const section of Object.values(project.numericStateSections ?? {})) reserved.add(section);
+  // Reserve every ancestor so a state or a generated section cannot take an existing section's number.
+  for (const value of reserved) {
+    const dot = value.lastIndexOf(".");
+    if (dot >= 0) reserved.add(value.slice(0, dot));
+  }
+  const allocate = (parent: string) => {
+    let index = counters.get(parent) ?? 1;
+    const prefix = parent ? parent + "." : "";
+    while (reserved.has(prefix + index)) index++;
+    counters.set(parent, index + 1);
+    return prefix + index;
+  };
+  const phase = (state: string): string | undefined => {
+    const declared = project.numericStateSections;
+    if (!declared) return undefined;
+    for (let key = state; key; key = key.includes(".") ? key.slice(0, key.lastIndexOf(".")) : "") {
+      if (Object.hasOwn(declared, key)) return declared[key];
+    }
+  };
   const local = (state: string): string => {
     if (terminal.has(state)) return state;
     if (!names.has(state)) {
-      const scope = scopes.find(prefix => state.startsWith(prefix));
-      if (scope) {
-        if (!scopeNames.has(scope)) {
-          while ([...terminal].some(item => item === String(next) || item.startsWith(`${next}.`))) next++;
-          scopeNames.set(scope, String(next++));
+      const pieces = state.split(".");
+      const leaf = pieces.pop();
+      let path = phase(state) ?? "";
+      if (!path) {
+        let original = "";
+        for (const piece of pieces) {
+          original += piece + ".";
+          if (!sections.has(original)) sections.set(original, allocate(path));
+          path = sections.get(original)!;
         }
-        let value = `${scopeNames.get(scope)}.${state === `${scope}*` ? "*" : next++}`;
-        while (terminal.has(value)) value = `${scopeNames.get(scope)}.${next++}`;
-        names.set(state, value);
-      } else {
-        while (terminal.has(String(next))) next++;
-        names.set(state, String(next++));
       }
+      names.set(state, leaf === "*" && path ? path + ".*" : allocate(path));
     }
     return names.get(state)!;
   };
@@ -90,7 +109,11 @@ function numericStates(project: ExampleProject): ExampleProject {
 
 export function exampleVariant(project: ExampleProject, names: ExampleNames, structure: ExampleStructure): ExampleProject {
   let variant = project;
-  if (structure === "functions") variant = extractSharedFunctions(project);
+  if (structure === "functions") variant = project.sharedRules ? {
+    ...project,
+    rules: project.sharedRules(),
+    description: project.description + " 公共函数版复用寄存器加一、减一后的整理和左右扫描。",
+  } : extractSharedFunctions(project);
   if (structure === "flat") {
     const parsed = parseTransitions(project.rules, { haltStates: split(project.haltStates), acceptStates: split(project.acceptStates), rejectStates: split(project.rejectStates) });
     if (parsed.errors.length) throw new Error(parsed.errors[0]);

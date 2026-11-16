@@ -8,6 +8,24 @@ const reject = "REJECT";
 class BinaryProgram extends TapeStackProgram {
   constructor() { super("binary", "B", "HALT", reject); }
 
+  readonly numericStateSections: Record<string, string> = {
+    "binary.start": "1.1", "binary.input": "1.1", "binary.finish": "3.2", "binary.clean": "3.2",
+  };
+  private numericSection = "2";
+
+  override label(): string {
+    const name = super.label();
+    this.numericStateSections[name] = this.numericSection;
+    return name;
+  }
+
+  inSection<T>(section: string, build: () => T): T {
+    const previous = this.numericSection;
+    this.numericSection = section;
+    try { return build(); }
+    finally { this.numericSection = previous; }
+  }
+
   digits(name = this.label()): TapeStack { return { name, values: bits }; }
 
   copy(source: TapeStack, target: TapeStack, next: string): string {
@@ -30,18 +48,21 @@ class BinaryProgram extends TapeStackProgram {
   }
 
   // Consume both operands. The finite control holds only one carry or borrow bit.
-  combine(left: TapeStack, right: TapeStack, output: TapeStack, subtract: boolean, next: string, negative = reject): string {
+  combine(left: TapeStack, right: TapeStack, output: TapeStack, subtract: boolean, next: string, negative = reject, section?: string): string {
     const reversed = this.digits();
-    const plain = this.label(), carried = this.label();
-    const done = this.move(reversed, output, next);
-    const overflow = subtract ? this.clear(reversed, negative) : this.push(reversed, "1", done);
+    const build = <T>(part: number, action: () => T) => section ? this.inSection(`${section}.${part}`, action) : action();
+    const plain = build(1, () => this.label()), carried = build(2, () => this.label());
+    const done = build(3, () => this.move(reversed, output, next));
+    const overflow = build(3, () => subtract ? this.clear(reversed, negative) : this.push(reversed, "1", done));
     for (const [carry, from] of [plain, carried].entries()) {
       const digit = (a: number, b: number) => {
         const value = subtract ? a - b - carry : a + b + carry;
         return this.push(reversed, String(value & 1), value < 0 || value > 1 ? carried : plain);
       };
-      const missingLeft = this.take(right, bit => digit(0, Number(bit)), carry ? overflow : done);
-      this.take(left, bit => this.take(right, other => digit(Number(bit), Number(other)), digit(Number(bit), 0)), missingLeft, from);
+      build(carry + 1, () => {
+        const missingLeft = this.take(right, bit => digit(0, Number(bit)), carry ? overflow : done);
+        this.take(left, bit => this.take(right, other => digit(Number(bit), Number(other)), digit(Number(bit), 0)), missingLeft, from);
+      });
     }
     return plain;
   }
@@ -109,7 +130,7 @@ class BinaryProgram extends TapeStackProgram {
     const startLeft = this.label(), readLeft = this.label();
     this.take(input, bit => bit === operator ? startRight : this.push(left, bit, readLeft), reject, readLeft);
     this.take(input, bit => bit === operator ? reject : this.push(left, bit, readLeft), reject, startLeft);
-    this.readInput(raw, this.move(raw, input, startLeft));
+    this.readInput(raw, this.move(raw, input, startLeft), operator !== "/");
   }
 }
 
@@ -120,22 +141,26 @@ function binaryExample(operator: Operator, name: string, description: string, in
   const left = program.digits("left"), right = program.digits("right"), result = program.digits("result");
   program.note(description);
   program.note("每个操作数只写 0 和 1，零写作 0。接受前导零。停机后从位置 0 开始留下二进制结果。");
-  const print = program.print(result);
+  if (operator === "+" || operator === "-") {
+    const carry = operator === "+" ? "进位" : "借位";
+    program.note(`数字状态名：1.1 读入，1.2 分离操作数；2.1 无${carry}，2.2 有${carry}，2.3 收尾；3.1 输出，3.2 清理。`);
+  }
+  const print = program.inSection("3.1", () => program.print(result));
   let calculate: string;
   switch (operator) {
-    case "+": calculate = program.combine(left, right, result, false, print); break;
-    case "-": calculate = program.combine(left, right, result, true, print); break;
+    case "+": calculate = program.combine(left, right, result, false, print, reject, "2"); break;
+    case "-": calculate = program.combine(left, right, result, true, print, reject, "2"); break;
     case "*": calculate = program.multiply(left, right, result, print); break;
     case "/": calculate = program.hasOne(right, program.divide(left, right, result, print), reject); break;
     case "^": calculate = program.power(left, right, result, print); break;
     case "@": calculate = program.logarithm(left, right, result, print); break;
   }
-  program.readOperands(operator, left, right, calculate);
+  program.inSection("1.2", () => program.readOperands(operator, left, right, calculate));
   return {
     category: "二进制运算", name, input, initialState: program.start, blankSymbol: stackTapeBlank,
     acceptStates: "", rejectStates: reject, haltStates: "HALT", maxSteps: null,
     description: description + " 两边都填二进制数，零写 0。停机时纸带只留下二进制结果。",
-    rules: program.finish(),
+    rules: program.finish(), numericStateSections: program.numericStateSections,
   };
 }
 

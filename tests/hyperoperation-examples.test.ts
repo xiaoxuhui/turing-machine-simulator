@@ -4,16 +4,20 @@ import { hyperoperationExamples } from "../src/hyperoperation-examples";
 
 const parsed = Object.fromEntries(Object.entries(hyperoperationExamples).map(([key, example]) => [key, parseTransitions(example.rules)]));
 
-function run(key: string, input: string, answer: number | "reject"): number {
+function run(key: string, input: string, answer: number | "reject" | "missing-transition"): number {
   const example = hyperoperationExamples[key];
   const machine = new TuringMachine({
     blankSymbol: example.blankSymbol, initialState: example.initialState,
     acceptStates: [], rejectStates: ["REJECT"], haltStates: ["HALT"], transitions: parsed[key].transitions,
   }, inputToTape(input, example.blankSymbol));
   let steps = 0;
-  for (; steps < 10_000_000; steps += 1) if (machine.step().stopped) break;
-  expect(machine.currentState, `${key}: ${input}, ${steps} steps`).toBe(answer === "reject" ? "REJECT" : "HALT");
-  if (answer !== "reject") {
+  let result;
+  for (; steps < 10_000_000; steps += 1) {
+    result = machine.step();
+    if (result.stopped) break;
+  }
+  expect(result?.reason, `${key}: ${input}, ${steps} steps`).toBe(typeof answer === "number" ? "halt" : answer);
+  if (typeof answer === "number") {
     const entries = machine.tape.entries();
     expect(entries.map(([, symbol]) => symbol).join(""), input).toBe("1".repeat(answer));
     expect(entries.every(([position], index) => position === entries[0][0] + index)).toBe(true);
@@ -29,6 +33,9 @@ describe("higher arithmetic executed only by ordinary tape transitions", () => {
       expect(example.maxSteps).toBeNull();
       expect(example).not.toHaveProperty("speed");
     }
+  });
+  it("leaves malformed unary division input to the missing-transition status", () => {
+    for (const input of ["111", "1//1", "0/1", "1+1", "11/1X"]) run("unaryDivide", input, "missing-transition");
   });
   it("divides every numerator 0–8 by every divisor 0–4", () => {
     for (let a = 0; a <= 8; a += 1) for (let b = 0; b <= 4; b += 1) {
@@ -56,7 +63,6 @@ describe("higher arithmetic executed only by ordinary tape transitions", () => {
   });
   it("rejects malformed input instead of silently computing another operation", () => {
     for (const [key, inputs] of [
-      ["unaryDivide", ["111", "1//1", "0/1", "1+1"]],
       ["unaryPower", ["1^^1", "1^1^1", "1^0"]],
       ["unaryTetration", ["1^1", "1^^^1"]],
       ["unaryPentation", ["1^^1", "1^^^^1"]],

@@ -18,8 +18,8 @@ function run(key: Operation, input: string, expected: string): void {
   for (let steps = 0; steps < 2_000_000; steps++) {
     const result = machine.step();
     if (!result.stopped) continue;
-    expect(result.reason, input).toBe(expected === "REJECT" ? "reject" : "halt");
-    if (expected !== "REJECT") {
+    expect(result.reason, input).toBe(expected === "REJECT" ? "reject" : expected === "missing-transition" ? expected : "halt");
+    if (/^[01]+$/.test(expected)) {
       expect(machine.tape.entries(), input).toEqual([...expected].map((bit, index) => [index, bit]));
       expect(machine.headPosition, input).toBe(0);
     }
@@ -58,4 +58,9 @@ it("accepts leading zeroes and rejects malformed operands", () => {
   run("binaryDivide", "0001101/00011", "100");
   run("binaryLog", "00011@00011011", "11");
   for (const input of ["", "+11", "01+", "01++10", "0110", "2+10", "10-1"]) run("binaryAdd", input, "REJECT");
+});
+
+it("reports missing rules for mistyped binary division symbols", () => {
+  run("binaryDivide", "1101/13", "missing-transition");
+  run("binaryDivide", "1101+11", "missing-transition");
 });

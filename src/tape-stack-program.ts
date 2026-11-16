@@ -89,11 +89,11 @@ export class TapeStackProgram {
     return this.take(stack, () => loop, next, loop);
   }
 
-  readInput(stack: TapeStack, next: string): void {
+  readInput(stack: TapeStack, next: string, rejectUnknown = true): void {
     const scan = `${this.prefix}.input`, rewind = `${this.prefix}.input.rewind`, ready = `${this.prefix}.input.ready`;
     this.rule(this.start, "", `${this.prefix}.input.origin`, "", "L");
     this.rule(`${this.prefix}.input.origin`, stackTapeBlank, scan, this.origin, "R");
-    this.rule(scan, "", this.reject);
+    if (rejectUnknown) this.rule(scan, "", this.reject);
     this.rule(scan, this.consumed, scan, this.consumed, "R");
     this.rule(scan, stackTapeBlank, rewind, stackTapeBlank, "L");
     this.rule(rewind, this.consumed, rewind, stackTapeBlank, "L");

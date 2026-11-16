@@ -69,6 +69,7 @@ function project(name: string, description: string, input: string, operator: str
     acceptStates: "", rejectStates: "REJECT", haltStates: "HALT", maxSteps: null,
     description: `${description} 两侧用 1 的个数表示数值，空串表示 0。工作区在原点左侧，停机后只留下答案的 1；规则全部由读写头执行，默认 Max，仍可暂停或设置步数上限。`,
     rules: compileRegisterMachine(p.instructions, entry, p.registers, 2, operator),
+    sharedRules: () => compileRegisterMachine(p.instructions, entry, p.registers, 2, operator, true),
   };
 }
 

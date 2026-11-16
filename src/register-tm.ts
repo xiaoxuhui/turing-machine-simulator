@@ -10,6 +10,7 @@ export type RegisterInstruction =
 export function compileRegisterMachine(
   instructions: ReadonlyMap<string, RegisterInstruction>, entry: string,
   registers: number, result: number, operator: string,
+  withFunctions = false,
 ): string {
   if (!Number.isInteger(registers) || registers < 2 || result < 0 || result >= registers || !instructions.has(entry)) throw new Error("无效寄存器程序");
   if (!["/", "^", "^^", "^^^", "+", "~", "~~", "~~~", "@", "@@", "@@@"].includes(operator)) throw new Error("不支持的输入分隔符");
@@ -26,14 +27,33 @@ export function compileRegisterMachine(
     seen.add(key);
     lines.push(`${state},${read} -> ${next},${write},${direction}`);
   };
+  const functions = new Map<string, string>();
+  const calls: string[] = [];
+  type AddRule = typeof add;
+  const routine = (name: string, root: string, start: string, next: string, build: (rule: AddRule) => void) => {
+    if (!withFunctions) {
+      const state = (local: string) => local === "entry" ? start : local === "exit" ? next : `${root}.${local}`;
+      build((from, read, to, write, direction) => add(state(from), read, state(to), write, direction));
+      return;
+    }
+    if (!functions.has(name)) {
+      const definition = [`${name}(entry,exit):`];
+      build((from, read, to, write = read, direction = "N") =>
+        definition.push(`    ${from},${read}->${to},${write},${direction}`));
+      functions.set(name, definition.join("\n"));
+    }
+    calls.push(`${start}: ${name}->${next}`);
+  };
   const backStates = new Map<string, string>();
   const back = (next: string) => {
     const existing = backStates.get(next);
     if (existing) return existing;
     const state = `return.${backStates.size}`;
     backStates.set(next, state);
-    for (const symbol of ["1", "|", "□"]) add(state, symbol, state, symbol, "R");
-    add(state, "#", next);
+    routine("向右找原点", state, state, next, rule => {
+      for (const symbol of ["1", "|", "□"]) rule("entry", symbol, "entry", symbol, "R");
+      rule("entry", "#", "exit");
+    });
     return state;
   };
   const locate = (prefix: string, register: number) => {
@@ -41,20 +61,24 @@ export function compileRegisterMachine(
     add(prefix, "#", register ? `${prefix}.seek${register}` : op, "#", "L");
     for (let left = register; left > 0; left -= 1) {
       const state = `${prefix}.seek${left}`;
-      add(state, "1", state, "1", "L");
-      add(state, "|", left === 1 ? op : `${prefix}.seek${left - 1}`, "|", "L");
+      routine("向左过分隔符", state, state, left === 1 ? op : `${prefix}.seek${left - 1}`, rule => {
+        rule("entry", "1", "entry", "1", "L");
+        rule("entry", "|", "exit", "|", "L");
+      });
     }
     return op;
   };
   const increment = (prefix: string, register: number, next: string) => {
     const op = locate(prefix, register);
-    add(op, "1", op, "1", "L");
-    add(op, "|", `${prefix}.carryBar`, "1", "L");
-    for (const carry of ["1", "|"]) {
-      const state = `${prefix}.carry${carry === "1" ? "One" : "Bar"}`;
-      for (const read of ["1", "|"]) add(state, read, `${prefix}.carry${read === "1" ? "One" : "Bar"}`, carry, "L");
-      add(state, "□", back(next), carry, "R");
-    }
+    routine("寄存器加一", prefix, op, back(next), rule => {
+      rule("entry", "1", "entry", "1", "L");
+      rule("entry", "|", "carryBar", "1", "L");
+      for (const carry of ["1", "|"]) {
+        const state = `carry${carry === "1" ? "One" : "Bar"}`;
+        for (const read of ["1", "|"]) rule(state, read, `carry${read === "1" ? "One" : "Bar"}`, carry, "L");
+        rule(state, "□", "exit", carry, "R");
+      }
+    });
   };
 
   for (const [label, instruction] of instructions) {
@@ -68,18 +92,23 @@ export function compileRegisterMachine(
       const op = locate(state, instruction.register);
       add(op, "|", back(`I.${instruction.zero}`));
       add(op, "1", `${state}.take`, "□", "L");
-      for (const read of ["1", "|"]) {
-        add(`${state}.take`, read, `${state}.put${read === "1" ? "One" : "Bar"}`, "□", "R");
-        add(`${state}.put${read === "1" ? "One" : "Bar"}`, "□", `${state}.skipHole`, read, "L");
-      }
-      add(`${state}.skipHole`, "□", `${state}.take`, "□", "L");
-      add(`${state}.take`, "□", back(`I.${instruction.positive}`), "□", "R");
+      routine("减一后收拢纸带", state, `${state}.take`, back(`I.${instruction.positive}`), rule => {
+        for (const read of ["1", "|"]) {
+          const put = `put${read === "1" ? "One" : "Bar"}`;
+          rule("entry", read, put, "□", "R");
+          rule(put, "□", "skipHole", read, "L");
+        }
+        rule("skipHole", "□", "entry", "□", "L");
+        rule("entry", "□", "exit", "□", "R");
+      });
     } else if (instruction.kind === "jump") add(state, "#", `I.${instruction.next}`);
     else add(state, "#", instruction.kind === "halt" ? "clean.0.0" : "REJECT", "#", instruction.kind === "halt" ? "L" : "N");
   }
 
   // Build an empty register array to the left of the fixed origin.
-  const inputSymbols = ["1", "0", "+", "-", "*", "/", "^", "?", "□", "#", "|", "a", "b", ...new Set([...operator].filter(symbol => symbol === "~" || symbol === "@"))];
+  const division = operator === "/";
+  const inputSymbols = division ? ["1", "/", "□"]
+    : ["1", "0", "+", "-", "*", "/", "^", "?", "□", "#", "|", "a", "b", ...new Set([...operator].filter(symbol => symbol === "~" || symbol === "@"))];
   lines.push("# 初始化：从原点左侧建立用 | 分隔的计数器区域，# 固定原点位置。");
   for (const read of inputSymbols) add("BOOT", read, "init.fence", read, "L");
   add("init.fence", "□", "init.0", "#", "L");
@@ -88,11 +117,12 @@ export function compileRegisterMachine(
   add("init.back", "#", "validate.a", "#", "R");
   const validate = (state: string, actions: Record<string, [string, Direction]>) => {
     for (const read of inputSymbols) {
+      if (division && !actions[read]) continue;
       const [next, direction] = actions[read] ?? ["REJECT", "N"];
       add(state, read, next, read, direction);
     }
   };
-  lines.push(`# 检查输入：左侧只允许 1，中间必须为 ${operator}，右侧只允许 1；其它字符拒绝。`);
+  lines.push(`# 检查输入：左侧只允许 1，中间必须为 ${operator}，右侧只允许 1。${division ? "" : "其它字符拒绝。"}`);
   validate("validate.a", { "1": ["validate.a", "R"], [operator[0]]: [operator.length === 1 ? "validate.b" : "validate.op1", "R"] });
   for (let i = 1; i < operator.length; i += 1) validate(`validate.op${i}`, { [operator[i]]: [i === operator.length - 1 ? "validate.b" : `validate.op${i + 1}`, "R"] });
   validate("validate.b", { "1": ["validate.b", "R"], "□": ["validate.rewind", "L"] });
@@ -102,8 +132,10 @@ export function compileRegisterMachine(
   for (const [name, register] of [["A", 0], ["B", 1]] as const) {
     add(`parse.${name}`, "#", `parse.scan${name}`, "#", "R");
     add(`parse.scan${name}`, "1", `parse.seek${name}`, name.toLowerCase(), "L");
-    for (const read of ["1", "a", "b", operator[0]]) add(`parse.seek${name}`, read, `parse.seek${name}`, read, "L");
-    add(`parse.seek${name}`, "#", `parse.inc${name}`);
+    routine("向左找原点", `parse.seek${name}`, `parse.seek${name}`, `parse.inc${name}`, rule => {
+      for (const read of ["1", "a", "b", operator[0]]) rule("entry", read, "entry", read, "L");
+      rule("entry", "#", "exit");
+    });
     increment(`parse.inc${name}`, register, `parse.${name}`);
   }
   add("parse.scanA", "a", "parse.scanA", "a", "R");
@@ -132,5 +164,5 @@ export function compileRegisterMachine(
   add("clean.find", "1", "clean.start", "1", "L");
   add("clean.start", "1", "clean.start", "1", "L");
   add("clean.start", "□", "HALT", "□", "R");
-  return lines.join("\n");
+  return withFunctions ? [...functions.values(), ...lines, ...calls].join("\n") : lines.join("\n");
 }

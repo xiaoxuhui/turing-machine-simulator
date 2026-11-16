@@ -12,6 +12,10 @@ import { binaryExamples } from "./binary-examples";
 
 export interface ExampleProject {
   category?: "基础示例" | "函数教程" | "一进制运算" | "二进制运算" | "忙碌海狸" | "猜想验证";
+  /** State or state-prefix to numeric section path, used by the numeric example variant. */
+  numericStateSections?: Readonly<Record<string, string>>;
+  /** Optional function source for the same transitions. Built when selected. */
+  sharedRules?: () => string;
   maxSteps?: number | null;
   name: string;
   description: string;

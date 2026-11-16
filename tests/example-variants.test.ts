@@ -51,6 +51,37 @@ it("numbers direct external state parameters without changing their internal ali
   expect(numeric.rules).toContain(",C1->outside,*,*");
   expect(compile(numeric).parsed.errors).toEqual([]);
 });
+
+it.each([
+  ["binaryAdd", "1000"], ["binarySubtract", "101"],
+] as const)("numbers %s by input, carry or borrow, and output sections", (id, output) => {
+  const original = examples[id];
+  const numeric = exampleVariant(original, "numeric", "original");
+  expect(numeric.initialState).toMatch(/^1\.1\.\d+$/);
+  const { definition } = compile(numeric);
+  const machine = new TuringMachine(definition, inputToTape(numeric.input, numeric.blankSymbol));
+  const visited = new Set<string>();
+  for (let step = 0; step < 20_000; step++) {
+    visited.add(machine.currentState.split(".").slice(0, 2).join("."));
+    if (machine.step().stopped) break;
+  }
+  for (const section of ["1.1", "1.2", "2.1", "2.2", "2.3", "3.1", "3.2"]) expect(visited).toContain(section);
+  expect(machine.currentState).toBe("HALT");
+  expect(machine.tape.entries().map(([, bit]) => bit).join("")).toBe(output);
+});
+
+it("keeps nested state sections and the longest wildcard scope when numbering", () => {
+  const project = {
+    ...examples.unary, initialState: "first.second.third.X", input: "Z",
+    rules: "first.second.third.X,1->HALT,1,N\nfirst.*,*->HALT,A,N\nfirst.second.third.*,*->HALT,B,N",
+  };
+  const { definition } = compile(exampleVariant(project, "numeric", "original"));
+  expect(definition.initialState).toMatch(/^\d+\.\d+\.\d+\.\d+$/);
+  expect(definition.transitions[2].fromState).toBe(definition.initialState.replace(/\d+$/, "*"));
+  const machine = new TuringMachine(definition, [[0, "Z"]]);
+  expect(machine.step().reason).toBe("halt");
+  expect(machine.tape.read(0)).toBe("B");
+});
 it("keeps literal star writes intact when factoring shared functions or numbering states", () => {
   const project = { ...examples.unary, blankSymbol: "0", input: "", initialState: "a", rules: "a,0->a,**,*\na,**->b,*,*\nb,**->b,0,*\nb,0->c,*,*\nc,0->c,**,*\nc,**->HALT,*,*" };
   for (const names of ["descriptive", "numeric"] as const) for (const structure of ["original", "flat", "functions"] as const) {
@@ -85,4 +116,22 @@ it("actually shares duplicate rules and keeps each call site's continuation", ()
   expect(variant.rules).toContain("left: 公共右扫1 -> after");
   expect(variant.rules).toContain("right: 公共右扫1 -> HALT");
   expect(variant.rules.match(/^公共右扫1\(/gm)).toHaveLength(1);
+});
+
+it("reuses the arithmetic and scan routines across distinct unary division call sites", () => {
+  const project = examples.unaryDivide;
+  const variant = exampleVariant(project, "descriptive", "functions");
+  for (const routine of ["寄存器加一", "减一后收拢纸带", "向左找原点", "向右找原点"]) {
+    expect(variant.rules.match(new RegExp(`^${routine}\\(`, "gm"))).toHaveLength(1);
+    expect(variant.rules.match(new RegExp(`: ${routine}->`, "g"))?.length).toBeGreaterThan(1);
+  }
+  const count = (rules: string) => rules.split("\n").filter(line => line.includes("->") && !line.trimStart().startsWith("#")).length;
+  expect(count(variant.rules)).toBeLessThan(count(project.rules));
+  const run = (definition: ReturnType<typeof compile>["definition"]) => {
+    const machine = new TuringMachine(definition, inputToTape(project.input, project.blankSymbol));
+    for (let step = 0; step < 10_000; step++) if (machine.step().stopped) break;
+    expect(machine.currentState).toBe("HALT");
+    return [machine.stepCount, machine.tape.entries()];
+  };
+  expect(run(compile(variant).definition)).toEqual(run(compile(project).definition));
 });

@@ -14,6 +14,7 @@ const comparisonCleanup = ["<", "=", ">"].flatMap((result, index) => {
 export const unaryExamples: Record<string, ExampleProject> = {
   unaryAdd: {
     name: "一进制加法", category: "一进制运算",
+    numericStateSections: { "add.scan": "1", "add.end": "2.1", "add.trim": "2.2" },
     description: "格式 1^a+1^b：111+11 表示 3+2，结果 11111。空操作数表示 0，例如 +11；空纸带结果表示 0。",
     input: "111+11", initialState: "add.scan", blankSymbol: "□", acceptStates: "", rejectStates: "", haltStates: "HALT",
     rules: `add.scan,1 -> add.scan,1,R
@@ -24,6 +25,10 @@ add.trim,1 -> HALT,□,N`,
   },
   unarySubtract: {
     name: "一进制减法", category: "一进制运算",
+    numericStateSections: {
+      "sub.seek": "1", "sub.pick": "2.1", "sub.back": "2.1", "sub.take": "2.2", "sub.return": "2.2",
+      "sub.erase": "3", "sub.clean": "3",
+    },
     description: "格式 1^a-1^b：11111-11 表示 5−2，结果 111。空操作数表示 0；相减为 0 时纸带为空；a<b 时进入 REJECT（负结果）。",
     input: "11111-11", initialState: "sub.seek", blankSymbol: "□", acceptStates: "", rejectStates: "REJECT", haltStates: "HALT",
     rules: `sub.seek,1 -> sub.seek,1,R
