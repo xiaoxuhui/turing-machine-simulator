@@ -57,6 +57,10 @@ button { cursor: pointer; }
 .worked-example h3 { margin: 0 0 8px; font-size: 14px; color: #28597c; }
 .worked-example strong { font-size: 13px; }
 .worked-example ol { margin: 7px 0 0; padding-left: 22px; color: #415a70; line-height: 1.9; font-size: 13px; }
+.guide-tape { display: block; overflow-x: auto; white-space: nowrap; padding: 9px 10px; border: 1px solid #c7dcec; border-radius: 7px; background: #fff; font-size: 13px; }
+.guide-checkpoints { margin-top: 10px; color: #28597c; font-size: 13px; }
+.guide-checkpoints summary { cursor: pointer; font-weight: 700; }
+.guide-checkpoints ul { margin: 5px 0 0; padding-left: 22px; color: #415a70; line-height: 1.9; }
 textarea[readonly] { background: #f3f5f8; color: #718093; }
 .button:disabled { cursor: default; opacity: .55; }
 .concept-box { padding: 13px 15px; border-left: 4px solid #29aa7e; border-radius: 8px; background: #edf9f4; }
@@ -136,6 +140,9 @@ textarea:focus { outline: 2px solid #58c89f; outline-offset: 1px; }
 .button.ghost:active { transform: translateY(1px); }
 .confirm-dialog { width: min(360px, calc(100vw - 32px)); padding: 18px; border: 1px solid #dbe4ec; border-radius: 14px; background: white; color: #172033; box-shadow: 0 18px 48px #14203333; }
 .confirm-dialog::backdrop { background: #14203366; }
+.answer-preview { width: min(640px, calc(100vw - 32px)); }
+.answer-preview h2 { margin: 0 0 8px; font-size: 18px; }
+.answer-preview pre { margin: 0 0 16px; max-height: min(54vh, 440px); overflow: auto; padding: 12px; border: 1px solid #dbe4ec; border-radius: 8px; background: #f6f8fb; font-size: 13px; line-height: 1.6; }
 .confirm-dialog p { margin: 0 0 14px; color: #3a4759; font-size: 13px; line-height: 1.6; }
 .confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .confirm-actions .button { width: auto; margin-top: 0; }

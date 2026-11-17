@@ -20,15 +20,15 @@ export class TapeStackProgram {
   private readonly hole: string;
   private readonly consumed: string;
 
-  constructor(readonly prefix: string, markers: string, private readonly terminal: string, private readonly reject: string) {
-    this.origin = `${markers}.origin`;
-    this.hole = `${markers}.hole`;
-    this.consumed = `${markers}.read`;
+  constructor(private readonly prefix: string, private readonly code: string, private readonly terminal: string, private readonly reject: string, private readonly shortToken = (value: string) => value) {
+    this.origin = `#(${code}.o)#`;
+    this.hole = `#(${code}.g)·`;
+    this.consumed = `#(${code}.r)×`;
   }
 
   get start(): string { return `${this.prefix}.start`; }
-  get end(): string { return `${this.prefix}.finish`; }
-  label(): string { return `${this.prefix}.${this.count++}`; }
+  get end(): string { return `${this.code}.e`; }
+  label(): string { return `${this.code}.${this.count++}`; }
 
   private rule(from: string, read: string, to: string, write = read, direction: Direction = "N"): void {
     const rule = { fromState: from, readSymbol: read, toState: to, writeSymbol: write, direction };
@@ -38,7 +38,9 @@ export class TapeStackProgram {
     else this.states.set(from, [rule]);
   }
 
-  private entry(stack: TapeStack, value: string): string { return `${stack.name}:${value}`; }
+  private entry(stack: TapeStack, value: string): string {
+    return `#(${stack.name})${value === " " ? "␠" : this.shortToken(value)}`;
+  }
 
   note(message: string): void { this.source.push(`# ${message}`); }
 
@@ -53,11 +55,11 @@ export class TapeStackProgram {
   }
 
   take(stack: TapeStack, cases: (value: string) => string, empty: string, from = this.label(), keep = false): string {
-    const seek = `${from}.seek`;
+    const seek = `${from}.s`;
     this.rule(from, stackTapeBlank, seek, stackTapeBlank, "R");
     this.rule(seek, "", seek, "", "R");
     const backTo = (next: string) => {
-      const back = `${next}.back`, trim = `${next}.trim`;
+      const back = `${next}.b`, trim = `${next}.t`;
       if (!this.returns.has(next)) {
         this.returns.add(next);
         this.rule(back, "", back, "", "L");
@@ -90,9 +92,10 @@ export class TapeStackProgram {
   }
 
   readInput(stack: TapeStack, next: string, rejectUnknown = true): void {
-    const scan = `${this.prefix}.input`, rewind = `${this.prefix}.input.rewind`, ready = `${this.prefix}.input.ready`;
-    this.rule(this.start, "", `${this.prefix}.input.origin`, "", "L");
-    this.rule(`${this.prefix}.input.origin`, stackTapeBlank, scan, this.origin, "R");
+    const scan = `${this.code}.i`, rewind = `${scan}.r`, ready = `${scan}.f`;
+    const mark = `${scan}.o`, back = `${scan}.b`;
+    this.rule(this.start, "", mark, "", "L");
+    this.rule(mark, stackTapeBlank, scan, this.origin, "R");
     if (rejectUnknown) this.rule(scan, "", this.reject);
     this.rule(scan, this.consumed, scan, this.consumed, "R");
     this.rule(scan, stackTapeBlank, rewind, stackTapeBlank, "L");
@@ -101,7 +104,7 @@ export class TapeStackProgram {
     this.rule(ready, "", ready, "", "L");
     this.rule(ready, stackTapeBlank, next);
     for (const [index, value] of stack.values.entries()) {
-      const put = `${this.prefix}.input.put.${index}`, back = `${this.prefix}.input.back`;
+      const put = `${scan}.${index}`;
       this.rule(scan, value, put, this.consumed, "L");
       if (value === " ") {
         for (const space of ["\u3000", "\u00a0", "\t"]) this.rule(scan, space, put, this.consumed, "L");
@@ -109,21 +112,21 @@ export class TapeStackProgram {
       this.rule(put, "", put, "", "L");
       this.rule(put, stackTapeBlank, back, this.entry(stack, value), "R");
     }
-    this.rule(`${this.prefix}.input.back`, "", `${this.prefix}.input.back`, "", "R");
-    this.rule(`${this.prefix}.input.back`, this.origin, scan, this.origin, "R");
+    this.rule(back, "", back, "", "R");
+    this.rule(back, this.origin, scan, this.origin, "R");
   }
 
   // Append a character to the result on the right of the origin, then resume at the left edge.
   emit(value: string, next: string): string {
-    const from = this.label(), seek = `${from}.origin`, end = `${from}.end`, back = `${from}.out`;
+    const from = this.label(), seek = `${from}.os`, end = `${from}.oe`, back = `${from}.ob`;
     this.rule(from, stackTapeBlank, seek, stackTapeBlank, "R");
     this.rule(seek, "", seek, "", "R");
     this.rule(seek, this.origin, end, this.origin, "R");
     this.rule(end, "", end, "", "R");
     this.rule(end, stackTapeBlank, back, value, "L");
     this.rule(back, "", back, "", "L");
-    this.rule(back, this.origin, `${next}.output`, this.origin, "L");
-    const resume = `${next}.output`;
+    const resume = `${next}.or`;
+    this.rule(back, this.origin, resume, this.origin, "L");
     if (!this.returns.has(resume)) {
       this.returns.add(resume);
       this.rule(resume, "", resume, "", "L");
@@ -133,9 +136,10 @@ export class TapeStackProgram {
   }
 
   finish(): string {
-    this.rule(`${this.prefix}.finish`, stackTapeBlank, `${this.prefix}.clean`, stackTapeBlank, "R");
-    this.rule(`${this.prefix}.clean`, "", `${this.prefix}.clean`, stackTapeBlank, "R");
-    this.rule(`${this.prefix}.clean`, this.origin, this.terminal, stackTapeBlank, "R");
+    const clean = `${this.code}.c`;
+    this.rule(this.end, stackTapeBlank, clean, stackTapeBlank, "R");
+    this.rule(clean, "", clean, stackTapeBlank, "R");
+    this.rule(clean, this.origin, this.terminal, stackTapeBlank, "R");
     // Merge states only if every read, write, move and destination agrees.
     // Begin with the immediate tape effects, then refine by destination class.
     const reachable = new Set([this.start]);

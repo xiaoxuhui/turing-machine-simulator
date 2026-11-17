@@ -9,7 +9,7 @@ class BinaryProgram extends TapeStackProgram {
   constructor() { super("binary", "B", "HALT", reject); }
 
   readonly numericStateSections: Record<string, string> = {
-    "binary.start": "1.1", "binary.input": "1.1", "binary.finish": "3.2", "binary.clean": "3.2",
+    "binary.start": "1.1", "B.i": "1.1", "B.e": "3.2", "B.c": "3.2",
   };
   private numericSection = "2";
 
@@ -122,8 +122,8 @@ class BinaryProgram extends TapeStackProgram {
   }
 
   readOperands(operator: string, left: TapeStack, right: TapeStack, next: string): void {
-    const raw = { name: "raw", values: [...bits, operator] };
-    const input = { ...raw, name: "input" };
+    const raw = { name: "I", values: [...bits, operator] };
+    const input = { ...raw, name: "S" };
     const startRight = this.label(), readRight = this.label();
     this.take(input, bit => bit === operator ? reject : this.push(right, bit, readRight), next, readRight);
     this.take(input, bit => bit === operator ? reject : this.push(right, bit, readRight), reject, startRight);
@@ -138,7 +138,7 @@ type Operator = "+" | "-" | "*" | "/" | "^" | "@";
 
 function binaryExample(operator: Operator, name: string, description: string, input: string): ExampleProject {
   const program = new BinaryProgram();
-  const left = program.digits("left"), right = program.digits("right"), result = program.digits("result");
+  const left = program.digits("L"), right = program.digits("R"), result = program.digits("O");
   program.note(description);
   program.note("每个操作数只写 0 和 1，零写作 0。接受前导零。停机后从位置 0 开始留下二进制结果。");
   if (operator === "+" || operator === "-") {

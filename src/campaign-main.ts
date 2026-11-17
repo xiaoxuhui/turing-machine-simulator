@@ -4,6 +4,8 @@ import { parseTransitions, resolveInitialState, type MachineDefinition } from ".
 import { attachSpaceIndentation, insertAtSelection } from "./text-insertion";
 import { attachRuleDiagnostics } from "./rule-diagnostics";
 import { encodeCampaignBackup, MAX_CAMPAIGN_BACKUP_BYTES, parseCampaignBackup } from "./campaign-backup";
+import { solutionRules } from "./campaign-solutions";
+import { compactRuleArrows } from "./rule-format";
 
 const STORAGE_KEY = "turing-machine-simulator.campaign.v1";
 let progress = loadProgress();
@@ -34,7 +36,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
           <p id="backupStatus" class="backup-status" role="status" aria-live="polite"></p>
         </section>
         <article class="lesson-card">
-          <div class="lesson-heading"><div><div class="lesson-badges"><span id="sectionBadge"></span><span id="levelBadge"></span></div><h2 id="levelTitle"></h2></div><div class="lesson-heading-actions"><span id="levelState" class="level-state"></span><button type="button" id="undoComplete" class="button ghost" hidden>撤销通关</button></div></div>
+          <div class="lesson-heading"><div><div class="lesson-badges"><span id="sectionBadge"></span><span id="levelBadge"></span></div><h2 id="levelTitle"></h2></div><div class="lesson-heading-actions"><span id="levelState" class="level-state"></span><button type="button" id="previewAnswer" class="button ghost">查看答案</button><button type="button" id="undoComplete" class="button ghost" hidden>撤销通关</button></div></div>
           <p id="levelObjective" class="objective"></p>
           <p id="lessonLockNote" class="lesson-lock-note" role="status" hidden>当前是原理预览。完成前面的关卡后，即可编写、试跑和提交本关。</p>
           <div class="concept-box"><strong id="levelConcept"></strong><p id="levelExplanation"></p></div>
@@ -43,6 +45,12 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
             <section><h3>本关语法</h3><ul id="lessonSyntax" class="syntax-list"></ul></section>
           </div>
           <section id="workedExample" class="worked-example" hidden><h3>原理推演</h3><strong id="workedExampleTitle"></strong><ol id="workedExampleStages"></ol></section>
+          <section id="implementationGuide" class="worked-example implementation-guide" hidden aria-labelledby="implementationGuideTitle">
+            <h3 id="implementationGuideTitle">动手拆解</h3>
+            <code id="guideTape" class="guide-tape"></code>
+            <ol id="guideSteps"></ol>
+            <details class="guide-checkpoints"><summary>卡住时检查这些中间结果</summary><ul id="guideCheckpoints"></ul></details>
+          </section>
         </article>
 
         <div class="practice-grid">
@@ -79,6 +87,12 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
         </div>
       </section>
     </main>
+    <dialog id="answerPreview" class="confirm-dialog answer-preview" aria-labelledby="answerPreviewTitle" aria-describedby="answerPreviewNote">
+      <h2 id="answerPreviewTitle">参考答案</h2>
+      <p id="answerPreviewNote">仅供查看。练习草稿和通关进度保持原样。</p>
+      <pre tabindex="0" aria-label="参考规则"><code id="answerPreviewRules"></code></pre>
+      <form method="dialog" class="confirm-actions"><button class="button ghost" autofocus>关闭</button></form>
+    </dialog>
     <dialog id="confirmDialog" class="confirm-dialog">
       <form method="dialog">
         <p id="confirmMessage"></p>
@@ -123,6 +137,15 @@ function firstAvailableLevel(): CampaignLevel {
 function activeLevel(): CampaignLevel {
   return campaignLevels.find((level) => level.id === activeLevelId) ?? campaignLevels[0];
 }
+
+byId("previewAnswer").addEventListener("click", () => {
+  const level = activeLevel();
+  const answer = solutionRules[level.id];
+  if (!answer) return;
+  byId("answerPreviewTitle").textContent = level.title + " · 参考答案";
+  byId("answerPreviewRules").textContent = compactRuleArrows(answer);
+  byId<HTMLDialogElement>("answerPreview").showModal();
+});
 
 function definitionFromEditor(): MachineDefinition | null {
   const level = activeLevel();
@@ -226,6 +249,12 @@ function render(): void {
   byId("workedExample").hidden = !level.lesson.workedExample;
   byId("workedExampleTitle").textContent = level.lesson.workedExample?.title ?? "";
   renderTextList("workedExampleStages", level.lesson.workedExample?.stages ?? [], "li");
+  const guide = level.lesson.implementationGuide;
+  byId("implementationGuide").hidden = !guide;
+  byId("guideTape").textContent = guide?.tape ?? "";
+  renderTextList("guideSteps", guide?.steps ?? [], "li");
+  renderTextList("guideCheckpoints", guide?.checkpoints ?? [], "li");
+  byId<HTMLDetailsElement>("implementationGuide").querySelector("details")!.open = false;
   byId("starterInput").textContent = level.starter.input || "（空纸带）";
   byId("starterState").textContent = level.starter.initialState;
   byId("starterBlank").textContent = level.starter.blankSymbol;

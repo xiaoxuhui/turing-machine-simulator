@@ -61,6 +61,7 @@ body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }
 .compiled-program summary { cursor: pointer; font-weight: 700; color: #28597c; }
 .compiled-program label { margin-top: 10px; }
 .compiled-program textarea { width: 100%; min-height: 130px; font-family: Consolas, "Microsoft YaHei", monospace; white-space: pre; overflow: auto; }
+.name-translation textarea { min-height: 64px; }
 .name-table .rule-row { grid-template-columns: minmax(0, 2fr) 3em 3em minmax(0, 1fr) minmax(5em, 1.5fr); min-width: 340px; font-size: 13px; }
 .name-table .rule-table-virtual-body { min-width: 340px; }
 .name-table [role="cell"] { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -152,6 +153,7 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .sequence-cell.unwritten { color: #8c98a7; background: #edf0f4; }
 #directOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
 .lambda-output { min-height: 64px; }
+.universal-source { min-height: 70px; }
 .converter-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
 .converter-heading h2 { margin: 0 0 6px; font-size: 18px; }
 .converter-heading p { margin: 0; color: #697588; font-size: 13px; max-width: 720px; }

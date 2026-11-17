@@ -5,7 +5,7 @@ const counter = (name: string): LambdaStack => stack(name, ["index"]);
 
 // Compare a de Bruijn index with a nesting depth, restoring both counters.
 function compareIndex(p: LambdaTapeProgram, index: LambdaStack, depth: LambdaStack, less: string, equal: string, greater: string): string {
-  const pairs = counter(`pairs.${p.label()}`);
+  const pairs = counter(`P.${p.label()}`);
   const restore = (next: string) => {
     const loop = p.label();
     return p.take(pairs, () => p.push(index, "index", p.push(depth, "index", loop)), next, loop);
@@ -16,12 +16,12 @@ function compareIndex(p: LambdaTapeProgram, index: LambdaStack, depth: LambdaSta
 }
 
 export function normalizer(p: LambdaTapeProgram, scan: LambdaStack, tokens: readonly string[], print: string): string {
-  const prefix = stack("prefix", tokens);
-  const body = stack("body", tokens), arg = stack("argument", tokens);
-  const bodyReverse = stack("bodyReverse", tokens), argReverse = stack("argumentReverse", tokens);
-  const argSaved = stack("argumentSaved", tokens), result = stack("replacement", tokens);
-  const slots = counter("slots"), depth = counter("bodyDepth"), argDepth = counter("argumentDepth");
-  const index = counter("boundIndex"), temp = counter("tempDepth");
+  const prefix = stack("P", tokens);
+  const body = stack("B", tokens), arg = stack("A", tokens);
+  const bodyReverse = stack("BR", tokens), argReverse = stack("AR", tokens);
+  const argSaved = stack("AS", tokens), result = stack("R", tokens);
+  const slots = counter("SL"), depth = counter("BD"), argDepth = counter("AD");
+  const index = counter("BI"), temp = counter("D");
   const search = p.label(), substitute = p.label(), copyArgument = p.label();
   const restart = p.move(result, scan, p.move(prefix, scan, search));
 
@@ -80,8 +80,8 @@ export function normalizer(p: LambdaTapeProgram, scan: LambdaStack, tokens: read
 }
 
 export function writeNormalForm(p: LambdaTapeProgram, scan: LambdaStack, letters: readonly string[]): string {
-  const context = stack("printContext", ["left", "right", "abs", "root"]);
-  const depth = counter("printDepth"), held = counter("printSaved");
+  const context = stack("PC", ["left", "right", "abs", "root"]);
+  const depth = counter("PD"), held = counter("PS");
   const term = p.label(), done = p.label();
   const close = p.emit(")", done);
   const endAbs = p.take(scan, token => token === "close" ? p.take(depth, () => close, lambdaHalt) : lambdaHalt, lambdaHalt);
@@ -89,7 +89,7 @@ export function writeNormalForm(p: LambdaTapeProgram, scan: LambdaStack, letters
     if (value === "left") return p.push(context, "right", term);
     if (value === "right") return close;
     if (value === "abs") return endAbs;
-    return "lambda.finish";
+    return p.end;
   }, lambdaHalt, done);
 
   const zeros = (next: string) => {

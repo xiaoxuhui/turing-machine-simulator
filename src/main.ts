@@ -30,6 +30,8 @@ import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-c
 import { fibonacciSourceVariant } from "./fibonacci-example";
 import { exampleVariant, type ExampleNames, type ExampleStructure } from "./example-variants";
 import { requestDownload } from "./download";
+import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, universalDefault, universalMaxBudget } from "./universal-machine";
+import { universalHalt, universalReject, universalStart } from "./universal-tape";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -44,6 +46,8 @@ let solutionVisible = false;
 let tileOrder: string[] = [];
 let tapeScroll = 0;
 let appliedGijswijtThreshold: number | null = null;
+let appliedUniversalAlphabet: ReturnType<typeof readUniversalAlphabet>;
+let universalTimer: number | undefined;
 // 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
 let tapeRenderCenter: number | null = null;
 let tapeMotion: "continuous" | "manual" = "manual";
@@ -122,6 +126,25 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </div>
         </form>
       </section>
+      <section class="panel gijswijt-converter" aria-labelledby="universalTitle">
+        <div class="sequence-mode-bar"><h2 id="universalTitle">通用图灵机</h2></div>
+        <form id="universalForm">
+          <label for="universalSource">被模拟的规则与初始设置<textarea id="universalSource" class="universal-source" rows="3" spellcheck="false"></textarea></label>
+          <p class="hint">规则之间用 <code>/</code>、反斜杠或换行分隔。行内规则请写全方向。冒号后填 <code>初始纸带,初始状态,停止状态,接受状态,拒绝状态</code>。终态可留空，多个状态用 <code>|</code> 分隔。纸带里的斜杠和反斜杠按原样读入。</p>
+          <div class="direct-actions">
+            <label for="universalBlank">空白符<input id="universalBlank" value="□" maxlength="2" required /></label>
+            <label for="universalBudget">最多模拟步数<input id="universalBudget" type="number" min="0" max="${universalMaxBudget}" step="1" value="3" required /></label>
+            <button class="btn primary" type="submit">转换并载入</button>
+            <button id="runUniversal" class="btn" type="button" disabled>快速运行模拟</button>
+          </div>
+        </form>
+        <p id="universalCompileStatus" class="converter-status" role="status"></p>
+        <p id="universalAlphabet" class="hint"></p>
+        <div id="universalResult" hidden>
+          <label for="universalOutput">纸带结果,运行状态<textarea id="universalOutput" class="universal-source" rows="2" readonly spellcheck="false"></textarea></label>
+          <p id="universalStatus" class="hint" role="status"></p>
+        </div>
+      </section>
       <div class="lower">
         <section class="panel editor">
           <div class="panel-title"><h2>机器定义</h2><small>每行一条规则：状态,符号 → 状态,符号,方向</small></div>
@@ -178,6 +201,12 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <div class="rule-table name-table" role="table" aria-label="状态表"></div>
             <p class="name-table-status hint" role="status"></p>
           </details>
+          <details id="nameTranslation" class="compiled-program name-translation">
+            <summary>名称转译</summary>
+            <p class="hint">每行填一个名称。输出会解开转义，并按纸带的显示方式隐藏 <code>#(...)</code> 标记。</p>
+            <label for="nameTranslationInput">规则里的写法<textarea id="nameTranslationInput" rows="2" spellcheck="false"></textarea></label>
+            <label for="nameTranslationOutput">标准文本<textarea id="nameTranslationOutput" rows="2" readonly spellcheck="false"></textarea></label>
+          </details>
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
           <div id="ruleCount" class="hint" role="status"></div>
@@ -233,6 +262,13 @@ const byId = <T extends HTMLElement>(id: string) => document.getElementById(id) 
 const value = (id: string) => byId<HTMLInputElement | HTMLTextAreaElement>(id).value;
 const splitStates = (raw: string) => raw.split(",").map((item) => item.trim()).filter(Boolean);
 const ruleDiagnosticView = attachRuleDiagnostics(byId<HTMLTextAreaElement>("rules"));
+
+const nameTranslationInput = byId<HTMLTextAreaElement>("nameTranslationInput");
+const nameTranslationOutput = byId<HTMLTextAreaElement>("nameTranslationOutput");
+nameTranslationInput.addEventListener("input", () => {
+  nameTranslationOutput.value = nameTranslationInput.value.split("\n")
+    .map(line => visibleTapeSymbol(decodeRuleSymbol(line))).join("\n");
+});
 
 attachDirectGijswijt(byId("directSequenceMode"));
 byId("sequenceMode").addEventListener("change", () => {
@@ -309,6 +345,7 @@ function createMachine(preparedRules?: ReturnType<typeof parseTransitions>): boo
   const thresholdMatch = project.initialState === "G.seed" && project.blankSymbol === "0"
     ? project.rules.slice(0, 100).match(/^# Gijswijt threshold=(\d+)$/m) : null;
   appliedGijswijtThreshold = thresholdMatch ? Number(thresholdMatch[1]) : null;
+  appliedUniversalAlphabet = initialState === universalStart ? readUniversalAlphabet(project.rules) : undefined;
   if (appliedGijswijtThreshold !== null) byId<HTMLInputElement>("gijswijtThreshold").value = String(appliedGijswijtThreshold);
   tapeScroll = 0;
   tapeRenderCenter = null;
@@ -655,6 +692,27 @@ function render(): void {
   renderTape();
   renderLog();
   renderGijswijtOutput();
+  renderUniversalOutput();
+}
+
+const universalReasons: Record<string, string> = { H: "停止", A: "接受", J: "拒绝", M: "缺少转移规则", B: "达到步数上限" };
+
+function renderUniversalOutput(): void {
+  const panel = byId("universalResult");
+  panel.hidden = !machine || !appliedUniversalAlphabet;
+  byId<HTMLButtonElement>("runUniversal").disabled = panel.hidden || universalTimer !== undefined || status === "定义已修改，待应用";
+  if (!machine || !appliedUniversalAlphabet) return;
+  const output = byId<HTMLTextAreaElement>("universalOutput");
+  const message = byId("universalStatus");
+  const result = machine.currentState === universalHalt ? readUniversalResult(machine.tape, appliedUniversalAlphabet) : undefined;
+  if (result) {
+    const reason = universalReasons[result.reason];
+    output.value = `${result.output},${reason}`;
+    message.textContent = `模拟了 ${result.steps} 步 · 当前状态 ${result.state} · 读取 ${JSON.stringify(result.read)}`;
+  } else {
+    output.value = "";
+    message.textContent = machine.currentState === universalReject ? "纸带编码无效。" : status === "运行中" ? "正在用纸带上的规则模拟…" : "运行完成后显示被模拟机器的纸带和状态。";
+  }
 }
 
 function renderGijswijtOutput(): void {
@@ -700,7 +758,7 @@ function singleStep(applyDraft = true, renderAfter = true): boolean {
     status = reasonText[result.reason!];
     stopMessage = result.reason === "missing-transition" ? `状态 ${machine!.currentState} 读取 ${machine!.tape.read(machine!.headPosition)} 时无规则` : reasonText[result.reason!];
     pause(false);
-  } else status = scheduler.running ? "运行中" : "已暂停";
+  } else status = simulationRunning() ? "运行中" : "已暂停";
   if (renderAfter || result.stopped) render();
   return !result.stopped;
 }
@@ -720,8 +778,33 @@ const scheduler = new ExecutionScheduler({
   },
 });
 
+function simulationRunning(): boolean {
+  return scheduler.running || universalTimer !== undefined;
+}
+
+function runUniversal(): void {
+  if (!machine || !appliedUniversalAlphabet || universalTimer !== undefined) return;
+  scheduler.stop();
+  const start = performance.now(), initialSteps = machine.stepCount;
+  status = "运行中";
+  stopMessage = "";
+  tapeMotion = "continuous";
+  const tick = () => {
+    const deadline = performance.now() + 8;
+    for (let steps = 0; steps < 2_000 && performance.now() < deadline; steps++) {
+      if (!singleStep(false, false)) break;
+    }
+    const actual = ((machine!.stepCount - initialSteps) * 1000 / Math.max(1, performance.now() - start)).toFixed(0);
+    byId("actualSpeed").textContent = `实际 ${actual} 步/秒`;
+    if (universalTimer !== undefined) universalTimer = window.setTimeout(tick, 0);
+    render();
+  };
+  universalTimer = window.setTimeout(tick, 0);
+  render();
+}
+
 function run(): void {
-  if (scheduler.running) return;
+  if (simulationRunning()) return;
   if (!ensureCurrentDraftApplied()) return;
   status = "运行中";
   stopMessage = "";
@@ -732,6 +815,8 @@ function run(): void {
 
 function pause(changeStatus = true): void {
   scheduler.stop();
+  window.clearTimeout(universalTimer);
+  universalTimer = undefined;
   if (changeStatus && machine && status === "运行中") status = "已暂停";
   render();
 }
@@ -756,7 +841,7 @@ function handleEditorInput(): void {
   persistEditorDraft();
   const pending = shouldApplyCurrentDraft(Boolean(machine), appliedMachineKey, machineProjectKey(collectProject()));
   if (pending) {
-    if (scheduler.running) pause(false);
+    if (simulationRunning()) pause(false);
     status = "定义已修改，待应用";
     stopMessage = "旧程序已暂停。单步、运行或重置会应用当前定义，并从初始输入开始。";
     render();
@@ -934,7 +1019,7 @@ byId("puzzleBoard").addEventListener("drop", (event) => {
 document.addEventListener("keydown", (event) => {
   const editing = event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLSelectElement || event.target instanceof HTMLButtonElement;
   if (editing) return;
-  if (event.code === "Space") { event.preventDefault(); scheduler.running ? pause() : run(); }
+  if (event.code === "Space") { event.preventDefault(); simulationRunning() ? pause() : run(); }
   if (event.altKey && event.code === "ArrowRight") { event.preventDefault(); pause(false); singleStep(); }
   if (event.ctrlKey && event.code === "KeyR") { event.preventDefault(); resetMachine(); }
 });
@@ -949,5 +1034,24 @@ attachLambdaCalculator(byId("lambdaCalculator"), input => {
   fillProject({ ...example, input, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
   byId("lambdaTapeStatus").textContent = createMachine() ? "已载入。点击纸带下方的「运行」或「单步」。" : "载入失败，请检查机器定义。";
 });
+byId<HTMLTextAreaElement>("universalSource").value = universalDefault;
+byId("universalForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const message = byId("universalCompileStatus"), alphabet = byId("universalAlphabet");
+  try {
+    const compiled = makeUniversalProject(value("universalSource"), value("universalBlank"), Number(value("universalBudget")));
+    fillProject(compiled.project);
+    if (!createMachine()) throw new Error("无法载入通用图灵机。");
+    message.classList.remove("error");
+    message.textContent = `已编码 ${compiled.sourceRules} 条规则（纸带上 ${compiled.encodedRules} 条）。可快速运行，也可在上方单步观察。`;
+    const print = (symbols: string[]) => symbols.map(symbol => JSON.stringify(symbol)).join("、") || "空纸带";
+    alphabet.textContent = `初始输入字符：${print(compiled.inputSymbols)}。纸带符号：${print(compiled.alphabet.symbols)}。`;
+  } catch (error) {
+    message.classList.add("error");
+    message.textContent = error instanceof Error ? error.message : "转换失败。";
+    alphabet.textContent = "";
+  }
+});
+byId("runUniversal").addEventListener("click", runUniversal);
 previewExample();
 if (!createMachine()) renderRuleTable();

@@ -10,16 +10,16 @@ const stack = (name: string, values: readonly string[]): LambdaStack => ({ name,
 
 function lambdaRules(): string {
   const p = new LambdaTapeProgram();
-  const raw = stack("input", [...letters, "V", "0", "λ", "\\", ".", "(", ")", " "]);
-  const input = stack("chars", raw.values);
-  const term = stack("term", [...tokens, frame]);
-  const scan = stack("scan", tokens);
-  const scratch = stack("syntax", tokens);
-  const scopes = stack("scopes", ["root", "paren", "lambda"]);
-  const names = stack("names", [...letters, "V"]);
-  const held = stack("saved", names.values);
-  const count = stack("count", ["index"]);
-  const index = stack("index", ["index"]);
+  const raw = stack("I", [...letters, "V", "0", "λ", "\\", ".", "(", ")", " "]);
+  const input = stack("C", raw.values);
+  const term = stack("T", [...tokens, frame]);
+  const scan = stack("S", tokens);
+  const scratch = stack("W", tokens);
+  const scopes = stack("Q", ["root", "paren", "lambda"]);
+  const names = stack("N", [...letters, "V"]);
+  const held = stack("H", names.values);
+  const count = stack("K", ["index"]);
+  const index = stack("IX", ["index"]);
   const first = p.label(), after = p.label();
 
   p.note("输入：变量是单个英文字母，大写 V 留给生成的变量名。λ 或反斜杠引入抽象，应用左结合。");

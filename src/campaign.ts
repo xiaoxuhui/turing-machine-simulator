@@ -20,6 +20,11 @@ export interface CampaignLevel {
     steps: string[];
     syntax: string[];
     workedExample?: { title: string; stages: string[] };
+    implementationGuide?: {
+      tape: string;
+      steps: string[];
+      checkpoints: string[];
+    };
   };
   starter: ExampleProject;
   cases: CampaignCase[];
