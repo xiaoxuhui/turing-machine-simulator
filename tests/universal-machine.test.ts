@@ -1,9 +1,9 @@
 import { expect, it } from "vitest";
 import { inputToTape, parseTransitions, TuringMachine } from "../src/core";
-import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, splitUniversalSource } from "../src/universal-machine";
+import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, splitUniversalSource, type UniversalMachineInput } from "../src/universal-machine";
 import { visibleTapeSymbol } from "../src/symbol-annotations";
 
-function run(source: string, budget: number) {
+function run(source: string | UniversalMachineInput, budget: number | null = null) {
   const { project, alphabet } = makeUniversalProject(source, "□", budget);
   const parsed = parseTransitions(project.rules);
   expect(parsed.errors).toEqual([]);
@@ -26,6 +26,15 @@ it("keeps slashes and colons literal after the rule table", () => {
     rules: "q0,/->q1,\\,R\nq1,□->HALT,1,N", input: "/\\:x",
   });
   expect(splitUniversalSource("q0,/->q1,\\,R\\q1,□->HALT,1,N:/")).toMatchObject({ input: "/" });
+});
+
+it("loads multiline machine settings separately and allows an omitted step limit", () => {
+  const machine: UniversalMachineInput = {
+    rules: "q0,*->q1,*,R\nq1,*->H,*,N", input: "/,\n", initialState: "q0", haltStates: "H", acceptStates: "", rejectStates: "",
+  };
+  expect(makeUniversalProject(machine, "□").project.input.startsWith("∞|")).toBe(true);
+  expect(run(machine).result).toMatchObject({ reason: "H", steps: 2, output: "/,\n" });
+  expect(run(machine, 0).result).toMatchObject({ reason: "B", steps: 0 });
 });
 
 it("uses the same tape interpreter for different programs and walks both directions", () => {

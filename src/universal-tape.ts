@@ -14,10 +14,11 @@ const stack = (name: string, values: readonly string[] = [digit]): TapeStack => 
 /** A fixed interpreter. The program it executes is read exclusively from the tape. */
 export function universalRules(): string {
   const p = new TapeStackProgram("universal", "U", universalHalt, universalReject);
-  const raw = stack("I", [...programAlphabet, endHeader]);
+  const raw = stack("I", [...programAlphabet, endHeader, "∞"]);
   const table = stack("P", raw.values);
   const visited = stack("V", programAlphabet);
   const fuel = stack("F"), steps = stack("N"), state = stack("S"), head = stack("H");
+  const unlimited = stack("Z");
   const left = stack("L", codes), right = stack("R", codes);
   const inputReverse = stack("IR", codes);
   const candidate = stack("C"), compared = stack("M");
@@ -70,7 +71,7 @@ export function universalRules(): string {
     return move ? p.move(visited, table, p.push(steps, digit, move)) : invalid;
   });
   const apply = p.clear(state, readId(state, p.clear(head, readId(head, direction))));
-  const paid = p.take(fuel, () => apply, stepLimit);
+  const paid = p.peek(unlimited, () => apply, p.take(fuel, () => apply, stepLimit));
   const skipDirection = readRowToken(token => movement.has(token) ? scan : invalid);
   const skipWrite = readId(undefined, skipDirection);
   const skipNext = readId(undefined, skipWrite);
@@ -90,7 +91,8 @@ export function universalRules(): string {
   const initial = p.label();
   p.take(table, token => token === endId ? first : token === digit ? p.push(state, digit, initial) : invalid, invalid, initial);
   const budget = p.label();
-  p.take(table, token => token === endHeader ? initial : token === digit ? p.push(fuel, digit, budget) : invalid, invalid, budget);
+  p.take(table, token => token === endHeader ? initial : token === digit ? p.push(fuel, digit, budget)
+    : token === "∞" ? p.push(unlimited, digit, budget) : invalid, invalid, budget);
   p.note("读入编码：剩余步数、初态、原始纸带、规则表都来自输入。");
   p.readInput(raw, p.move(raw, table, budget));
   return p.finish();

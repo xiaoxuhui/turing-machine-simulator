@@ -14,6 +14,15 @@ interface Alphabet {
   symbols: string[];
 }
 
+export interface UniversalMachineInput {
+  rules: string;
+  input: string;
+  initialState: string;
+  haltStates: string;
+  acceptStates: string;
+  rejectStates: string;
+}
+
 export function splitUniversalSource(source: string): { rules: string; input: string } {
   const { text, restore } = protectSymbolAnnotations(source);
   const pieces: string[] = [];
@@ -65,18 +74,22 @@ function expandWildcards(transitions: Transition[], states: string[], symbols: s
 }
 
 export function makeUniversalProject(
-  source: string, blank: string, budget: number,
+  source: string | UniversalMachineInput, blank: string, budget: number | null = null,
 ): { project: ExampleProject; alphabet: Alphabet; inputSymbols: string[]; sourceRules: number; encodedRules: number } {
-  if (!Number.isSafeInteger(budget) || budget < 0 || budget > universalMaxBudget) {
+  if (budget !== null && (!Number.isSafeInteger(budget) || budget < 0 || budget > universalMaxBudget)) {
     throw new Error("最多模拟步数须为 0 至 " + universalMaxBudget + " 的整数。");
   }
   if ([...blank].length !== 1) throw new Error("被模拟机器的空白符必须是一个字符。");
-  if (source.length > 32_000) throw new Error("规则表或输入过长，请先试一个较小的程序。");
-  const { rules, input: configuration } = splitUniversalSource(source);
-  const fields = configuration.split(",");
-  if (fields.length < 5) throw new Error("冒号后请写：初始纸带,初始状态,停止状态,接受状态,拒绝状态。");
-  const [initialState, halt, accept, reject] = fields.splice(-4).map(field => field.trim());
-  const input = fields.join(",");
+  if ((typeof source === "string" ? source.length : JSON.stringify(source).length) > 32_000) throw new Error("规则表或输入过长，请先试一个较小的程序。");
+  let settings: UniversalMachineInput;
+  if (typeof source === "string") {
+    const { rules, input: configuration } = splitUniversalSource(source);
+    const fields = configuration.split(",");
+    if (fields.length < 5) throw new Error("冒号后请写：初始纸带,初始状态,停止状态,接受状态,拒绝状态。");
+    const [initialState, haltStates, acceptStates, rejectStates] = fields.splice(-4).map(field => field.trim());
+    settings = { rules, input: fields.join(","), initialState, haltStates, acceptStates, rejectStates };
+  } else settings = source;
+  const { rules, input, initialState, haltStates: halt, acceptStates: accept, rejectStates: reject } = settings;
   const terminalList = (text: string) => text.split("|").map(name => name.trim()).filter(Boolean);
   const terminals = { haltStates: terminalList(halt), acceptStates: terminalList(accept), rejectStates: terminalList(reject) };
   const parsed = parseTransitions(rules, terminals);
@@ -98,11 +111,11 @@ export function makeUniversalProject(
     if (rule.writeSymbol) symbols.add(rule.writeSymbol);
   }
   const alphabet: Alphabet = { states: [...states], symbols: [...symbols] };
-  if ([...input].length + budget + states.size + symbols.size > maxPacketLength) throw new Error("输入或名称表太长，请先试一个较小的程序。");
+  if ([...input].length + (budget ?? 0) + states.size + symbols.size > maxPacketLength) throw new Error("输入或名称表太长，请先试一个较小的程序。");
   const transitions = expandWildcards(parsed.transitions, alphabet.states, alphabet.symbols);
   const codebook = (labels: string[]) => new Map(labels.map((label, index) => [label, "1".repeat(index) + "."]));
   const stateCode = codebook(alphabet.states), symbolCode = codebook(alphabet.symbols);
-  let packet = "1".repeat(budget) + "|" + stateCode.get(initial) + Array.from(input, symbol => symbolCode.get(symbol)!).join("") + "|";
+  let packet = (budget === null ? "∞" : "1".repeat(budget)) + "|" + stateCode.get(initial) + Array.from(input, symbol => symbolCode.get(symbol)!).join("") + "|";
   for (const [state, kind] of terminalRows) packet += kind + stateCode.get(state);
   for (const rule of transitions) {
     packet += "T" + stateCode.get(rule.fromState) + symbolCode.get(rule.readSymbol) + stateCode.get(rule.toState)

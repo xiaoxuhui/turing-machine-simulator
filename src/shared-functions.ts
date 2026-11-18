@@ -36,7 +36,8 @@ export function extractSharedFunctions(project: ExampleProject): ExampleProject 
   reusable.forEach((group, index) => {
     const first = group[0], loops = first.rules.filter(rule => rule.toState === first.state);
     const direction = loops.length && loops.every(rule => rule.direction === "R") ? "公共右扫" : loops.length && loops.every(rule => rule.direction === "L") ? "公共左扫" : "公共规则";
-    let name = `${direction}${index + 1}`;
+    const shortDirection = direction === "公共右扫" ? "r" : direction === "公共左扫" ? "l" : "f";
+    let name = `${project.category === "一进制运算" ? shortDirection : direction}${index + 1}`;
     while (used.has(name)) name += "_";
     used.add(name);
     const body = first.rules.map(rule => `    ${formatTransition({ ...rule, fromState: "0", toState: rule.toState === first.state ? "0" : "1" })}`).join("\n");

@@ -72,7 +72,7 @@ it.each([
 
 it("keeps nested state sections and the longest wildcard scope when numbering", () => {
   const project = {
-    ...examples.unary, initialState: "first.second.third.X", input: "Z",
+    ...examples.unary, haltStates: "HALT", initialState: "first.second.third.X", input: "Z",
     rules: "first.second.third.X,1->HALT,1,N\nfirst.*,*->HALT,A,N\nfirst.second.third.*,*->HALT,B,N",
   };
   const { definition } = compile(exampleVariant(project, "numeric", "original"));
@@ -83,7 +83,7 @@ it("keeps nested state sections and the longest wildcard scope when numbering", 
   expect(machine.tape.read(0)).toBe("B");
 });
 it("keeps literal star writes intact when factoring shared functions or numbering states", () => {
-  const project = { ...examples.unary, blankSymbol: "0", input: "", initialState: "a", rules: "a,0->a,**,*\na,**->b,*,*\nb,**->b,0,*\nb,0->c,*,*\nc,0->c,**,*\nc,**->HALT,*,*" };
+  const project = { ...examples.unary, haltStates: "HALT", blankSymbol: "0", input: "", initialState: "a", rules: "a,0->a,**,*\na,**->b,*,*\nb,**->b,0,*\nb,0->c,*,*\nc,0->c,**,*\nc,**->HALT,*,*" };
   for (const names of ["descriptive", "numeric"] as const) for (const structure of ["original", "flat", "functions"] as const) {
     const variant = exampleVariant(project, names, structure), { parsed, definition } = compile(variant);
     if (structure === "functions") expect(parsed.hasFunctions).toBe(true);
@@ -110,18 +110,18 @@ it.each([
 });
 
 it("actually shares duplicate rules and keeps each call site's continuation", () => {
-  const project: ExampleProject = { ...examples.unary, input: "11", initialState: "left", rules: `left,1->left,1,R\nleft,□->after,□,N\nafter,□->right,2,L\nright,1->right,1,R\nright,□->HALT,□,N` };
+  const project: ExampleProject = { ...examples.unary, haltStates: "HALT", blankSymbol: "□", input: "11", initialState: "left", rules: `left,1->left,1,R\nleft,□->after,□,N\nafter,□->right,2,L\nright,1->right,1,R\nright,□->HALT,□,N` };
   const variant = exampleVariant(project, "descriptive", "functions");
   expect(variant.rules).not.toContain("主程序(");
-  expect(variant.rules).toContain("left: 公共右扫1 -> after");
-  expect(variant.rules).toContain("right: 公共右扫1 -> HALT");
-  expect(variant.rules.match(/^公共右扫1\(/gm)).toHaveLength(1);
+  expect(variant.rules).toContain("left: r1 -> after");
+  expect(variant.rules).toContain("right: r1 -> HALT");
+  expect(variant.rules.match(/^r1\(/gm)).toHaveLength(1);
 });
 
 it("reuses the arithmetic and scan routines across distinct unary division call sites", () => {
   const project = examples.unaryDivide;
   const variant = exampleVariant(project, "descriptive", "functions");
-  for (const routine of ["寄存器加一", "减一后收拢纸带", "向左找原点", "向右找原点"]) {
+  for (const routine of ["inc", "dec", "hl", "hr"]) {
     expect(variant.rules.match(new RegExp(`^${routine}\\(`, "gm"))).toHaveLength(1);
     expect(variant.rules.match(new RegExp(`: ${routine}->`, "g"))?.length).toBeGreaterThan(1);
   }
@@ -130,7 +130,7 @@ it("reuses the arithmetic and scan routines across distinct unary division call 
   const run = (definition: ReturnType<typeof compile>["definition"]) => {
     const machine = new TuringMachine(definition, inputToTape(project.input, project.blankSymbol));
     for (let step = 0; step < 10_000; step++) if (machine.step().stopped) break;
-    expect(machine.currentState).toBe("HALT");
+    expect(machine.currentState).toBe(project.haltStates);
     return [machine.stepCount, machine.tape.entries()];
   };
   expect(run(compile(variant).definition)).toEqual(run(compile(project).definition));

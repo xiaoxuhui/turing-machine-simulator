@@ -9,6 +9,8 @@ import { inverseOperationExamples } from "./inverse-operation-examples";
 import { registerAdderExample } from "./register-adder-example";
 import { lambdaExample } from "./lambda-example";
 import { binaryExamples } from "./binary-examples";
+import { shortUnaryProject } from "./unary-state-names";
+import { bfPresets, makeBrainfuckProject } from "./brainfuck";
 
 export interface ExampleProject {
   category?: "基础示例" | "函数教程" | "一进制运算" | "二进制运算" | "忙碌海狸" | "猜想验证";
@@ -16,6 +18,8 @@ export interface ExampleProject {
   numericStateSections?: Readonly<Record<string, string>>;
   /** Optional function source for the same transitions. Built when selected. */
   sharedRules?: () => string;
+  /** Original BF source retained when the displayed rules have no comments. */
+  brainfuckSource?: { source: string; input: string };
   maxSteps?: number | null;
   name: string;
   description: string;
@@ -30,18 +34,6 @@ export interface ExampleProject {
 
 const exampleDefinitions: Record<string, ExampleProject> = {
   ...functionExamples,
-  unary: {
-    category: "一进制运算",
-    name: "一进制加一",
-    description: "越过所有 1，在末尾写入一个 1。",
-    input: "111",
-    initialState: "q0",
-    blankSymbol: "□",
-    acceptStates: "",
-    rejectStates: "",
-    haltStates: "HALT",
-    rules: `q0,1 -> q0,1,R\nq0,□ -> HALT,1,N`,
-  },
   binary: {
     category: "二进制运算",
     name: "二进制加一",
@@ -83,10 +75,15 @@ const exampleDefinitions: Record<string, ExampleProject> = {
   registerAdder: registerAdderExample,
   fibonacci: fibonacciExample,
   lambda: lambdaExample,
+  brainfuck: makeBrainfuckProject(bfPresets.letter.source),
   ...hyperoperationExamples,
   ...inverseOperationExamples,
   ...busyBeaverExamples,
   ...conjectureExamples,
 };
 
-export const examples: Record<string, ExampleProject> = Object.fromEntries(Object.entries(exampleDefinitions).map(([id, project]) => [id, { ...project, rules: compactRuleArrows(project.rules) }]));
+export const examples: Record<string, ExampleProject> = Object.fromEntries(Object.entries(exampleDefinitions).map(([id, project]) => {
+  const variant = project.category === "一进制运算" && id !== "registerAdder" && id !== "fibonacci"
+    ? shortUnaryProject(project) : project;
+  return [id, { ...variant, rules: compactRuleArrows(variant.rules) }];
+}));

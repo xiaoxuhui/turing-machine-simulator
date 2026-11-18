@@ -12,6 +12,11 @@ const comparisonCleanup = ["<", "=", ">"].flatMap((result, index) => {
 }).join("\n");
 
 export const unaryExamples: Record<string, ExampleProject> = {
+  unary: {
+    category: "一进制运算", name: "一进制加一", description: "越过所有 1，在末尾写入一个 1。",
+    input: "111", initialState: "q0", blankSymbol: "□", acceptStates: "", rejectStates: "", haltStates: "HALT",
+    rules: "q0,1->q0,1,R\nq0,□->HALT,1,N",
+  },
   unaryAdd: {
     name: "一进制加法", category: "一进制运算",
     numericStateSections: { "add.scan": "1", "add.end": "2.1", "add.trim": "2.2" },

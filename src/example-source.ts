@@ -1,6 +1,7 @@
 import type { ExampleProject } from "./examples";
 import { functionHeader } from "./function-parameters";
 import { compactRuleArrows } from "./rule-format";
+import { shortUnaryState } from "./unary-state-names";
 
 export type ExampleSourceStyle = "plain" | "commented";
 
@@ -40,6 +41,8 @@ const registerFunctionNotes: Record<string, string> = {
   output: "原稿收尾：定位两个寄存器，标记要保留的 1，再擦除 o、| 及其它工作符。",
 };
 
+const shortPhaseNotes = Object.fromEntries(Object.entries(phaseNotes).map(([state, note]) => [shortUnaryState(state), note]));
+
 export function exampleSource(project: ExampleProject, style: ExampleSourceStyle, includeHeader = true): string {
   const plain = compactRuleArrows(project.rules).split(/\r?\n/).filter(line => !line.trimStart().startsWith("#")).join("\n");
   if (style === "plain") return plain;
@@ -74,7 +77,8 @@ export function exampleSource(project: ExampleProject, style: ExampleSourceStyle
       lines.push(`${indent}# ${registerFunctionNotes[registerFunction]}`);
       notedFunctions.add(registerFunction);
     }
-    if (state && phaseNotes[state] && !seen.has(state)) { lines.push(`${indent}# ${phaseNotes[state]}`); seen.add(state); }
+    const note = state && (phaseNotes[state] ?? (project.category === "一进制运算" ? shortPhaseNotes[state] : undefined));
+    if (state && note && !seen.has(state)) { lines.push(`${indent}# ${note}`); seen.add(state); }
     if (/^[\p{L}_][\p{L}\p{N}_-]*$/u.test(text)) lines.push(`${indent}# 调用 ${text}；正常完成后从本调用下面继续。`);
     lines.push(line);
   }

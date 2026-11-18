@@ -29,9 +29,11 @@ import { attachRuleDiagnostics } from "./rule-diagnostics";
 import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
 import { fibonacciSourceVariant } from "./fibonacci-example";
 import { exampleVariant, type ExampleNames, type ExampleStructure } from "./example-variants";
+import { migrateUnaryExample } from "./unary-example-migration";
 import { requestDownload } from "./download";
-import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, universalDefault, universalMaxBudget } from "./universal-machine";
+import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, splitUniversalSource, universalDefault, universalMaxBudget } from "./universal-machine";
 import { universalHalt, universalReject, universalStart } from "./universal-tape";
+import { bfBlank, bfPresets, bfStart, makeBrainfuckProject, readBrainfuckOutput, readBrainfuckSource } from "./brainfuck";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -47,6 +49,8 @@ let tileOrder: string[] = [];
 let tapeScroll = 0;
 let appliedGijswijtThreshold: number | null = null;
 let appliedUniversalAlphabet: ReturnType<typeof readUniversalAlphabet>;
+let appliedBrainfuck: ReturnType<typeof readBrainfuckSource>;
+let bfProjectSource: { source: string; input: string; rules: string; tape: string } | undefined;
 let universalTimer: number | undefined;
 // 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
 let tapeRenderCenter: number | null = null;
@@ -126,14 +130,38 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           </div>
         </form>
       </section>
+      <section class="panel gijswijt-converter" aria-labelledby="bfTitle">
+        <div class="sequence-mode-bar"><h2 id="bfTitle">Brainfuck（BF）</h2><label for="bfPreset">BF 示例<select id="bfPreset">${Object.entries(bfPresets).map(([key, preset]) => `<option value="${key}">${preset.name}</option>`).join("")}</select></label></div>
+        <form id="bfForm">
+          <label for="bfSource">BF 源码<textarea id="bfSource" rows="3" spellcheck="false"></textarea></label>
+          <p class="hint"><code>&gt; &lt;</code> 移动单元，<code>+ -</code> 加减一，<code>. ,</code> 输出和输入字节，<code>[ ]</code> 循环。其它字符忽略。单元为 0～255，溢出回绕；左右均可延伸，输入结束读 0。空白符固定为 <code>|</code>。</p>
+          <label for="bfInput">程序输入（UTF-8）<textarea id="bfInput" rows="2" spellcheck="false"></textarea></label>
+          <div class="direct-actions"><button class="btn primary" type="submit">转换并载入图灵机</button><button id="runBf" class="btn" type="button" disabled>快速运行 BF</button><button id="pauseBf" class="btn" type="button" disabled>暂停</button></div>
+        </form>
+        <p id="bfCompileStatus" class="converter-status" role="status"></p>
+        <p class="hint">转换只生成规则和编码输入，运行时由读写头逐格计算。可用上方“单步”“运行”或“暂停”；快速运行会连续执行相同规则并定时让出界面。</p>
+        <div id="bfResult" hidden>
+          <label for="bfOutput">字符输出<textarea id="bfOutput" rows="2" readonly spellcheck="false"></textarea></label>
+          <label for="bfBytes">字节输出（纸带每格显示一个字节）<textarea id="bfBytes" rows="2" readonly spellcheck="false"></textarea></label>
+          <p id="bfStatus" class="hint" role="status"></p>
+        </div>
+      </section>
       <section class="panel gijswijt-converter" aria-labelledby="universalTitle">
         <div class="sequence-mode-bar"><h2 id="universalTitle">通用图灵机</h2></div>
         <form id="universalForm">
-          <label for="universalSource">被模拟的规则与初始设置<textarea id="universalSource" class="universal-source" rows="3" spellcheck="false"></textarea></label>
-          <p class="hint">规则之间用 <code>/</code>、反斜杠或换行分隔。行内规则请写全方向。冒号后填 <code>初始纸带,初始状态,停止状态,接受状态,拒绝状态</code>。终态可留空，多个状态用 <code>|</code> 分隔。纸带里的斜杠和反斜杠按原样读入。</p>
+          <label for="universalSource">被模拟机器的转移规则<textarea id="universalSource" class="universal-source" rows="5" spellcheck="false"></textarea></label>
+          <p class="hint">每行一条规则，可以直接粘贴机器源码。初始纸带和状态在下方分别填写；纸带里的斜杠、反斜杠、逗号和换行都按原样读入。</p>
+          <div class="form-grid">
+            <label for="universalInput">初始纸带<textarea id="universalInput" rows="2" spellcheck="false"></textarea></label>
+            <label for="universalInitial">初始状态<input id="universalInitial" value="q0" /></label>
+            <label for="universalHalt">停止状态<input id="universalHalt" value="HALT" /></label>
+            <label for="universalAccept">接受状态<input id="universalAccept" placeholder="可留空" /></label>
+            <label for="universalReject">拒绝状态<input id="universalReject" placeholder="可留空" /></label>
+          </div>
+          <p class="hint">多个终态用 <code>|</code> 分隔。最多模拟步数可不填，留空则一直运行到目标机器停止，也可随时暂停。</p>
           <div class="direct-actions">
             <label for="universalBlank">空白符<input id="universalBlank" value="□" maxlength="2" required /></label>
-            <label for="universalBudget">最多模拟步数<input id="universalBudget" type="number" min="0" max="${universalMaxBudget}" step="1" value="3" required /></label>
+            <label for="universalBudget">最多模拟步数（可省略）<input id="universalBudget" type="number" min="0" max="${universalMaxBudget}" step="1" placeholder="不限" /></label>
             <button class="btn primary" type="submit">转换并载入</button>
             <button id="runUniversal" class="btn" type="button" disabled>快速运行模拟</button>
           </div>
@@ -292,10 +320,15 @@ function collectProject(): ProjectData {
     rules: value("rules"),
     maxSteps: byId<HTMLInputElement>("unlimitedSteps").checked ? null : Number(value("maxSteps")) || 10000,
     speed: Number(value("speed")) || 5,
+    ...(bfProjectSource && bfProjectSource.rules === value("rules") && bfProjectSource.tape === value("input")
+      ? { brainfuckSource: { source: bfProjectSource.source, input: bfProjectSource.input } } : {}),
   };
 }
 
 function fillProject(project: ProjectData | ExampleProject): void {
+  const bfSource = project.brainfuckSource ?? readBrainfuckSource(project.rules);
+  bfProjectSource = bfSource && typeof bfSource.source === "string" && typeof bfSource.input === "string"
+    ? { ...bfSource, rules: compactRuleArrows(project.rules), tape: project.input } : undefined;
   const fields = ["input", "blankSymbol", "initialState", "acceptStates", "rejectStates", "haltStates", "rules"] as const;
   for (const field of fields) byId<HTMLInputElement | HTMLTextAreaElement>(field).value = field === "rules" ? compactRuleArrows(project[field]) : project[field];
   const stepLimit = project.maxSteps === undefined ? 10000 : project.maxSteps;
@@ -346,6 +379,13 @@ function createMachine(preparedRules?: ReturnType<typeof parseTransitions>): boo
     ? project.rules.slice(0, 100).match(/^# Gijswijt threshold=(\d+)$/m) : null;
   appliedGijswijtThreshold = thresholdMatch ? Number(thresholdMatch[1]) : null;
   appliedUniversalAlphabet = initialState === universalStart ? readUniversalAlphabet(project.rules) : undefined;
+  const bfSource = project.blankSymbol === bfBlank && (initialState === bfStart || project.rules.includes("#(F.o)#"))
+    ? project.brainfuckSource ?? readBrainfuckSource(project.rules) : undefined;
+  appliedBrainfuck = bfSource;
+  if (bfSource) {
+    byId<HTMLTextAreaElement>("bfSource").value = bfSource.source;
+    byId<HTMLTextAreaElement>("bfInput").value = bfSource.input;
+  }
   if (appliedGijswijtThreshold !== null) byId<HTMLInputElement>("gijswijtThreshold").value = String(appliedGijswijtThreshold);
   tapeScroll = 0;
   tapeRenderCenter = null;
@@ -693,6 +733,21 @@ function render(): void {
   renderLog();
   renderGijswijtOutput();
   renderUniversalOutput();
+  renderBrainfuckOutput();
+}
+
+function renderBrainfuckOutput(): void {
+  const hidden = !machine || !appliedBrainfuck;
+  byId("bfResult").hidden = hidden;
+  const changed = appliedBrainfuck && (value("bfSource") !== appliedBrainfuck.source || value("bfInput") !== appliedBrainfuck.input);
+  byId<HTMLButtonElement>("runBf").disabled = hidden || Boolean(changed) || simulationRunning() || status === "定义已修改，待应用" || machine?.currentState === "H" || machine?.currentState === "R";
+  byId<HTMLButtonElement>("pauseBf").disabled = hidden || !simulationRunning();
+  if (!machine || !appliedBrainfuck) return;
+  const result = readBrainfuckOutput(machine.tape);
+  byId<HTMLTextAreaElement>("bfOutput").value = result.text;
+  byId<HTMLTextAreaElement>("bfBytes").value = result.bytes.join(", ");
+  byId("bfStatus").textContent = changed ? "源码或输入已修改，请先转换并载入。"
+    : `已输出 ${result.bytes.length} 字节 · ${machine.currentState === "H" ? "BF 程序已结束" : machine.currentState === "R" ? "纸带数据无效" : status} · ${machine.stepCount} 个图灵机步`;
 }
 
 const universalReasons: Record<string, string> = { H: "停止", A: "接受", J: "拒绝", M: "缺少转移规则", B: "达到步数上限" };
@@ -782,8 +837,9 @@ function simulationRunning(): boolean {
   return scheduler.running || universalTimer !== undefined;
 }
 
-function runUniversal(): void {
-  if (!machine || !appliedUniversalAlphabet || universalTimer !== undefined) return;
+function runTapeFast(): void {
+  if (!ensureCurrentDraftApplied()) return;
+  if (!machine || (!appliedUniversalAlphabet && !appliedBrainfuck) || universalTimer !== undefined) return;
   scheduler.stop();
   const start = performance.now(), initialSteps = machine.stepCount;
   status = "运行中";
@@ -1026,7 +1082,8 @@ document.addEventListener("keydown", (event) => {
 
 const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
 const editorDraft = loadEditorDraft(localStorage);
-fillProject({ ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed });
+const restoredProject = { ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed };
+fillProject(migrateUnaryExample(restoredProject));
 byId<HTMLInputElement>("lambdaInput").value = value("acceptStates") === examples.lambda.acceptStates
   ? value("input") : examples.lambda.input;
 attachLambdaCalculator(byId("lambdaCalculator"), input => {
@@ -1034,12 +1091,40 @@ attachLambdaCalculator(byId("lambdaCalculator"), input => {
   fillProject({ ...example, input, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
   byId("lambdaTapeStatus").textContent = createMachine() ? "已载入。点击纸带下方的「运行」或「单步」。" : "载入失败，请检查机器定义。";
 });
-byId<HTMLTextAreaElement>("universalSource").value = universalDefault;
+function fillBfPreset(): void {
+  const preset = bfPresets[value("bfPreset") as keyof typeof bfPresets];
+  byId<HTMLTextAreaElement>("bfSource").value = preset.source;
+  byId<HTMLTextAreaElement>("bfInput").value = preset.input;
+}
+fillBfPreset();
+byId("bfPreset").addEventListener("change", () => { fillBfPreset(); renderBrainfuckOutput(); });
+byId("bfSource").addEventListener("input", renderBrainfuckOutput);
+byId("bfInput").addEventListener("input", renderBrainfuckOutput);
+byId("bfForm").addEventListener("submit", event => {
+  event.preventDefault();
+  const message = byId("bfCompileStatus");
+  try {
+    const project = makeBrainfuckProject(value("bfSource"), value("bfInput"));
+    fillProject(project);
+    if (!createMachine()) throw new Error("BF 规则载入失败，请检查机器定义。");
+    message.classList.remove("error");
+    message.textContent = "已转换并载入，空白符为 |。点击“快速运行 BF”，或使用上方的运行和单步。";
+  } catch (error) {
+    message.classList.add("error");
+    message.textContent = error instanceof Error ? error.message : "BF 转换失败。";
+  }
+});
+byId("runBf").addEventListener("click", runTapeFast);
+byId("pauseBf").addEventListener("click", () => pause());
+byId<HTMLTextAreaElement>("universalSource").value = splitUniversalSource(universalDefault).rules;
+byId<HTMLTextAreaElement>("universalInput").value = "/";
 byId("universalForm").addEventListener("submit", event => {
   event.preventDefault();
   const message = byId("universalCompileStatus"), alphabet = byId("universalAlphabet");
   try {
-    const compiled = makeUniversalProject(value("universalSource"), value("universalBlank"), Number(value("universalBudget")));
+    const compiled = makeUniversalProject({ rules: value("universalSource"), input: value("universalInput"),
+      initialState: value("universalInitial"), haltStates: value("universalHalt"), acceptStates: value("universalAccept"), rejectStates: value("universalReject"),
+    }, value("universalBlank"), value("universalBudget").trim() ? Number(value("universalBudget")) : null);
     fillProject(compiled.project);
     if (!createMachine()) throw new Error("无法载入通用图灵机。");
     message.classList.remove("error");
@@ -1052,6 +1137,6 @@ byId("universalForm").addEventListener("submit", event => {
     alphabet.textContent = "";
   }
 });
-byId("runUniversal").addEventListener("click", runUniversal);
+byId("runUniversal").addEventListener("click", runTapeFast);
 previewExample();
 if (!createMachine()) renderRuleTable();
