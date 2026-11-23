@@ -3,7 +3,7 @@ import type { LambdaReduction } from "./lambda-reduce";
 export function attachLambdaCalculator(root: HTMLElement, loadMachine: (input: string) => void): void {
   const get = <T extends HTMLElement>(id: string) => root.querySelector<T>(`#${id}`)!;
   const mode = get<HTMLSelectElement>("lambdaMode");
-  const input = get<HTMLInputElement>("lambdaInput");
+  const input = get<HTMLTextAreaElement>("lambdaInput");
   const output = get<HTMLTextAreaElement>("lambdaOutput");
   const status = get("lambdaStatus");
   const calculate = get<HTMLButtonElement>("lambdaCalculate");
@@ -79,7 +79,13 @@ export function attachLambdaCalculator(root: HTMLElement, loadMachine: (input: s
   get("lambdaForm").addEventListener("submit", event => {
     event.preventDefault();
     if (mode.value === "direct") start(false);
-    else loadMachine(input.value);
+    else {
+      try { loadMachine(input.value); }
+      catch (error) {
+        get("lambdaTapeStatus").textContent = error instanceof Error ? error.message : "表达式无法载入。";
+        get("lambdaTapeStatus").classList.add("error");
+      }
+    }
   });
   step.addEventListener("click", () => start(true));
   cancel.addEventListener("click", () => {

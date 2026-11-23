@@ -90,7 +90,7 @@ export function makeBrainfuckProject(source: string, input = ""): ExampleProject
   p.readInput(raw, p.move(raw, stream, zero(labels[0])));
   return {
     category: "基础示例", name: "Brainfuck（BF）", description: "八条 BF 指令编译成普通图灵机规则；空白符 |，字节 0～255 回绕，输入输出采用 UTF-8。可在 BF 面板修改源码后重新转换。",
-    rules: "# bf " + JSON.stringify({ source, input }) + "\n" + p.finish(),
+    rules: "# bf " + JSON.stringify({ source, input }) + "\n" + p.finish(), ruleGuide: p.ruleGuide,
     brainfuckSource: { source, input },
     input: Array.from(bytes, inputToken).join(""),
     initialState: bfStart, blankSymbol: bfBlank, haltStates: "H", acceptStates: "", rejectStates: "R", maxSteps: null,

@@ -11,15 +11,20 @@ import { lambdaExample } from "./lambda-example";
 import { binaryExamples } from "./binary-examples";
 import { shortUnaryProject } from "./unary-state-names";
 import { bfPresets, makeBrainfuckProject } from "./brainfuck";
+import { campaignExamples } from "./campaign-examples";
+import type { RuleGuide } from "./rule-guide";
 
 export interface ExampleProject {
-  category?: "基础示例" | "函数教程" | "一进制运算" | "二进制运算" | "忙碌海狸" | "猜想验证";
+  category?: "基础示例" | "函数教程" | "一进制运算" | "二进制运算" | "忙碌海狸" | "猜想验证" | "关卡示例";
+  campaignLevelId?: string;
+  ruleGuide?: RuleGuide;
   /** State or state-prefix to numeric section path, used by the numeric example variant. */
   numericStateSections?: Readonly<Record<string, string>>;
   /** Optional function source for the same transitions. Built when selected. */
   sharedRules?: () => string;
   /** Original BF source retained when the displayed rules have no comments. */
   brainfuckSource?: { source: string; input: string };
+  lambdaSource?: { source: string; capacity: number; betaState?: string };
   maxSteps?: number | null;
   name: string;
   description: string;
@@ -80,6 +85,7 @@ const exampleDefinitions: Record<string, ExampleProject> = {
   ...inverseOperationExamples,
   ...busyBeaverExamples,
   ...conjectureExamples,
+  ...campaignExamples,
 };
 
 export const examples: Record<string, ExampleProject> = Object.fromEntries(Object.entries(exampleDefinitions).map(([id, project]) => {

@@ -1,0 +1,54 @@
+:root { font: 16px/1.75 system-ui, sans-serif; color: #203248; background: #f2f6f8; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+a { color: #14684f; text-underline-offset: 3px; }
+button, input { font: inherit; }
+button, a { touch-action: manipulation; }
+header { display: flex; gap: 28px; align-items: center; padding: 18px max(24px, calc((100vw - 1360px) / 2)); background: white; border-bottom: 1px solid #dae4e8; }
+header div { flex: 1; } header span { font-size: 11px; letter-spacing: .15em; color: #65837d; }
+h1 { font-size: 23px; line-height: 1.2; margin: 4px 0; }
+main { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 26px; max-width: 1360px; padding: 26px; margin: auto; }
+aside { position: sticky; top: 18px; height: calc(100vh - 36px); overflow: auto; background: white; border: 1px solid #dae4e8; border-radius: 14px; padding: 18px; }
+aside label { font-weight: 650; font-size: 14px; } input { width: 100%; border: 1px solid #bcced0; border-radius: 8px; padding: 8px; }
+#principleCount, .note { font-size: 12px; color: #65768a; }
+nav h2 { font-size: 12px; color: #607c79; margin: 22px 0 6px; }
+nav button { display: block; width: 100%; text-align: left; font-size: 13px; background: none; border: 0; border-radius: 7px; padding: 7px 9px; cursor: pointer; color: #30475d; }
+nav button:hover { background: #edf4f2; } nav button[aria-current] { background: #dcefe8; color: #075c41; font-weight: 650; }
+.reading { min-width: 0; }
+article, .binary-help { border: 1px solid #dae4e8; border-radius: 14px; background: white; padding: 26px 32px; }
+.binary-help { margin-bottom: 18px; padding: 16px 24px; } summary { cursor: pointer; font-weight: 650; color: #14684f; }
+article h2 { font-size: 27px; line-height: 1.4; margin: 8px 0 18px; } h3 { margin-top: 28px; font-size: 17px; }
+.category { color: #14684f; font-size: 12px; } .summary { font-size: 17px; }
+.input { display: flex; gap: 18px; padding: 14px; background: #f4f7fa; border-radius: 8px; font-size: 14px; }
+code { font-family: Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+li { padding: 5px 0 5px 5px; overflow-wrap: anywhere; }
+.walkthrough { background: #eef7f3; border-left: 3px solid #26936f; padding: 1px 20px 12px; border-radius: 6px; }
+footer, .path { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 20px; }
+footer a, .path button { padding: 8px 14px; border: 1px solid #b8d5ca; border-radius: 8px; background: white; font-size: 13px; cursor: pointer; text-decoration: none; color: #14684f; }
+footer .primary { background: #14684f; color: white; }
+table { border-collapse: collapse; width: 100%; margin-top: 20px; text-align: center; font-size: 14px; } td, th { border: 1px solid #d7e4df; padding: 5px; } caption { text-align: left; }
+:focus-visible { outline: 3px solid #65bda0; outline-offset: 2px; }
+.rule-guide { margin-top: 26px; border: 1px solid #b8d5ca; border-radius: 10px; padding: 16px; }
+.rule-guide > p { font-size: 13px; }
+.rule-guide-controls { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
+.rule-guide label { display: block; font-size: 13px; }
+.rule-guide select { font: inherit; display: block; width: 100%; max-width: 100%; padding: 8px; border: 1px solid #bcced0; border-radius: 6px; background: white; }
+.guide-count { color: #65768a; }
+.guide-arrows, .guide-targets { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.guide-arrows button, .guide-targets button { font: inherit; max-width: 100%; border: 1px solid #b8d5ca; border-radius: 6px; padding: 5px 9px; color: #14684f; background: #f4faf7; cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+.guide-arrows button:disabled { opacity: .4; cursor: default; }
+.guide-rule { margin: 14px 0; border: 1px solid #dce5e9; border-radius: 8px; padding: 12px; }
+.guide-rule summary { color: #203248; font-size: 13px; overflow-wrap: anywhere; }
+.guide-purpose, .guide-context { padding: 12px; background: #eef7f3; border-radius: 6px; font-size: 14px; }
+.guide-context ul { margin-bottom: 0; }
+.rule-guide dl { font-size: 14px; } .rule-guide dt { font-weight: 650; margin: 16px 0 4px; overflow-wrap: anywhere; }
+.rule-guide dd { margin-left: 0; color: #465c70; overflow-wrap: anywhere; }
+.guide-symbols { margin-top: 20px; }
+.guide-symbols dl { max-height: 400px; overflow: auto; padding-right: 12px; }
+.guide-state-content h4 { overflow-wrap: anywhere; }
+@media (max-width: 760px) {
+  header { gap: 14px; padding: 14px 16px; } header a { font-size: 12px; } h1 { font-size: 20px; }
+  main { display: block; padding: 14px; } aside { position: static; height: auto; max-height: 230px; margin-bottom: 14px; padding: 14px; }
+  article, .binary-help { padding: 18px; } article h2 { font-size: 22px; } .input { display: block; } .input code { display: block; } ol, ul { padding-left: 23px; }
+  .rule-guide-controls { grid-template-columns: minmax(0, 1fr); } .rule-guide { padding: 12px; }
+}

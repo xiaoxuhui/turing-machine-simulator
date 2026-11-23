@@ -19,10 +19,10 @@ function definitionFor(levelIndex: number): MachineDefinition {
 }
 
 describe("campaign verification", () => {
-  it("provides a 16/7/5 three-part curriculum with function and arithmetic principles", () => {
+  it("provides a 24/15/9 curriculum with gradual binary and function lessons", () => {
     expect(campaignSections.map((section) => section.id)).toEqual(["tutorial", "challenge", "hard"]);
-    expect(campaignLevels).toHaveLength(28);
-    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([16, 7, 5]);
+    expect(campaignLevels).toHaveLength(48);
+    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([24, 15, 9]);
     expect(campaignLevels.map((level) => level.id).every((id, index, ids) => ids.indexOf(id) === index)).toBe(true);
   });
   it("keeps every original level id and its saved completion/draft", () => {

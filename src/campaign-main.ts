@@ -15,13 +15,13 @@ let activeLevelId = campaignLevels.some(level => level.id === requestedLevelId) 
 document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
   <div class="course-app">
     <header class="course-topbar">
-      <a class="back-link" href="./">← 返回实验台</a>
+      <nav class="course-links"><a class="back-link" href="./">← 返回实验台</a><a class="back-link" href="./principles.html">示例原理</a></nav>
       <div><span>TM LEARNING PATH</span><h1>图灵机教学关卡</h1></div>
       <div class="course-progress"><strong id="progressText"></strong><progress id="progressBar" max="${campaignLevels.length}"></progress></div>
     </header>
     <main class="course-layout">
       <nav class="level-sidebar" aria-label="教学关卡">
-        <div class="sidebar-heading"><strong>学习路线 · ${campaignLevels.length} 关</strong><small>新增函数与幂运算原理；锁定课程可预习</small></div>
+        <div class="sidebar-heading"><strong>学习路线 · ${campaignLevels.length} 关</strong><small>从位权、进位与借位到四则运算；锁定课程可预习</small></div>
         <div id="levelList"></div>
       </nav>
       <section class="lesson-workspace">

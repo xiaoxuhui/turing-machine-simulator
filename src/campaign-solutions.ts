@@ -1,5 +1,6 @@
 import { unaryExamples } from "./unary-examples";
 import { hyperoperationExamples } from "./hyperoperation-examples";
+import { extraCampaignSolutions } from "./campaign-extra";
 
 export const advancedSolutions = {
   "function-wrap": "追加(q0,done):\n    q0,1 -> q0,1,R\n    q0,□ -> done,1,R\n\n追加",
@@ -18,6 +19,7 @@ export const advancedSolutions = {
 
 export const solutionRules: Record<string, string> = {
   ...advancedSolutions,
+  ...extraCampaignSolutions,
   "write-one": "q0,□ -> HALT,1,N",
   "move-right-write": "q0,1 -> write,1,R\nwrite,□ -> HALT,1,N",
   "unary-increment": "q0,1 -> q0,1,R\nq0,□ -> HALT,1,N",

@@ -220,7 +220,7 @@ export function inputToTape(input: string, blankSymbol: string): Array<[number, 
   );
 }
 
-export type TapeViewMode = "follow-head" | "fixed-zero" | "free-drag";
+export type TapeViewMode = "follow-head" | "fixed-zero" | "free-drag" | "show-all";
 
 export function tapeWindowCenter(mode: TapeViewMode, headPosition: number): number {
   // free-drag 与 fixed-zero 都以 0 为基准（满足“初始位置在零”），follow-head 跟随读写头。

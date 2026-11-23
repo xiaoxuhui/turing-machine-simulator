@@ -30,6 +30,12 @@ button { cursor: pointer; }
 /* 固定窗口不参与平移；17 格（含重叠边框）之外的格子在滑动时也不可见。 */
 .tape-viewport { width: min(100%, 970px); margin-inline: auto; padding: 26px 0 38px; overflow: hidden; }
 .tape { position: relative; display: flex; justify-content: center; touch-action: none; }
+.tape-viewport.show-all { width: 100%; max-width: none; overflow: visible; padding: 22px 0; }
+.tape.show-all { justify-content: flex-start; flex-wrap: wrap; gap: 32px 4px; padding-inline: 12px; touch-action: auto; }
+.tape.show-all .cell { flex-basis: 36px; height: 38px; margin-left: 0; font-size: 16px; }
+.tape.show-all .cell-index { top: -17px; font-size: 9px; }
+.tape.show-all .cell.head::after { bottom: -20px; font-size: 13px; }
+.tape-gap { align-self: center; padding-inline: 8px; color: #778293; font-size: 11px; }
 /* 平滑拖动：提示浏览器对 transform 做合成层优化，跟手更顺 */
 .tape.can-drag { cursor: grab; will-change: transform; }
 .tape.dragging { will-change: transform; }
@@ -87,7 +93,9 @@ body.tape-dragging, body.tape-dragging * { cursor: grabbing !important; }
 label { color: #566275; font-size: 12px; display: grid; gap: 5px; }
 input, textarea, select { border: 1px solid #ccd5e1; border-radius: 8px; padding: 8px 10px; color: #1d2939; background: white; }
 input:focus, textarea:focus, select:focus { outline: 2px solid #67c8a6; outline-offset: 1px; }
-textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Cascadia Code", Consolas, monospace; line-height: 1.6; font-size: 13px; }
+textarea { width: 100%; min-height: 0; resize: vertical; font-family: "Cascadia Code", Consolas, monospace; line-height: 1.6; font-size: 13px; }
+#rules { min-height: 200px; }
+.simulation-controls { position: sticky; top: 8px; z-index: 30; flex-wrap: wrap; margin-top: 0; padding: 10px 12px; background: white; border: 1px solid #dce3ec; border-radius: 10px; box-shadow: 0 3px 12px #1f36501a; }
 .table-heading { display:flex; align-items:center; justify-content:space-between; margin:14px 0 8px; font-size:13px; }
 .table-heading .btn { padding:6px 10px; }
 .rule-table { border:1px solid #dbe2eb; border-radius:9px; overflow:auto; max-height:270px; }
@@ -153,6 +161,9 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .sequence-cell.unwritten { color: #8c98a7; background: #edf0f4; }
 #directOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
 .lambda-output { min-height: 64px; }
+.lambda-aux-option { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
+.lambda-aux-option input { margin: 0; }
+.cell.auxiliary-cell { color: #8b95a3; background: #f5f7fa; }
 .universal-source { min-height: 70px; }
 .converter-heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
 .converter-heading h2 { margin: 0 0 6px; font-size: 18px; }
@@ -177,6 +188,13 @@ textarea { width: 100%; min-height: 245px; resize: vertical; font-family: "Casca
 .legend-head { background: #ef476f; }.legend-written { background: #168963; }.legend-empty { background: #f4f7fa; border: 1px solid #cbd5e1; }
 .route-canvas-shell { position: relative; overflow: auto; min-height: 180px; max-height: 620px; border: 1px solid #dfe5ed; border-radius: 10px; background: #f4f7fa; }
 #routeCanvas { display: block; width: 100%; min-height: 180px; image-rendering: pixelated; }
+.route-full-controls { display: flex; gap: 8px; align-items: end; margin-bottom: 8px; }
+.route-full-controls[hidden] { display: none; }
+.route-full-controls label { width: 150px; }
+.route-window { margin: 8px 0; color: #596678; font-size: 12px; }
+.route-canvas-shell.full-route { height: min(620px, 65vh); }
+.full-route #routeSurface { position: relative; min-width: 100%; }
+.full-route #routeCanvas { position: sticky; top: 0; left: 0; width: auto; min-height: 0; }
 #routeEmpty { position: absolute; inset: 0; display: grid; place-items: center; color: #8b96a7; font-size: 13px; }
 #routeEmpty[hidden] { display: none; }
 @media (max-width: 1200px) { .workspace { padding-inline: 18px; } .tape-viewport { max-width: 868px; } .cell { flex-basis: 52px; height: 52px; } }

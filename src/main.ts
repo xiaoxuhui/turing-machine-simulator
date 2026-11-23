@@ -1,7 +1,7 @@
 import "./styles.css";
 import { compactRuleArrows, decodeRuleSymbol, encodeRuleSymbol, formatTransition } from "./rule-format";
 import { exampleSource, type ExampleSourceStyle } from "./example-source";
-import { effectiveTapeScroll, headFollowShift, inputToTape, isHeadInWindow, parseTransitions, resolveInitialState, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
+import { effectiveTapeScroll, headFollowShift, inputToTape, parseTransitions, resolveInitialState, slideDurationMs, tapeWindowCenter, TuringMachine, type MachineDefinition, type StepRecord, type TapeViewMode } from "./core";
 import { examples, type ExampleProject } from "./examples";
 import { machineProjectKey, shouldApplyCurrentDraft } from "./project-state";
 import { buildTilePuzzle, isSolved, tileFits, type TilePuzzle } from "./tile-puzzle";
@@ -9,7 +9,8 @@ import { attachTapeDrag } from "./tape-drag";
 import { normalizeRouteSteps, routeCanvasSize, routeSampleIndex } from "./route-view";
 import { applySpeed, attachSpeedSync, type SpeedSyncElements } from "./speed-input";
 import { ExecutionScheduler } from "./execution-scheduler";
-import { RouteController, type RouteFrame } from "./route-controller";
+import { RouteController, type RouteComplete, type RouteRequest } from "./route-controller";
+import { RouteTraceView } from "./route-trace-view";
 import { renderExecutionLog } from "./execution-log";
 import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./project-codec";
 import { shuffled } from "./shuffle";
@@ -34,6 +35,8 @@ import { requestDownload } from "./download";
 import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, splitUniversalSource, universalDefault, universalMaxBudget } from "./universal-machine";
 import { universalHalt, universalReject, universalStart } from "./universal-tape";
 import { bfBlank, bfPresets, bfStart, makeBrainfuckProject, readBrainfuckOutput, readBrainfuckSource } from "./brainfuck";
+import { lambdaBeta, lambdaLimit, makeLambdaProject, migrateLambdaInput, readLambdaOutput, readLambdaSource } from "./lambda-local";
+import { fullTapeDisplay, tapeDisplayPositions } from "./tape-display";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
 let machine: TuringMachine | null = null;
@@ -51,6 +54,11 @@ let appliedGijswijtThreshold: number | null = null;
 let appliedUniversalAlphabet: ReturnType<typeof readUniversalAlphabet>;
 let appliedBrainfuck: ReturnType<typeof readBrainfuckSource>;
 let bfProjectSource: { source: string; input: string; rules: string; tape: string } | undefined;
+let lambdaProjectSource: { source: string; capacity: number; betaState?: string; rules: string; tape: string } | undefined;
+let appliedLambda: { source: string; capacity: number; betaState?: string } | undefined;
+let lambdaHasReduced = false;
+let lambdaView: ReturnType<typeof readLambdaOutput>;
+let lambdaDisplay: Map<number, string> | undefined;
 let universalTimer: number | undefined;
 // 上次渲染时纸带窗口中心；用于「跟随读写头」模式下判断中心是否变化，从而触发平滑滑动。null 表示下一次渲染直接定位、不滑入。
 let tapeRenderCenter: number | null = null;
@@ -70,6 +78,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <div class="brand"><div class="brand-mark">TM</div><div><h1>图灵机实验台</h1><p>单纸带 · 确定性 · 可编程</p></div></div>
       <div class="toolbar">
         <a class="campaign-link" href="./campaign.html">进入关卡</a>
+        <a class="campaign-link" href="./principles.html">示例原理</a>
         <button id="exportProject">导出项目</button>
         <button id="importProject">导入项目</button>
         <input id="fileInput" type="file" accept="application/json,.json" hidden />
@@ -86,98 +95,20 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <div class="metric"><span>已执行步数</span><strong id="stepCount">0</strong></div>
         </div>
         <div class="tape-shell"><div class="tape-viewport"><div id="tape" class="tape"></div></div><div id="headState" class="head-state"></div></div>
-        <div class="controls">
+      </section>
+        <div class="controls simulation-controls" role="toolbar" aria-label="图灵机运行控制">
           <button id="step" class="btn">单步</button>
           <button id="run" class="btn primary">运行</button>
           <button id="pause" class="btn">暂停</button>
           <button id="reset" class="btn">重置</button>
-          <label class="view-mode">纸带视角<select id="tapeViewMode"><option value="follow-head">跟随读写头</option><option value="fixed-zero">固定在 0</option><option value="free-drag">随意拖动</option></select></label>
+          <label class="view-mode">纸带视角<select id="tapeViewMode"><option value="follow-head">跟随读写头</option><option value="fixed-zero">固定在 0</option><option value="free-drag">随意拖动</option><option value="show-all">显示全部</option></select></label>
           <div class="speed"><span>目标速度</span><input id="speed" type="range" min="1" max="1000" value="5" /><input id="speedNumber" type="number" min="1" max="1000" step="1" value="5" title="手动输入目标速度（步/秒）" /><span id="speedText">5 步/秒</span><strong id="actualSpeed">实际 0 步/秒</strong></div>
         </div>
-      </section>
-      <section class="panel gijswijt-converter" aria-labelledby="gijswijtTitle">
-        <div class="sequence-mode-bar"><h2 id="gijswijtTitle">吉斯维杰特数列</h2><label for="sequenceMode">计算模式<select id="sequenceMode"><option value="tm">图灵机计算 · 规则与单步</option><option value="direct">直接计算 · 快速生成</option></select></label></div>
-        <div id="tmSequenceMode">
-        <div class="converter-heading">
-          <div><p>输入阈值，转换后的规则会显示在下方。点击上方“运行”开始计算；新项严格超过阈值时写出并停机，等于时继续。</p></div>
-          <div class="converter-actions"><label for="gijswijtThreshold">整数阈值（0–16）<input id="gijswijtThreshold" type="number" min="0" max="16" step="1" value="2" /></label><button id="compileGijswijt" class="btn primary">开始转换</button></div>
-        </div>
-        <p class="hint">0 表示未写入；数字表示数列项。计算时 |O、S、A、B 为比较标记，#数字记录本轮最大重复次数，停机时会清除。建议先试 2；阈值越大，运行可能极长。</p>
-        <p id="gijswijtCompileStatus" class="converter-status" role="status"></p>
-        <div id="gijswijtResult" hidden><label for="gijswijtOutput">已写入的数列（直接读取纸带）</label><textarea id="gijswijtOutput" readonly rows="3" spellcheck="false"></textarea><p id="gijswijtOutputStatus" class="hint" aria-live="polite"></p></div>
-        </div>
-        <div id="directSequenceMode" hidden>
-          <div class="converter-heading"><p>按最大重复后缀的定义快速生成数列。切换模式会保留当前页中两种模式各自的进度。</p></div>
-          <div class="direct-actions"><button id="directNext" class="btn">写入下一项</button><label for="directTarget">生成到第几项<input id="directTarget" type="number" min="1" step="1" value="30" /></label><button id="directGenerate" class="btn primary">批量生成</button><button id="directCancel" class="btn" disabled>取消</button><button id="directReset" class="btn">重置数列</button></div>
-          <p id="directStatus" class="converter-status" role="status"></p>
-          <div id="directTape" class="sequence-tape" aria-label="直接计算的数列纸带"></div>
-          <p class="hint">0 = 尚未写入；正整数 = 数列项。纸带显示最新 40 项，完整数列见下方。</p>
-          <label for="directOutput">完整数列</label><textarea id="directOutput" readonly rows="3" spellcheck="false"></textarea>
-        </div>
-      </section>
-      <section id="lambdaCalculator" class="panel gijswijt-converter" aria-labelledby="lambdaTitle">
-        <div class="sequence-mode-bar"><h2 id="lambdaTitle">λ 表达式归约</h2><label for="lambdaMode">计算模式<select id="lambdaMode"><option value="direct">直接计算</option><option value="tm">图灵机计算</option></select></label></div>
-        <form id="lambdaForm">
-          <label for="lambdaInput">λ 表达式<input id="lambdaInput" spellcheck="false" autocomplete="off" /></label>
-          <div id="lambdaDirectMode">
-            <div class="direct-actions"><button id="lambdaCalculate" class="btn primary" type="submit">直接归约</button><button id="lambdaStep" class="btn" type="button">单步归约</button><button id="lambdaCancel" class="btn" type="button" disabled>取消</button></div>
-            <p id="lambdaStatus" class="converter-status" role="status"></p>
-            <label for="lambdaOutput">归约结果<textarea id="lambdaOutput" class="lambda-output" readonly rows="2" spellcheck="false"></textarea></label>
-          </div>
-          <div id="lambdaTapeMode" hidden>
-            <div class="direct-actions"><button class="btn primary" type="submit">载入图灵机</button></div>
-            <p id="lambdaTapeStatus" class="converter-status" role="status"></p>
-          </div>
-        </form>
-      </section>
-      <section class="panel gijswijt-converter" aria-labelledby="bfTitle">
-        <div class="sequence-mode-bar"><h2 id="bfTitle">Brainfuck（BF）</h2><label for="bfPreset">BF 示例<select id="bfPreset">${Object.entries(bfPresets).map(([key, preset]) => `<option value="${key}">${preset.name}</option>`).join("")}</select></label></div>
-        <form id="bfForm">
-          <label for="bfSource">BF 源码<textarea id="bfSource" rows="3" spellcheck="false"></textarea></label>
-          <p class="hint"><code>&gt; &lt;</code> 移动单元，<code>+ -</code> 加减一，<code>. ,</code> 输出和输入字节，<code>[ ]</code> 循环。其它字符忽略。单元为 0～255，溢出回绕；左右均可延伸，输入结束读 0。空白符固定为 <code>|</code>。</p>
-          <label for="bfInput">程序输入（UTF-8）<textarea id="bfInput" rows="2" spellcheck="false"></textarea></label>
-          <div class="direct-actions"><button class="btn primary" type="submit">转换并载入图灵机</button><button id="runBf" class="btn" type="button" disabled>快速运行 BF</button><button id="pauseBf" class="btn" type="button" disabled>暂停</button></div>
-        </form>
-        <p id="bfCompileStatus" class="converter-status" role="status"></p>
-        <p class="hint">转换只生成规则和编码输入，运行时由读写头逐格计算。可用上方“单步”“运行”或“暂停”；快速运行会连续执行相同规则并定时让出界面。</p>
-        <div id="bfResult" hidden>
-          <label for="bfOutput">字符输出<textarea id="bfOutput" rows="2" readonly spellcheck="false"></textarea></label>
-          <label for="bfBytes">字节输出（纸带每格显示一个字节）<textarea id="bfBytes" rows="2" readonly spellcheck="false"></textarea></label>
-          <p id="bfStatus" class="hint" role="status"></p>
-        </div>
-      </section>
-      <section class="panel gijswijt-converter" aria-labelledby="universalTitle">
-        <div class="sequence-mode-bar"><h2 id="universalTitle">通用图灵机</h2></div>
-        <form id="universalForm">
-          <label for="universalSource">被模拟机器的转移规则<textarea id="universalSource" class="universal-source" rows="5" spellcheck="false"></textarea></label>
-          <p class="hint">每行一条规则，可以直接粘贴机器源码。初始纸带和状态在下方分别填写；纸带里的斜杠、反斜杠、逗号和换行都按原样读入。</p>
-          <div class="form-grid">
-            <label for="universalInput">初始纸带<textarea id="universalInput" rows="2" spellcheck="false"></textarea></label>
-            <label for="universalInitial">初始状态<input id="universalInitial" value="q0" /></label>
-            <label for="universalHalt">停止状态<input id="universalHalt" value="HALT" /></label>
-            <label for="universalAccept">接受状态<input id="universalAccept" placeholder="可留空" /></label>
-            <label for="universalReject">拒绝状态<input id="universalReject" placeholder="可留空" /></label>
-          </div>
-          <p class="hint">多个终态用 <code>|</code> 分隔。最多模拟步数可不填，留空则一直运行到目标机器停止，也可随时暂停。</p>
-          <div class="direct-actions">
-            <label for="universalBlank">空白符<input id="universalBlank" value="□" maxlength="2" required /></label>
-            <label for="universalBudget">最多模拟步数（可省略）<input id="universalBudget" type="number" min="0" max="${universalMaxBudget}" step="1" placeholder="不限" /></label>
-            <button class="btn primary" type="submit">转换并载入</button>
-            <button id="runUniversal" class="btn" type="button" disabled>快速运行模拟</button>
-          </div>
-        </form>
-        <p id="universalCompileStatus" class="converter-status" role="status"></p>
-        <p id="universalAlphabet" class="hint"></p>
-        <div id="universalResult" hidden>
-          <label for="universalOutput">纸带结果,运行状态<textarea id="universalOutput" class="universal-source" rows="2" readonly spellcheck="false"></textarea></label>
-          <p id="universalStatus" class="hint" role="status"></p>
-        </div>
-      </section>
       <div class="lower">
         <section class="panel editor">
           <div class="panel-title"><h2>机器定义</h2><small>每行一条规则：状态,符号 → 状态,符号,方向</small></div>
           <div class="form-grid">
-            <label>初始输入<input id="input" /></label>
+            <label>初始输入<textarea id="input" rows="1" spellcheck="false"></textarea></label>
             <label>空白符<input id="blankSymbol" maxlength="2" /></label>
             <label>初始状态<input id="initialState" /></label>
             <div class="step-limit-field"><label for="maxSteps">最大步数</label><div class="step-limit-control"><input id="maxSteps" type="number" min="1" max="1000000" /><label class="max-steps-option"><input id="unlimitedSteps" type="checkbox" /> Max</label></div></div>
@@ -245,7 +176,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <section class="panel">
             <div class="panel-title"><h2>示例程序</h2><small>${Object.keys(examples).length} 个</small></div>
             <select id="example" style="width:100%">
-              ${["一进制运算", "二进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
+              ${["一进制运算", "二进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证", "关卡示例"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
             <label style="margin-top:10px">示例源码<select id="exampleSourceStyle"><option value="plain">无注释</option><option value="commented">有注释</option></select></label>
             <div id="exampleProgramOptions">
@@ -254,6 +185,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               <p class="hint">适用于所有示例。公共函数只定义一次，各入口指定自己的续接状态；无重复块时保留原规则。选择后点击“加载此示例”。</p>
             </div>
             <p id="exampleNote" class="example-note"></p>
+            <p><a id="examplePrinciple" href="./principles.html">查看此示例的原理</a></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
           </section>
           <section class="panel">
@@ -265,12 +197,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       </div>
       <section class="panel route-panel">
         <div class="route-heading">
-          <div><h2>全路线总览</h2><p>后台计算整段运行轨迹并压缩成一张时空图；生成时仍可继续使用上面的模拟器和瓷砖游戏。</p></div>
-          <div class="route-actions"><label>运行步数<input id="routeSteps" type="number" min="1" step="1" value="10000" /></label><button id="generateRoute" class="btn primary">后台生成</button><button id="cancelRoute" class="btn" disabled>取消</button></div>
+          <div><h2>全路线总览</h2><p>后台计算运行轨迹。压缩总览查看整体，显示全部逐步逐格查看；生成时仍可继续使用模拟器。</p></div>
+          <div class="route-actions"><label>显示方式<select id="routeViewMode"><option value="overview">压缩总览</option><option value="all">显示全部</option></select></label><label>运行步数<input id="routeSteps" type="number" min="1" step="1" value="10000" /></label><button id="generateRoute" class="btn primary">后台生成</button><button id="cancelRoute" class="btn" disabled>取消</button></div>
         </div>
         <div class="route-progress"><progress id="routeProgress" max="100" value="0"></progress><span id="routeStatus">等待生成</span></div>
         <div id="routeLegend" class="route-legend"><span class="legend-head"></span>读写头（略带当前符号颜色） <span class="legend-empty"></span>空白；生成后显示各符号颜色。纵向为时间，横向为纸带位置</div>
-        <div class="route-canvas-shell"><canvas id="routeCanvas" width="900" height="260"></canvas><div id="routeEmpty">输入步数后点击“后台生成”</div></div>
+        <div id="routeFullControls" class="route-full-controls" hidden><label>定位到第几步<input id="routeGoStep" type="number" min="0" step="1" value="0" /></label><button id="routeGo" class="btn">定位</button></div>
+        <p id="routeWindow" class="route-window"></p>
+        <div id="routeViewport" class="route-canvas-shell"><div id="routeSurface"><canvas id="routeCanvas" width="900" height="260"></canvas></div><div id="routeEmpty">输入步数后点击“后台生成”</div></div>
       </section>
       <section class="panel puzzle-panel">
         <div class="puzzle-heading">
@@ -282,6 +216,88 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <h3 class="tray-title">待拼瓷砖 <small>点击一块，再点击空格；也支持拖放</small></h3>
         <div id="tileTray" class="tile-tray"></div>
         <div id="puzzleMessage" class="puzzle-message" aria-live="polite"></div>
+      </section>
+      <section class="panel gijswijt-converter" aria-labelledby="gijswijtTitle">
+        <div class="sequence-mode-bar"><h2 id="gijswijtTitle">吉斯维杰特数列</h2><label for="sequenceMode">计算模式<select id="sequenceMode"><option value="tm">图灵机计算 · 规则与单步</option><option value="direct">直接计算 · 快速生成</option></select></label></div>
+        <div id="tmSequenceMode">
+        <div class="converter-heading">
+          <div><p>输入阈值，转换后的规则会显示在下方。点击上方“运行”开始计算；新项严格超过阈值时写出并停机，等于时继续。</p></div>
+          <div class="converter-actions"><label for="gijswijtThreshold">整数阈值（0–16）<input id="gijswijtThreshold" type="number" min="0" max="16" step="1" value="2" /></label><button id="compileGijswijt" class="btn primary">开始转换</button></div>
+        </div>
+        <p class="hint">0 表示未写入；数字表示数列项。计算时 |O、S、A、B 为比较标记，#数字记录本轮最大重复次数，停机时会清除。建议先试 2；阈值越大，运行可能极长。</p>
+        <p id="gijswijtCompileStatus" class="converter-status" role="status"></p>
+        <div id="gijswijtResult" hidden><label for="gijswijtOutput">已写入的数列（直接读取纸带）</label><textarea id="gijswijtOutput" readonly rows="3" spellcheck="false"></textarea><p id="gijswijtOutputStatus" class="hint" aria-live="polite"></p></div>
+        </div>
+        <div id="directSequenceMode" hidden>
+          <div class="converter-heading"><p>按最大重复后缀的定义快速生成数列。切换模式会保留当前页中两种模式各自的进度。</p></div>
+          <div class="direct-actions"><button id="directNext" class="btn">写入下一项</button><label for="directTarget">生成到第几项<input id="directTarget" type="number" min="1" step="1" value="30" /></label><button id="directGenerate" class="btn primary">批量生成</button><button id="directCancel" class="btn" disabled>取消</button><button id="directReset" class="btn">重置数列</button></div>
+          <p id="directStatus" class="converter-status" role="status"></p>
+          <div id="directTape" class="sequence-tape" aria-label="直接计算的数列纸带"></div>
+          <p class="hint">0 = 尚未写入；正整数 = 数列项。纸带显示最新 40 项，完整数列见下方。</p>
+          <label for="directOutput">完整数列</label><textarea id="directOutput" readonly rows="3" spellcheck="false"></textarea>
+        </div>
+      </section>
+      <section id="lambdaCalculator" class="panel gijswijt-converter" aria-labelledby="lambdaTitle">
+        <div class="sequence-mode-bar"><h2 id="lambdaTitle">λ 表达式归约</h2><label for="lambdaMode">计算模式<select id="lambdaMode"><option value="direct">直接计算</option><option value="tm">图灵机计算</option></select></label></div>
+        <form id="lambdaForm">
+          <label for="lambdaInput">λ 表达式<textarea id="lambdaInput" rows="2" spellcheck="false" autocomplete="off"></textarea></label>
+          <p class="hint">名称字符：A–Z、a–z、0–9、_、.。AB_12 和 A.B 都是完整变量，A B 是应用。带点参数写 <code>λA.B . A.B</code>，旧写法 <code>λx.x</code> 也支持。重名时加数字后缀。</p>
+          <div id="lambdaDirectMode">
+            <div class="direct-actions"><button id="lambdaCalculate" class="btn primary" type="submit">直接归约</button><button id="lambdaStep" class="btn" type="button">单步归约</button><button id="lambdaCancel" class="btn" type="button" disabled>取消</button></div>
+            <p id="lambdaStatus" class="converter-status" role="status"></p>
+            <label for="lambdaOutput">归约结果<textarea id="lambdaOutput" class="lambda-output" readonly rows="2" spellcheck="false"></textarea></label>
+          </div>
+          <div id="lambdaTapeMode" hidden>
+            <div class="direct-actions"><button class="btn primary" type="submit">载入图灵机</button></div>
+            <p id="lambdaTapeStatus" class="converter-status" role="status"></p>
+            <div class="direct-actions"><button id="runLambdaTape" class="btn" type="button" disabled>快速归约（纸带规则）</button><button id="pauseLambdaTape" class="btn" type="button" disabled>暂停</button></div>
+            <label class="lambda-aux-option"><input id="lambdaAuxCells" type="checkbox" /> 显示辅助格</label>
+            <label for="lambdaTapeOutput">当前表达式<textarea id="lambdaTapeOutput" rows="3" readonly spellcheck="false"></textarea></label>
+          </div>
+        </form>
+      </section>
+      <section class="panel gijswijt-converter" aria-labelledby="bfTitle">
+        <div class="sequence-mode-bar"><h2 id="bfTitle">Brainfuck（BF）</h2><label for="bfPreset">BF 示例<select id="bfPreset">${Object.entries(bfPresets).map(([key, preset]) => `<option value="${key}">${preset.name}</option>`).join("")}</select></label></div>
+        <form id="bfForm">
+          <label for="bfSource">BF 源码<textarea id="bfSource" rows="3" spellcheck="false"></textarea></label>
+          <p class="hint"><code>&gt; &lt;</code> 移动单元，<code>+ -</code> 加减一，<code>. ,</code> 输出和输入字节，<code>[ ]</code> 循环。其它字符忽略。单元为 0～255，溢出回绕；左右均可延伸，输入结束读 0。空白符固定为 <code>|</code>。</p>
+          <label for="bfInput">程序输入（UTF-8）<textarea id="bfInput" rows="2" spellcheck="false"></textarea></label>
+          <div class="direct-actions"><button class="btn primary" type="submit">转换并载入图灵机</button><button id="runBf" class="btn" type="button" disabled>快速运行 BF</button><button id="pauseBf" class="btn" type="button" disabled>暂停</button></div>
+        </form>
+        <p id="bfCompileStatus" class="converter-status" role="status"></p>
+        <p class="hint">转换只生成规则和编码输入，运行时由读写头逐格计算。可用上方“单步”“运行”或“暂停”；快速运行会连续执行相同规则并定时让出界面。</p>
+        <div id="bfResult" hidden>
+          <label for="bfOutput">字符输出<textarea id="bfOutput" rows="2" readonly spellcheck="false"></textarea></label>
+          <label for="bfBytes">字节输出（纸带每格显示一个字节）<textarea id="bfBytes" rows="2" readonly spellcheck="false"></textarea></label>
+          <p id="bfStatus" class="hint" role="status"></p>
+        </div>
+      </section>
+      <section class="panel gijswijt-converter" aria-labelledby="universalTitle">
+        <div class="sequence-mode-bar"><h2 id="universalTitle">通用图灵机</h2></div>
+        <form id="universalForm">
+          <label for="universalSource">被模拟机器的转移规则<textarea id="universalSource" class="universal-source" rows="5" spellcheck="false"></textarea></label>
+          <p class="hint">每行一条规则，可以直接粘贴机器源码。初始纸带和状态在下方分别填写；纸带里的斜杠、反斜杠、逗号和换行都按原样读入。</p>
+          <div class="form-grid">
+            <label for="universalInput">初始纸带<textarea id="universalInput" rows="2" spellcheck="false"></textarea></label>
+            <label for="universalInitial">初始状态<input id="universalInitial" value="q0" /></label>
+            <label for="universalHalt">停止状态<input id="universalHalt" value="HALT" /></label>
+            <label for="universalAccept">接受状态<input id="universalAccept" placeholder="可留空" /></label>
+            <label for="universalReject">拒绝状态<input id="universalReject" placeholder="可留空" /></label>
+          </div>
+          <p class="hint">多个终态用 <code>|</code> 分隔。最多模拟步数可不填，留空则一直运行到目标机器停止，也可随时暂停。</p>
+          <div class="direct-actions">
+            <label for="universalBlank">空白符<input id="universalBlank" value="□" maxlength="2" required /></label>
+            <label for="universalBudget">最多模拟步数（可省略）<input id="universalBudget" type="number" min="0" max="${universalMaxBudget}" step="1" placeholder="不限" /></label>
+            <button class="btn primary" type="submit">转换并载入</button>
+            <button id="runUniversal" class="btn" type="button" disabled>快速运行模拟</button>
+          </div>
+        </form>
+        <p id="universalCompileStatus" class="converter-status" role="status"></p>
+        <p id="universalAlphabet" class="hint"></p>
+        <div id="universalResult" hidden>
+          <label for="universalOutput">纸带结果,运行状态<textarea id="universalOutput" class="universal-source" rows="2" readonly spellcheck="false"></textarea></label>
+          <p id="universalStatus" class="hint" role="status"></p>
+        </div>
       </section>
     </main>
   </div>`;
@@ -322,6 +338,8 @@ function collectProject(): ProjectData {
     speed: Number(value("speed")) || 5,
     ...(bfProjectSource && bfProjectSource.rules === value("rules") && bfProjectSource.tape === value("input")
       ? { brainfuckSource: { source: bfProjectSource.source, input: bfProjectSource.input } } : {}),
+    ...(lambdaProjectSource && lambdaProjectSource.rules === value("rules") && lambdaProjectSource.tape === value("input")
+      ? { lambdaSource: { source: lambdaProjectSource.source, capacity: lambdaProjectSource.capacity, betaState: lambdaProjectSource.betaState } } : {}),
   };
 }
 
@@ -329,6 +347,9 @@ function fillProject(project: ProjectData | ExampleProject): void {
   const bfSource = project.brainfuckSource ?? readBrainfuckSource(project.rules);
   bfProjectSource = bfSource && typeof bfSource.source === "string" && typeof bfSource.input === "string"
     ? { ...bfSource, rules: compactRuleArrows(project.rules), tape: project.input } : undefined;
+  const lambdaSource = project.lambdaSource ?? readLambdaSource(project.rules);
+  lambdaProjectSource = lambdaSource && typeof lambdaSource.source === "string" && Number.isInteger(lambdaSource.capacity)
+    ? { ...lambdaSource, rules: compactRuleArrows(project.rules), tape: project.input } : undefined;
   const fields = ["input", "blankSymbol", "initialState", "acceptStates", "rejectStates", "haltStates", "rules"] as const;
   for (const field of fields) byId<HTMLInputElement | HTMLTextAreaElement>(field).value = field === "rules" ? compactRuleArrows(project[field]) : project[field];
   const stepLimit = project.maxSteps === undefined ? 10000 : project.maxSteps;
@@ -386,6 +407,11 @@ function createMachine(preparedRules?: ReturnType<typeof parseTransitions>): boo
     byId<HTMLTextAreaElement>("bfSource").value = bfSource.source;
     byId<HTMLTextAreaElement>("bfInput").value = bfSource.input;
   }
+  appliedLambda = project.lambdaSource ?? readLambdaSource(project.rules);
+  lambdaView = undefined;
+  lambdaDisplay = undefined;
+  lambdaHasReduced = false;
+  if (appliedLambda) byId<HTMLTextAreaElement>("lambdaInput").value = appliedLambda.source;
   if (appliedGijswijtThreshold !== null) byId<HTMLInputElement>("gijswijtThreshold").value = String(appliedGijswijtThreshold);
   tapeScroll = 0;
   tapeRenderCenter = null;
@@ -456,26 +482,41 @@ function generatePuzzle(): void {
 }
 
 let routeBlankSymbol = "□";
-function drawRoute(frames: RouteFrame[], min: number, max: number, symbols: string[]): void {
+let routeTraceView: RouteTraceView | undefined;
+let lastRouteRequest: RouteRequest | undefined;
+let lastRouteResult: RouteComplete | undefined;
+function drawRoute({ frames, min, max, symbols, trace }: RouteComplete): void {
+  routeTraceView?.destroy(); routeTraceView = undefined;
+  byId("routeFullControls").hidden = true;
   const canvas = byId<HTMLCanvasElement>("routeCanvas");
-  const positions = max - min + 1;
-  const size = routeCanvasSize(frames.length, positions);
-  canvas.width = size.width; canvas.height = size.height;
-  const context = canvas.getContext("2d")!;
-  context.fillStyle = ROUTE_BLANK_COLOR; context.fillRect(0, 0, canvas.width, canvas.height);
   const colors = createRoutePalette(symbols, routeBlankSymbol);
-  const headColors = new Map([...colors].map(([symbol, color]) => [symbol, routeHeadColor(color)]));
-  headColors.set(routeBlankSymbol, routeHeadColor());
-  for (let y = 0; y < canvas.height; y += 1) {
-    const frame = frames[routeSampleIndex(y, canvas.height, frames.length)];
-    const cells = new Map(frame.cells);
-    for (let x = 0; x < canvas.width; x += 1) {
-      const position = min + routeSampleIndex(x, canvas.width, positions);
-      const symbol = cells.get(position) ?? routeBlankSymbol;
-      if (position === frame.head) context.fillStyle = headColors.get(symbol)!;
-      else if (symbol !== routeBlankSymbol) context.fillStyle = colors.get(symbol)!;
-      else continue;
-      context.fillRect(x, y, 1, 1);
+  if (trace) {
+    routeTraceView = new RouteTraceView(byId("routeViewport"), byId("routeSurface"), canvas, trace, min, max, colors,
+      message => { byId("routeWindow").textContent = message; });
+    const full = value("routeViewMode") === "all";
+    routeTraceView.setFull(full);
+    byId("routeFullControls").hidden = !full;
+    byId<HTMLInputElement>("routeGoStep").max = String(trace.heads.length - 1);
+  } else {
+    byId("routeWindow").textContent = "压缩总览会抽样；切换显示全部将重新在后台生成完整轨迹。";
+    const positions = max - min + 1;
+    const size = routeCanvasSize(frames.length, positions);
+    canvas.width = size.width; canvas.height = size.height;
+    const context = canvas.getContext("2d")!;
+    context.fillStyle = ROUTE_BLANK_COLOR; context.fillRect(0, 0, canvas.width, canvas.height);
+    const headColors = new Map([...colors].map(([symbol, color]) => [symbol, routeHeadColor(color)]));
+    headColors.set(routeBlankSymbol, routeHeadColor());
+    for (let y = 0; y < canvas.height; y += 1) {
+      const frame = frames[routeSampleIndex(y, canvas.height, frames.length)];
+      const cells = new Map(frame.cells);
+      for (let x = 0; x < canvas.width; x += 1) {
+        const position = min + routeSampleIndex(x, canvas.width, positions);
+        const symbol = cells.get(position) ?? routeBlankSymbol;
+        if (position === frame.head) context.fillStyle = headColors.get(symbol)!;
+        else if (symbol !== routeBlankSymbol) context.fillStyle = colors.get(symbol)!;
+        else continue;
+        context.fillRect(x, y, 1, 1);
+      }
     }
   }
   const legend = byId("routeLegend");
@@ -509,10 +550,12 @@ const routeController = new RouteController(
       byId<HTMLProgressElement>("routeProgress").value = step / maxSteps * 100;
       byId("routeStatus").textContent = `后台计算中：${step} / ${maxSteps} 步（你可以继续玩）`;
     },
-    onComplete: ({ frames, min, max, reason, symbols }) => {
-      drawRoute(frames, min, max, symbols);
+    onComplete: (result) => {
+      lastRouteResult = result;
+      drawRoute(result);
+      const { frames, min, max, reason, trace } = result;
       byId<HTMLProgressElement>("routeProgress").value = 100;
-      byId("routeStatus").textContent = `已显示 ${frames.length} 个时刻，纸带位置 ${min}…${max}，结束原因：${reasonText[reason as keyof typeof reasonText] ?? "达到步数上限"}`;
+      byId("routeStatus").textContent = `已${trace ? "完整记录" : "抽样显示"} ${trace?.heads.length ?? frames.length} 个时刻，纸带位置 ${min}…${max}，结束原因：${reasonText[reason as keyof typeof reasonText] ?? "达到步数上限"}`;
       byId<HTMLButtonElement>("generateRoute").disabled = false;
       byId<HTMLButtonElement>("cancelRoute").disabled = true;
     },
@@ -535,7 +578,21 @@ function generateRoute(): void {
   byId<HTMLInputElement>("routeSteps").value = String(maxSteps);
   routeBlankSymbol = machine.definition.blankSymbol;
   const initialTape = inputToTape(value("input"), machine.definition.blankSymbol);
-  routeController.start({ definition: machine.definition, initialTape, maxSteps });
+  lastRouteRequest = { definition: machine.definition, initialTape, maxSteps, full: value("routeViewMode") === "all" };
+  lastRouteResult = undefined;
+  routeController.start(lastRouteRequest);
+}
+
+function tapeLabel(position: number): string {
+  return lambdaDisplay?.get(position) ?? visibleTapeSymbol(machine?.tape.read(position) ?? value("blankSymbol") ?? "□");
+}
+
+function tapePositions(): number[] {
+  const head = machine?.headPosition ?? 0, mode = value("tapeViewMode") as TapeViewMode;
+  const center = tapeWindowCenter(mode, head) + effectiveTapeScroll(mode, tapeScroll);
+  if (mode === "show-all") return fullTapeDisplay(machine?.tape.entries() ?? [], head, tapeLabel, Boolean(appliedLambda) && !byId<HTMLInputElement>("lambdaAuxCells").checked)
+    .flatMap(item => "position" in item ? [item.position] : []);
+  return tapeDisplayPositions(center, tapeLabel, Boolean(appliedLambda) && !byId<HTMLInputElement>("lambdaAuxCells").checked, head);
 }
 
 function renderTape(): void {
@@ -547,17 +604,31 @@ function renderTape(): void {
   const center = tapeWindowCenter(mode, head) + effectiveTapeScroll(mode, tapeScroll);
   // 抓手光标只在「随意拖动」模式下出现。
   tape.classList.toggle("can-drag", mode === "free-drag");
-  for (let position = center - 8; position <= center + 8; position += 1) {
+  tape.classList.toggle("show-all", mode === "show-all");
+  tape.parentElement!.classList.toggle("show-all", mode === "show-all");
+  const items = mode === "show-all"
+    ? fullTapeDisplay(machine?.tape.entries() ?? [], head, tapeLabel, Boolean(appliedLambda) && !byId<HTMLInputElement>("lambdaAuxCells").checked)
+    : tapePositions().map(position => ({ position }));
+  const positions = items.flatMap(item => "position" in item ? [item.position] : []);
+  for (const item of items) {
+    if (!("position" in item)) {
+      const gap = document.createElement("span"); gap.className = "tape-gap";
+      gap.textContent = `… ${item.to - item.from + 1} 格空白 …`; gap.title = `${item.from}…${item.to}`;
+      tape.append(gap); continue;
+    }
+    const position = item.position;
     const cell = document.createElement("div");
     cell.className = `cell${position === head ? " head" : ""}`;
     cell.innerHTML = `<span class="cell-index">${position}</span>`;
     const symbol = document.createElement("span");
-    symbol.textContent = visibleTapeSymbol(machine?.tape.read(position) ?? value("blankSymbol") ?? "□");
+    const label = tapeLabel(position);
+    symbol.textContent = label === "" && appliedLambda ? "◇" : label;
+    if (label === "" && appliedLambda) { cell.classList.add("auxiliary-cell"); cell.title = "辅助标记；格号仍是实际纸带位置"; }
     cell.append(symbol);
     tape.append(cell);
   }
   // 读写头移出可视窗口时，在边缘显示指示箭头，避免“拖远了就找不到光标”。
-  if (!isHeadInWindow(center, head)) {
+  if (!positions.includes(head)) {
     const hint = document.createElement("div");
     const onLeft = head < center;
     hint.className = `head-offscreen ${onLeft ? "left" : "right"}`;
@@ -719,13 +790,18 @@ function escapeAttribute(raw: string): string {
 }
 
 function render(): void {
+  if (appliedLambda && machine) {
+    const current = readLambdaOutput(machine.tape);
+    lambdaDisplay = current && lambdaHasReduced ? new Map([...current.display, ...current.parentheses]) : undefined;
+    if (current) lambdaView = current;
+  }
   byId("status").textContent = status;
   byId("currentState").textContent = machine?.currentState ?? "—";
   byId("readSymbol").textContent = machine?.tape.read(machine.headPosition) ?? "—";
   byId("headPosition").textContent = String(machine?.headPosition ?? 0);
   byId("stepCount").textContent = String(machine?.stepCount ?? 0);
   const viewMode = value("tapeViewMode") as TapeViewMode;
-  const headOutside = viewMode === "fixed-zero" && machine && Math.abs(machine.headPosition) > 8;
+  const headOutside = viewMode === "fixed-zero" && machine && !tapePositions().includes(machine.headPosition);
   const headDirection = machine && machine.headPosition < -8 ? "←" : "→";
   byId("headState").textContent = machine ? (headOutside ? `${headDirection} 读写头在 ${machine.headPosition} · ${machine.currentState}` : `读写头 · ${machine.currentState}`) : "";
   byId("stopMessage").textContent = stopMessage;
@@ -734,6 +810,22 @@ function render(): void {
   renderGijswijtOutput();
   renderUniversalOutput();
   renderBrainfuckOutput();
+  renderLambdaOutput();
+}
+
+function renderLambdaOutput(): void {
+  const ready = Boolean(machine && appliedLambda);
+  byId<HTMLButtonElement>("runLambdaTape").disabled = !ready || simulationRunning() || status === "定义已修改，待应用" || machine?.currentState === "lambda.accept" || machine?.currentState === lambdaLimit;
+  byId<HTMLButtonElement>("pauseLambdaTape").disabled = !ready || !simulationRunning();
+  if (!machine || !appliedLambda) return;
+  const output = byId<HTMLTextAreaElement>("lambdaTapeOutput");
+  output.value = lambdaHasReduced ? lambdaView?.output ?? appliedLambda.source : appliedLambda.source;
+  const message = byId("lambdaTapeStatus");
+  message.classList.toggle("error", machine.currentState === lambdaLimit);
+  message.textContent = machine.currentState === lambdaLimit
+    ? `本次纸带规则的绑定索引或嵌套超过 ${appliedLambda.capacity}，尚未得到正规形；可切换直接归约。`
+    : machine.currentState === "lambda.accept" ? `已得到正规形 · ${machine.stepCount} 个图灵机步。`
+      : `原位置局部归约 · ${status} · ${machine.stepCount} 个图灵机步。`;
 }
 
 function renderBrainfuckOutput(): void {
@@ -806,6 +898,7 @@ function singleStep(applyDraft = true, renderAfter = true): boolean {
   }
   const result = machine!.step();
   if (result.record) {
+    if (appliedLambda && result.record.fromState === (appliedLambda.betaState ?? lambdaBeta)) lambdaHasReduced = true;
     records.push(result.record);
     if (records.length > 5000) records.shift();
   }
@@ -839,7 +932,7 @@ function simulationRunning(): boolean {
 
 function runTapeFast(): void {
   if (!ensureCurrentDraftApplied()) return;
-  if (!machine || (!appliedUniversalAlphabet && !appliedBrainfuck) || universalTimer !== undefined) return;
+  if (!machine || (!appliedUniversalAlphabet && !appliedBrainfuck && !appliedLambda) || universalTimer !== undefined) return;
   scheduler.stop();
   const start = performance.now(), initialSteps = machine.stepCount;
   status = "运行中";
@@ -884,6 +977,9 @@ function resetMachine(): void {
     return;
   }
   machine!.reset();
+  lambdaHasReduced = false;
+  lambdaView = undefined;
+  lambdaDisplay = undefined;
   records = [];
   tapeScroll = 0;
   tapeRenderCenter = null;
@@ -997,6 +1093,7 @@ function selectedExample(): ExampleProject {
 }
 function previewExample(): void {
   byId("exampleNote").textContent = selectedExample().description;
+  byId<HTMLAnchorElement>("examplePrinciple").href = `./principles.html?example=${encodeURIComponent(value("example"))}`;
 }
 byId("example").addEventListener("change", previewExample);
 byId("exampleStateNames").addEventListener("change", previewExample);
@@ -1028,6 +1125,22 @@ byId("exportLog").addEventListener("click", () => {
 });
 byId("generatePuzzle").addEventListener("click", generatePuzzle);
 byId("generateRoute").addEventListener("click", generateRoute);
+byId("routeViewMode").addEventListener("change", () => {
+  const full = value("routeViewMode") === "all";
+  if (lastRouteRequest && (routeController.running || (full && !lastRouteResult?.trace))) {
+    lastRouteRequest = { ...lastRouteRequest, full };
+    routeController.start(lastRouteRequest);
+  } else if (routeTraceView) {
+    routeTraceView.setFull(full);
+    byId("routeFullControls").hidden = !full;
+  }
+});
+byId("routeGo").addEventListener("click", () => {
+  const input = byId<HTMLInputElement>("routeGoStep");
+  const step = Math.max(0, Math.min(Number(input.max), Math.floor(Number(input.value) || 0)));
+  input.value = String(step);
+  routeTraceView?.goToStep(step);
+});
 byId("cancelRoute").addEventListener("click", () => {
   routeController.cancel();
 });
@@ -1083,14 +1196,18 @@ document.addEventListener("keydown", (event) => {
 const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
 const editorDraft = loadEditorDraft(localStorage);
 const restoredProject = { ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed };
-fillProject(migrateUnaryExample(restoredProject));
-byId<HTMLInputElement>("lambdaInput").value = value("acceptStates") === examples.lambda.acceptStates
-  ? value("input") : examples.lambda.input;
+fillProject(migrateLambdaInput(migrateUnaryExample(restoredProject)));
+byId<HTMLTextAreaElement>("lambdaInput").value = lambdaProjectSource?.source
+  ?? (value("acceptStates") === examples.lambda.acceptStates && !value("input").includes("#(λ.token.")
+    ? value("input") : examples.lambda.lambdaSource!.source);
 attachLambdaCalculator(byId("lambdaCalculator"), input => {
-  const example = examples.lambda;
-  fillProject({ ...example, input, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
+  const example = makeLambdaProject(input);
+  fillProject({ ...example, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
   byId("lambdaTapeStatus").textContent = createMachine() ? "已载入。点击纸带下方的「运行」或「单步」。" : "载入失败，请检查机器定义。";
 });
+byId("runLambdaTape").addEventListener("click", runTapeFast);
+byId("pauseLambdaTape").addEventListener("click", () => pause());
+byId("lambdaAuxCells").addEventListener("change", () => { tapeRenderCenter = null; render(); });
 function fillBfPreset(): void {
   const preset = bfPresets[value("bfPreset") as keyof typeof bfPresets];
   byId<HTMLTextAreaElement>("bfSource").value = preset.source;
@@ -1138,5 +1255,11 @@ byId("universalForm").addEventListener("submit", event => {
   }
 });
 byId("runUniversal").addEventListener("click", runTapeFast);
+const requestedExample = new URLSearchParams(location.search).get("example");
+if (requestedExample && Object.hasOwn(examples, requestedExample)) {
+  byId<HTMLSelectElement>("example").value = requestedExample;
+  // A link selects the example. Loading remains an explicit click to protect the current draft.
+  byId("exampleNote").scrollIntoView({ block: "center" });
+}
 previewExample();
 if (!createMachine()) renderRuleTable();

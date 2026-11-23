@@ -104,7 +104,8 @@ function numericStates(project: ExampleProject): ExampleProject {
   });
   const initialState = project.initialState ? rename(project.initialState) : "";
   const mapping = [...names].slice(0, 40).map(([from, to]) => `# 状态 ${from} → ${to}`);
-  return { ...project, initialState, rules: [...mapping, ...lines].join("\n") };
+  const lambdaSource = project.lambdaSource ? { ...project.lambdaSource, betaState: rename(project.lambdaSource.betaState ?? "lambda.beta") } : undefined;
+  return { ...project, initialState, lambdaSource, rules: [...mapping, ...lines].join("\n") };
 }
 
 export function exampleVariant(project: ExampleProject, names: ExampleNames, structure: ExampleStructure): ExampleProject {

@@ -9,6 +9,7 @@ export default defineConfig({
       input: {
         main: "index.html",
         campaign: "campaign.html",
+        principles: "principles.html",
       },
     },
   },

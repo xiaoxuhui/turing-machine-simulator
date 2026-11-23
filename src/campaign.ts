@@ -1,6 +1,7 @@
 import { inputToTape, TuringMachine, type MachineDefinition, type StopReason, type Tape } from "./core";
 import type { ExampleProject } from "./examples";
 import { advancedCampaignLevels } from "./campaign-advanced";
+import { extraCampaignLevels } from "./campaign-extra";
 import { compactRuleArrows } from "./rule-format";
 
 export interface CampaignCase {
@@ -40,9 +41,9 @@ export interface CampaignSection {
 }
 
 export const campaignSections: CampaignSection[] = [
-  { id: "tutorial", title: "教程", description: "规则、函数、ret 与重复相加；锁定关卡也可预习原理" },
-  { id: "challenge", title: "闯关", description: "组合状态与函数，过渡到减法、乘法和平方" },
-  { id: "hard", title: "高难", description: "多阶段算法，以及乘方、超幂、超超幂的递推原理" },
+  { id: "tutorial", title: "教程", description: "规则、位权、进位、借位与函数；一步一个新概念" },
+  { id: "challenge", title: "闯关", description: "复制与复用函数，组合一进制和二进制四则运算" },
+  { id: "hard", title: "高难", description: "乘方、整数逆运算，以及超幂、超超幂" },
 ];
 
 export interface CampaignCaseResult extends CampaignCase {
@@ -381,10 +382,16 @@ const originalCampaignLevels: CampaignLevel[] = [
   },
 ];
 
+const additionsBefore: Record<string, string[]> = {
+  "turn-back": ["binary-place-zero", "binary-place-one"],
+  "binary-increment": ["binary-carry-local", "binary-carry-chain", "binary-borrow-local", "binary-borrow-chain", "binary-parity-bit", "binary-shift-right"],
+};
 export const campaignLevels: CampaignLevel[] = campaignSections.flatMap(section => [
   ...originalCampaignLevels.filter(level => level.section === section.id),
   ...advancedCampaignLevels.filter(level => level.section === section.id),
-]).map((level, index) => ({ ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}`, starter: { ...level.starter, rules: compactRuleArrows(level.starter.rules) } }));
+].flatMap(level => [...(additionsBefore[level.id] ?? []).map(id => extraCampaignLevels.find(item => item.id === id)!), level]).concat(
+  extraCampaignLevels.filter(level => level.section === section.id && !Object.values(additionsBefore).flat().includes(level.id)),
+)).map((level, index) => ({ ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}`, starter: { ...level.starter, rules: compactRuleArrows(level.starter.rules) } }));
 
 export function tapeOutput(tape: Tape): string {
   const entries = tape.entries();

@@ -11,9 +11,9 @@ try {
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(`${url}?level=unary-tetration`);
   await page.waitForSelector("[data-level-id]");
-  assert.equal(await page.locator("[data-level-id]").count(), 28);
+  assert.equal(await page.locator("[data-level-id]").count(), 48);
   const groups = await page.locator(".level-group").evaluateAll(items => items.map(item => item.querySelectorAll("[data-level-id]").length));
-  assert.deepEqual(groups, [16, 7, 5]);
+  assert.deepEqual(groups, [24, 15, 9]);
   const principles = [];
   for (const [id, expected] of [["unary-power", "1 → 2 → 4 → 8"], ["unary-tetration", "T₃=2⁴=16"], ["unary-pentation", "65536"]]) {
     await page.click(`[data-level-id="${id}"]`);
@@ -72,7 +72,7 @@ try {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
   assert.equal(overflow, false);
   assert.deepEqual(errors, []);
-  const report = { total: 28, groups, principles, oldProgressPreserved: true, allDraftArrowsMigrated: true, oldNextMigratedToDone: true, functionLessonsSubmitted: 4, progressPersistedAfterReload: true, mobileOverflow: false, pageErrors: errors };
+  const report = { total: 48, groups, principles, oldProgressPreserved: true, allDraftArrowsMigrated: true, oldNextMigratedToDone: true, functionLessonsSubmitted: 4, progressPersistedAfterReload: true, mobileOverflow: false, pageErrors: errors };
   const directory = new URL("../doc/教学更新/evidence/", import.meta.url);
   await mkdir(directory, { recursive: true });
   await writeFile(new URL("browser.json", directory), JSON.stringify(report, null, 2) + "\n");

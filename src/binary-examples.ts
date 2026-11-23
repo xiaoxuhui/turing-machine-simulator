@@ -26,18 +26,22 @@ class BinaryProgram extends TapeStackProgram {
     finally { this.numericSection = previous; }
   }
 
-  digits(name = this.label()): TapeStack { return { name, values: bits }; }
+  digits(name = this.label(), meaning = "临时二进制数位"): TapeStack {
+    const stack = { name, values: bits };
+    this.describeStack(stack, meaning);
+    return stack;
+  }
 
   copy(source: TapeStack, target: TapeStack, next: string): string {
-    const reverse = this.digits();
+    const reverse = this.digits(undefined, `复制 ${source.name} 时的反转暂存；随后恢复源并生成 ${target.name} 副本`);
     const loop = this.label();
     this.take(reverse, bit => this.push(source, bit, this.push(target, bit, loop)), next, loop);
-    return this.move(source, reverse, loop);
+    return this.describe(this.move(source, reverse, loop), `复制 ${source.name} 到 ${target.name}：先暂存再双写，源数最终恢复，不会被消耗。`);
   }
 
   transfer(source: TapeStack, target: TapeStack, next: string): string {
-    const reverse = this.digits();
-    return this.move(source, reverse, this.move(reverse, target, next));
+    const reverse = this.digits(undefined, `从 ${source.name} 搬到 ${target.name} 时的顺序恢复区`);
+    return this.describe(this.move(source, reverse, this.move(reverse, target, next)), `搬运 ${source.name} 到 ${target.name}：反转两次，数位顺序保持不变；源区被消耗。`);
   }
 
   hasOne(source: TapeStack, yes: string, no: string, skipLowBit = false): string {
@@ -49,19 +53,28 @@ class BinaryProgram extends TapeStackProgram {
 
   // Consume both operands. The finite control holds only one carry or borrow bit.
   combine(left: TapeStack, right: TapeStack, output: TapeStack, subtract: boolean, next: string, negative = reject, section?: string): string {
-    const reversed = this.digits();
+    const reversed = this.digits(undefined, `${subtract ? "减法" : "加法"}本轮结果位；按低位到高位生成，稍后反转成可继续运算的顺序`);
     const build = <T>(part: number, action: () => T) => section ? this.inSection(`${section}.${part}`, action) : action();
     const plain = build(1, () => this.label()), carried = build(2, () => this.label());
+    this.describe(plain, `本轮没有${subtract ? "借位" : "进位"}（c=0），先取 ${left.name} 的最低位。`);
+    this.describe(carried, `本轮带着上一低位的${subtract ? "借位" : "进位"}（c=1），先取 ${left.name} 的最低位。`);
     const done = build(3, () => this.move(reversed, output, next));
     const overflow = build(3, () => subtract ? this.clear(reversed, negative) : this.push(reversed, "1", done));
     for (const [carry, from] of [plain, carried].entries()) {
       const digit = (a: number, b: number) => {
         const value = subtract ? a - b - carry : a + b + carry;
-        return this.push(reversed, String(value & 1), value < 0 || value > 1 ? carried : plain);
+        const bit = value & 1, carriedNext = value < 0 || value > 1;
+        return this.describe(this.push(reversed, String(bit), carriedNext ? carried : plain),
+          subtract ? `本轮已知左位 ${a}、右位 ${b}、借位 ${carry}：${a}−${b}−${carry}=${value}。${value < 0 ? "不足，借 2" : "不必借位"}，本位写 ${bit}，下一高位借位 ${Number(carriedNext)}。`
+            : `本轮已知左位 ${a}、右位 ${b}、进位 ${carry}：${a}+${b}+${carry}=${value}。本位写 ${bit}，下一高位进位 ${Number(carriedNext)}。`);
       };
       build(carry + 1, () => {
         const missingLeft = this.take(right, bit => digit(0, Number(bit)), carry ? overflow : done);
-        this.take(left, bit => this.take(right, other => digit(Number(bit), Number(other)), digit(Number(bit), 0)), missingLeft, from);
+        this.describe(missingLeft, `左操作数 ${left.name} 已读完，高位补 0；${subtract ? "借位" : "进位"}仍为 ${carry}，继续检查右操作数 ${right.name}。`);
+        this.take(left, bit => this.describe(
+          this.take(right, other => digit(Number(bit), Number(other)), digit(Number(bit), 0)),
+          `本轮左位已经读到 ${bit}，${subtract ? "借位" : "进位"}为 ${carry}；现在取右操作数 ${right.name} 的对应位，右边读完则当 0。`,
+        ), missingLeft, from);
       });
     }
     return plain;
@@ -118,12 +131,16 @@ class BinaryProgram extends TapeStackProgram {
     const reversed = this.digits(), write = this.label(), first = this.label();
     this.take(reversed, bit => this.emit(bit, write), this.end, write);
     this.take(reversed, bit => bit === "0" ? first : this.emit(bit, write), this.emit("0", this.end), first);
+    this.describe(first, "输出的第一位尚未确定：跳过前导 0，首次遇到 1 才开始输出；若全为 0，输出单个 0。");
+    this.describe(write, "已输出第一个有效位，后面的 0 也必须保留，不能再当成前导零略过。");
     return this.move(result, reversed, first);
   }
 
   readOperands(operator: string, left: TapeStack, right: TapeStack, next: string): void {
     const raw = { name: "I", values: [...bits, operator] };
     const input = { ...raw, name: "S" };
+    this.describeStack(raw, "原始输入字符，含运算符；刚搬入时顺序与输入相反");
+    this.describeStack(input, "恢复从高位到低位顺序后的输入流，等待按运算符分开");
     const startRight = this.label(), readRight = this.label();
     this.take(input, bit => bit === operator ? reject : this.push(right, bit, readRight), next, readRight);
     this.take(input, bit => bit === operator ? reject : this.push(right, bit, readRight), reject, startRight);
@@ -138,7 +155,7 @@ type Operator = "+" | "-" | "*" | "/" | "^" | "@";
 
 function binaryExample(operator: Operator, name: string, description: string, input: string): ExampleProject {
   const program = new BinaryProgram();
-  const left = program.digits("L"), right = program.digits("R"), result = program.digits("O");
+  const left = program.digits("L", "左操作数，栈顶为最低位"), right = program.digits("R", "右操作数，栈顶为最低位"), result = program.digits("O", "运算结果，供最后输出");
   program.note(description);
   program.note("每个操作数只写 0 和 1，零写作 0。接受前导零。停机后从位置 0 开始留下二进制结果。");
   if (operator === "+" || operator === "-") {
@@ -160,7 +177,7 @@ function binaryExample(operator: Operator, name: string, description: string, in
     category: "二进制运算", name, input, initialState: program.start, blankSymbol: stackTapeBlank,
     acceptStates: "", rejectStates: reject, haltStates: "HALT", maxSteps: null,
     description: description + " 两边都填二进制数，零写 0。停机时纸带只留下二进制结果。",
-    rules: program.finish(), numericStateSections: program.numericStateSections,
+    rules: program.finish(), numericStateSections: program.numericStateSections, ruleGuide: program.ruleGuide,
   };
 }
 
