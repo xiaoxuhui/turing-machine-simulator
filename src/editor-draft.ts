@@ -1,4 +1,5 @@
 import type { MachineProjectFields } from "./project-state";
+import { queueArchive } from "./local-archive";
 
 export const editorFields = ["input", "blankSymbol", "initialState", "acceptStates", "rejectStates", "haltStates", "rules"] as const;
 const DRAFT_KEY = "turing-machine-simulator.editor-draft.v1";
@@ -19,8 +20,10 @@ export function loadEditorDraft(storage: Pick<Storage, "getItem">): MachineProje
 }
 
 export function saveEditorDraft(storage: Pick<Storage, "setItem">, draft: MachineProjectFields): string | null {
+  const content = JSON.stringify({ version: 1, ...Object.fromEntries(editorFields.map(field => [field, draft[field]])) });
+  queueArchive({ kind: "draft", title: "实验台编辑草稿", content });
   try {
-    storage.setItem(DRAFT_KEY, JSON.stringify({ version: 1, ...Object.fromEntries(editorFields.map(field => [field, draft[field]])) }));
+    storage.setItem(DRAFT_KEY, content);
     return null;
   } catch {
     return "草稿未能保存；刷新可能丢失，请先复制文本或导出项目。";

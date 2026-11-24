@@ -10,7 +10,7 @@ it.each(campaignLevels)("offers a runnable laboratory solution for $id, in both 
   const project = examples[`campaign-${level.id}`];
   expect(project.campaignLevelId).toBe(level.id);
   expect(project.category).toBe("关卡示例");
-  const options = { haltStates: project.haltStates.split(",").filter(Boolean), acceptStates: [], rejectStates: [] };
+  const options = { haltStates: project.haltStates.split(",").filter(Boolean), acceptStates: project.acceptStates.split(",").filter(Boolean), rejectStates: project.rejectStates.split(",").filter(Boolean) };
   const plain = parseTransitions(exampleSource(project, "plain"), options);
   const commented = parseTransitions(exampleSource(project, "commented"), options);
   expect(plain.errors).toEqual([]);

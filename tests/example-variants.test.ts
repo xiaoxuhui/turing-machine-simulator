@@ -30,7 +30,8 @@ it.each(Object.entries(examples))("preserves all state-name and structure varian
     }
     expect(b.tape.entries()).toEqual(a.tape.entries());
   }
-}, 60000);
+  // λ 示例的三套结构变体各要编译 6 万多条规则，慢机上整例约 40 秒。
+}, 180000);
 
 it("keeps local aliases, returns, exported paths, symbols and terminals when numbering", () => {
   const project: ExampleProject = { ...examples.functionExports, input: "", initialState: "父.入口", rules: `子(s,back):\n    s,□->back,1,R\n    ret back\n父(s,end,x=子):\n    s,□->入口,□,N\n    入口,□->x\n    back,□->end,2,N\n    导出状态 入口\n父` };

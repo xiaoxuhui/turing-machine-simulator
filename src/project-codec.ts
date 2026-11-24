@@ -1,5 +1,6 @@
 import { parseTransitions, resolveInitialState, TuringMachine } from "./core";
 import type { ExampleProject } from "./examples";
+import { queueArchive } from "./local-archive";
 
 export interface ProjectData extends ExampleProject {
   format: "turing-machine-simulator";
@@ -66,6 +67,7 @@ export function parseProjectJson(source: string): ProjectData {
 }
 
 export function saveProject(storage: Pick<Storage, "setItem">, key: string, project: ProjectData): string | null {
+  queueArchive({ kind: "project", title: project.name || "实验台项目", content: JSON.stringify(project) });
   try {
     storage.setItem(key, JSON.stringify(project));
     return null;

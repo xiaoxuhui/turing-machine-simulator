@@ -61,5 +61,5 @@ it("distinguishes hidden stack identity, a literal zero, and the actual blank", 
   expect(explainSymbol("#(R)1", examples.binaryAdd)).toContain("右操作数");
   expect(explainSymbol("□", examples.binaryAdd)).toContain("空白");
   expect(explainSymbol("0", examples.binaryAdd)).toContain("普通数值");
-  expect(explainSymbol("0", examples.fibonacci)).toContain("真正空白");
+  expect(explainSymbol("0", { ...examples.unary, blankSymbol: "0" })).toContain("真正空白");
 });

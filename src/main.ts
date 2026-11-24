@@ -28,10 +28,11 @@ import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
 import { attachSpaceIndentation } from "./text-insertion";
 import { attachRuleDiagnostics } from "./rule-diagnostics";
 import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-colors";
-import { fibonacciSourceVariant } from "./fibonacci-example";
 import { exampleVariant, type ExampleNames, type ExampleStructure } from "./example-variants";
 import { migrateUnaryExample } from "./unary-example-migration";
 import { requestDownload } from "./download";
+import { captureExistingLocalSaves, saveArchive } from "./local-archive";
+import { attachLocalArchive } from "./local-archive-view";
 import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, splitUniversalSource, universalDefault, universalMaxBudget } from "./universal-machine";
 import { universalHalt, universalReject, universalStart } from "./universal-tape";
 import { bfBlank, bfPresets, bfStart, makeBrainfuckProject, readBrainfuckOutput, readBrainfuckSource } from "./brainfuck";
@@ -39,6 +40,7 @@ import { lambdaBeta, lambdaLimit, makeLambdaProject, migrateLambdaInput, readLam
 import { fullTapeDisplay, tapeDisplayPositions } from "./tape-display";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
+const localArchiveReady = captureExistingLocalSaves();
 let machine: TuringMachine | null = null;
 let records: StepRecord[] = [];
 let status = "就绪";
@@ -80,6 +82,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <a class="campaign-link" href="./campaign.html">进入关卡</a>
         <a class="campaign-link" href="./principles.html">示例原理</a>
         <button id="exportProject">导出项目</button>
+        <button data-local-saves>本地存档</button>
         <button id="importProject">导入项目</button>
         <input id="fileInput" type="file" accept="application/json,.json" hidden />
         <button id="exportLog">导出记录</button>
@@ -169,14 +172,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <div class="table-heading"><strong>结构化规则表</strong><button id="addRule" class="btn">＋ 新增规则</button></div>
           <div id="ruleTable" class="rule-table"></div>
           <div id="ruleCount" class="hint" role="status"></div>
-          <div class="editor-actions"><button id="apply" class="btn primary">应用并重置</button><button id="clear" class="btn danger">清空规则</button><span id="errors" class="error"></span></div>
+          <div class="editor-actions"><button id="apply" class="btn primary">应用并重置</button><button data-save-local class="btn">保存存档</button><button id="clear" class="btn danger">清空规则</button><span id="errors" class="error"></span></div>
           <div class="hint">快捷键：空格运行/暂停，Alt + → 单步，Ctrl + R 重置（输入框聚焦时不触发）。</div>
         </section>
         <aside class="side">
           <section class="panel">
             <div class="panel-title"><h2>示例程序</h2><small>${Object.keys(examples).length} 个</small></div>
             <select id="example" style="width:100%">
-              ${["一进制运算", "二进制运算", "函数教程", "基础示例", "忙碌海狸", "猜想验证", "关卡示例"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
+              ${["一进制运算", "二进制运算", "函数教程", "基础示例", "猜想验证", "关卡示例"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
             <label style="margin-top:10px">示例源码<select id="exampleSourceStyle"><option value="plain">无注释</option><option value="commented">有注释</option></select></label>
             <div id="exampleProgramOptions">
@@ -185,7 +188,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               <p class="hint">适用于所有示例。公共函数只定义一次，各入口指定自己的续接状态；无重复块时保留原规则。选择后点击“加载此示例”。</p>
             </div>
             <p id="exampleNote" class="example-note"></p>
-            <p><a id="examplePrinciple" href="./principles.html">查看此示例的原理</a></p>
+            <p><a id="examplePrinciple" href="./principles.html">查看此示例的原理</a> · <a id="exampleCampaign" href="./campaign.html">练习此示例关卡</a></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
           </section>
           <section class="panel">
@@ -257,7 +260,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         </form>
       </section>
       <section class="panel gijswijt-converter" aria-labelledby="bfTitle">
-        <div class="sequence-mode-bar"><h2 id="bfTitle">Brainfuck（BF）</h2><label for="bfPreset">BF 示例<select id="bfPreset">${Object.entries(bfPresets).map(([key, preset]) => `<option value="${key}">${preset.name}</option>`).join("")}</select></label></div>
+        <div class="sequence-mode-bar"><h2 id="bfTitle">BF</h2><label for="bfPreset">BF 示例<select id="bfPreset">${Object.entries(bfPresets).map(([key, preset]) => `<option value="${key}">${preset.name}</option>`).join("")}</select></label></div>
         <form id="bfForm">
           <label for="bfSource">BF 源码<textarea id="bfSource" rows="3" spellcheck="false"></textarea></label>
           <p class="hint"><code>&gt; &lt;</code> 移动单元，<code>+ -</code> 加减一，<code>. ,</code> 输出和输入字节，<code>[ ]</code> 循环。其它字符忽略。单元为 0～255，溢出回绕；左右均可延伸，输入结束读 0。空白符固定为 <code>|</code>。</p>
@@ -344,6 +347,7 @@ function collectProject(): ProjectData {
 }
 
 function fillProject(project: ProjectData | ExampleProject): void {
+  if (value("rules")) void saveArchive({ kind: "project", title: "切换前的实验台草稿", content: JSON.stringify(collectProject()) }, "切换前备份").catch(() => {});
   const bfSource = project.brainfuckSource ?? readBrainfuckSource(project.rules);
   bfProjectSource = bfSource && typeof bfSource.source === "string" && typeof bfSource.input === "string"
     ? { ...bfSource, rules: compactRuleArrows(project.rules), tape: project.input } : undefined;
@@ -1063,7 +1067,9 @@ attachTapeDrag(byId("tape"), {
   },
   isEnabled: () => value("tapeViewMode") === "free-drag",
 });
-byId("clear").addEventListener("click", () => {
+byId("clear").addEventListener("click", async () => {
+  try { await saveArchive({ kind: "project", title: "清空前的实验台草稿", content: JSON.stringify(collectProject()) }, "清空前备份"); }
+  catch { byId("errors").textContent = "未能备份当前草稿，尚未清空。请先导出项目。"; return; }
   pause();
   byId<HTMLTextAreaElement>("rules").value = "";
   handleEditorInput();
@@ -1087,13 +1093,12 @@ byId("maxSteps").addEventListener("change", () => {
   if (storageError) byId("errors").textContent = storageError;
 });
 function selectedExample(): ExampleProject {
-  return value("example") === "fibonacci"
-    ? exampleVariant(fibonacciSourceVariant(value("exampleStateNames") as ExampleNames, "flat"), "descriptive", value("exampleStructure") as ExampleStructure)
-    : exampleVariant(examples[value("example")], value("exampleStateNames") as ExampleNames, value("exampleStructure") as ExampleStructure);
+  return exampleVariant(examples[value("example")], value("exampleStateNames") as ExampleNames, value("exampleStructure") as ExampleStructure);
 }
 function previewExample(): void {
   byId("exampleNote").textContent = selectedExample().description;
   byId<HTMLAnchorElement>("examplePrinciple").href = `./principles.html?example=${encodeURIComponent(value("example"))}`;
+  byId<HTMLAnchorElement>("exampleCampaign").href = `./campaign.html?level=${encodeURIComponent(examples[value("example")].campaignLevelId!)}`;
 }
 byId("example").addEventListener("change", previewExample);
 byId("exampleStateNames").addEventListener("change", previewExample);
@@ -1263,3 +1268,16 @@ if (requestedExample && Object.hasOwn(examples, requestedExample)) {
 }
 previewExample();
 if (!createMachine()) renderRuleTable();
+attachLocalArchive({
+  page: "project", ready: localArchiveReady,
+  current: () => ({ kind: "project", title: "我的实验台存档", content: JSON.stringify(collectProject()) }),
+  restore: entry => {
+    const data = JSON.parse(entry.content) as Record<string, unknown>;
+    if (editorFields.some(field => typeof data[field] !== "string")) throw new Error("存档缺少实验台字段，仍可查看或下载原内容。");
+    pause();
+    const previous = collectProject();
+    fillProject({ ...previous, ...data, format: "turing-machine-simulator", version: 1 } as ProjectData);
+    saveEditorDraft(localStorage, Object.fromEntries(editorFields.map(field => [field, value(field)])) as ReturnType<typeof loadEditorDraft> & object);
+    createMachine();
+  },
+});

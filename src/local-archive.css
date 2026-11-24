@@ -1,0 +1,17 @@
+.local-archive-dialog { width: min(1000px, calc(100vw - 28px)); max-height: 90vh; padding: 22px; border: 1px solid #cbd9d6; border-radius: 14px; color: #263b4e; background: #fff; }
+.local-archive-dialog::backdrop { background: #172b3f80; }
+.archive-heading { display: flex; align-items: start; justify-content: space-between; gap: 14px; }
+.archive-heading h2 { margin: 0 0 7px; font-size: 20px; }
+.archive-heading p, .archive-note, .archive-meta { margin: 0 0 12px; color: #65768a; font-size: 12px; line-height: 1.6; }
+.archive-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.local-archive-dialog button { padding: 7px 11px; border: 1px solid #bfd4cc; border-radius: 7px; color: #14684f; background: #f4faf7; font: inherit; font-size: 13px; cursor: pointer; }
+.local-archive-dialog button:disabled { opacity: .45; cursor: default; }
+.archive-status { min-height: 20px; color: #14684f; font-size: 13px; }
+.archive-layout { display: grid; grid-template-columns: 265px minmax(0, 1fr); gap: 16px; }
+.archive-list { max-height: 55vh; overflow: auto; }
+.archive-list button { display: block; width: 100%; text-align: left; margin: 0 0 7px; overflow-wrap: anywhere; }
+.archive-list button[aria-pressed="true"] { background: #dcefe7; border-color: #539a7e; }
+.archive-list strong, .archive-list small { display: block; } .archive-list small { margin-top: 4px; color: #65768a; font-size: 11px; }
+.archive-detail { min-width: 0; } .archive-detail h3 { margin: 0 0 8px; font-size: 16px; overflow-wrap: anywhere; }
+.archive-source { width: 100%; min-height: 260px; height: 35vh; padding: 10px; border: 1px solid #ccd8e0; border-radius: 7px; font: 12px/1.65 Consolas, monospace; white-space: pre; resize: vertical; }
+@media (max-width: 650px) { .local-archive-dialog { padding: 15px; } .archive-layout { grid-template-columns: minmax(0, 1fr); } .archive-list { max-height: 180px; } .archive-source { min-height: 180px; height: 28vh; } }

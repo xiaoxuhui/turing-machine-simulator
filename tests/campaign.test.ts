@@ -6,23 +6,23 @@ import { advancedSolutions, solutionRules } from "../src/campaign-solutions";
 function definitionFor(levelIndex: number): MachineDefinition {
   const level = campaignLevels[levelIndex];
   const project = level.starter;
-  const parsed = parseTransitions(solutionRules[level.id], { haltStates: ["HALT"], acceptStates: [], rejectStates: [] });
+  const parsed = parseTransitions(solutionRules[level.id], { haltStates: project.haltStates.split(",").filter(Boolean), acceptStates: project.acceptStates.split(",").filter(Boolean), rejectStates: project.rejectStates.split(",").filter(Boolean) });
   expect(parsed.errors).toEqual([]);
   return {
     blankSymbol: project.blankSymbol,
     initialState: resolveInitialState(parsed, project.initialState),
-    acceptStates: [],
-    rejectStates: [],
+    acceptStates: project.acceptStates.split(",").filter(Boolean),
+    rejectStates: project.rejectStates.split(",").filter(Boolean),
     haltStates: project.haltStates.split(",").filter(Boolean),
     transitions: parsed.transitions,
   };
 }
 
 describe("campaign verification", () => {
-  it("provides a 24/15/9 curriculum with gradual binary and function lessons", () => {
+  it("provides a three-section curriculum including every built-in example", () => {
     expect(campaignSections.map((section) => section.id)).toEqual(["tutorial", "challenge", "hard"]);
-    expect(campaignLevels).toHaveLength(48);
-    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([24, 15, 9]);
+    expect(campaignLevels).toHaveLength(78);
+    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([40, 19, 19]);
     expect(campaignLevels.map((level) => level.id).every((id, index, ids) => ids.indexOf(id) === index)).toBe(true);
   });
   it("keeps every original level id and its saved completion/draft", () => {

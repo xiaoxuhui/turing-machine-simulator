@@ -1,12 +1,21 @@
-import { inputToTape, TuringMachine, type MachineDefinition, type StopReason, type Tape } from "./core";
+import type { MachineDefinition, StopReason } from "./core";
+import { verifyCampaignCases } from "./campaign-verification";
+export { tapeOutput } from "./campaign-verification";
 import type { ExampleProject } from "./examples";
 import { advancedCampaignLevels } from "./campaign-advanced";
 import { extraCampaignLevels } from "./campaign-extra";
+import { exampleCampaignLevels } from "./campaign-from-examples";
 import { compactRuleArrows } from "./rule-format";
+import { MAX_CAMPAIGN_DRAFT_LENGTH } from "./campaign-limits";
 
 export interface CampaignCase {
   input: string;
   expectedOutput: string;
+  mode?: "tape" | "status" | "nonblank-count" | "lambda" | "brainfuck" | "goldbach" | "universal";
+  expectedReason?: StopReason | "step-limit";
+  expectedSteps?: number;
+  maxSteps?: number;
+  alphabet?: { states: string[]; symbols: string[] };
 }
 
 export interface CampaignLevel {
@@ -30,6 +39,8 @@ export interface CampaignLevel {
   starter: ExampleProject;
   cases: CampaignCase[];
   maxSteps: number;
+  sourceExampleId?: string;
+  prerequisite?: string;
 }
 
 export type CampaignSectionId = "tutorial" | "challenge" | "hard";
@@ -48,6 +59,7 @@ export const campaignSections: CampaignSection[] = [
 
 export interface CampaignCaseResult extends CampaignCase {
   actualOutput: string;
+  tapePreview?: string[];
   steps: number;
   reason: StopReason | "step-limit";
   stoppedState: string;
@@ -386,47 +398,20 @@ const additionsBefore: Record<string, string[]> = {
   "turn-back": ["binary-place-zero", "binary-place-one"],
   "binary-increment": ["binary-carry-local", "binary-carry-chain", "binary-borrow-local", "binary-borrow-chain", "binary-parity-bit", "binary-shift-right"],
 };
-export const campaignLevels: CampaignLevel[] = campaignSections.flatMap(section => [
+export const coreCampaignLevels: CampaignLevel[] = campaignSections.flatMap(section => [
   ...originalCampaignLevels.filter(level => level.section === section.id),
   ...advancedCampaignLevels.filter(level => level.section === section.id),
 ].flatMap(level => [...(additionsBefore[level.id] ?? []).map(id => extraCampaignLevels.find(item => item.id === id)!), level]).concat(
   extraCampaignLevels.filter(level => level.section === section.id && !Object.values(additionsBefore).flat().includes(level.id)),
 )).map((level, index) => ({ ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}`, starter: { ...level.starter, rules: compactRuleArrows(level.starter.rules) } }));
 
-export function tapeOutput(tape: Tape): string {
-  const entries = tape.entries();
-  if (!entries.length) return "";
-  const min = entries[0][0];
-  const max = entries[entries.length - 1][0];
-  let output = "";
-  for (let position = min; position <= max; position += 1) output += tape.read(position);
-  return output;
-}
+export const campaignLevels: CampaignLevel[] = campaignSections.flatMap(section => [
+  ...coreCampaignLevels.filter(level => level.section === section.id),
+  ...exampleCampaignLevels.filter(level => level.section === section.id),
+]).map((level, index) => ({ ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}` }));
 
 export function verifyLevel(level: CampaignLevel, definition: MachineDefinition): CampaignVerification {
-  const results = level.cases.map((testCase): CampaignCaseResult => {
-    const machine = new TuringMachine(definition, inputToTape(testCase.input, definition.blankSymbol));
-    let reason: StopReason | "step-limit" = "step-limit";
-    while (machine.stepCount < level.maxSteps) {
-      const result = machine.step();
-      if (result.stopped) {
-        reason = result.reason!;
-        break;
-      }
-    }
-    const actualOutput = tapeOutput(machine.tape);
-    return {
-      ...testCase,
-      actualOutput,
-      steps: machine.stepCount,
-      reason,
-      stoppedState: machine.currentState,
-      readSymbol: machine.tape.read(machine.headPosition),
-      passed: reason !== "step-limit" && actualOutput === testCase.expectedOutput,
-    };
-  });
-  const passedCount = results.filter((result) => result.passed).length;
-  return { passed: passedCount === results.length, passedCount, totalCount: results.length, cases: results };
+  return verifyCampaignCases(level.cases, level.maxSteps, definition);
 }
 
 export function emptyCampaignProgress(): CampaignProgress {
@@ -450,7 +435,7 @@ export function normalizeCampaignProgress(value: unknown): CampaignProgress {
   const known = new Set(campaignLevels.map((level) => level.id));
   const completedLevelIds = [...new Set(candidate.completedLevelIds.filter((id): id is string => typeof id === "string" && known.has(id)))];
   const drafts = typeof candidate.drafts === "object" && candidate.drafts !== null
-    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= 100_000).map(([id, draft]) => [id, normalizeCampaignDraft(id, draft as string)]))
+    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= MAX_CAMPAIGN_DRAFT_LENGTH).map(([id, draft]) => [id, normalizeCampaignDraft(id, draft as string)]))
     : {};
   return { version: 1, completedLevelIds, drafts };
 }
@@ -463,9 +448,13 @@ export function normalizeCampaignProgress(value: unknown): CampaignProgress {
  * 第 4、5 关会一并变锁）。前沿式对空洞天然容错，同时仍只允许"一次推进一关"。
  */
 export function isLevelUnlocked(progress: CampaignProgress, levelId: string): boolean {
-  const index = campaignLevels.findIndex((level) => level.id === levelId);
+  const requested = campaignLevels.find(level => level.id === levelId);
+  if (!requested) return false;
+  if (progress.completedLevelIds.includes(levelId)) return true;
+  if (requested.prerequisite) return progress.completedLevelIds.includes(requested.prerequisite) || isLevelUnlocked(progress, requested.prerequisite);
+  const index = coreCampaignLevels.findIndex((level) => level.id === levelId);
   if (index < 0) return false;
-  const frontier = campaignLevels.reduce(
+  const frontier = coreCampaignLevels.reduce(
     (max, level, position) =>
       progress.completedLevelIds.includes(level.id) ? Math.max(max, position) : max,
     -1,

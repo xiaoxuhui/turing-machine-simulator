@@ -1,7 +1,7 @@
 import "./principles-styles.css";
 import { examplePrinciples } from "./example-principles";
 import { examples } from "./examples";
-import { attachRuleLessons } from "./rule-lessons-view";
+import { renderKeyRules } from "./key-rules-view";
 
 const escape = (value: string) => value.replace(/[&<>"']/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[character]!);
 const requested = new URLSearchParams(location.search).get("example");
@@ -22,7 +22,6 @@ document.querySelector("#principles-app")!.innerHTML = `
   </main>`;
 
 const byId = (id: string) => document.getElementById(id)!;
-let detachRuleLessons: (() => void) | undefined;
 function renderList(): void {
   const search = (byId("principleSearch") as HTMLInputElement).value.trim().toLocaleLowerCase();
   const matches = examplePrinciples.filter(item => `${item.name} ${item.category} ${item.summary} ${item.steps.join(" ")}`.toLocaleLowerCase().includes(search));
@@ -30,19 +29,18 @@ function renderList(): void {
   byId("principleList").innerHTML = [...new Set(matches.map(item => item.category))].map(category => `<section><h2>${escape(category)}</h2>${matches.filter(item => item.category === category).map(item => `<button data-open="${escape(item.id)}" ${item.id === activeId ? 'aria-current="page"' : ""}>${escape(item.name)}</button>`).join("")}</section>`).join("") || "<p>没有匹配的示例，试试进位、函数或复制。</p>";
 }
 function renderArticle(): void {
-  detachRuleLessons?.(); detachRuleLessons = undefined;
   const item = examplePrinciples.find(item => item.id === activeId)!;
   const list = (items: string[]) => items.map(value => `<li>${escape(value)}</li>`).join("");
   byId("principleArticle").innerHTML = `<span class="category">${escape(item.category)}</span><h2>${escape(item.name)}</h2><p class="summary">${escape(item.summary)}</p>
     <div class="input"><strong>示例输入</strong><code>${escape(item.input || "空纸带")}</code></div>
-    <h3>一步一步怎么做</h3><ol>${list(item.steps)}</ol>
+    <h3>怎么实现</h3><ol>${list(item.steps)}</ol>
     <section class="walkthrough"><h3>具体推演</h3><ol>${list(item.walkthrough)}</ol></section>
     ${item.notes.length ? `<h3>边界与易错点</h3><ul>${list(item.notes)}</ul>` : ""}
     <section id="ruleLessonHost"></section>
     <footer><a class="primary" href="${escape(item.laboratoryUrl)}">到实验台选择此示例</a>${item.levelId ? `<a href="./campaign.html?level=${encodeURIComponent(item.levelId)}">练习对应关卡</a>` : ""}</footer>
     <p class="note">实验台链接只选择示例；点击“加载此示例”才替换编辑器。阅读原理与试跑示例不会标记关卡通关。</p>`;
   document.title = `${item.name} · 示例原理`;
-  if (Object.hasOwn(examples, item.id)) detachRuleLessons = attachRuleLessons(byId("ruleLessonHost"), examples[item.id]);
+  if (Object.hasOwn(examples, item.id)) renderKeyRules(byId("ruleLessonHost"), examples[item.id]);
 }
 function open(id: string): void {
   if (!examplePrinciples.some(item => item.id === id)) return;

@@ -33,6 +33,6 @@ describe("campaign backup", () => {
 
   it("rejects invalid JSON and oversized files", () => {
     expect(() => parseCampaignBackup("{")).toThrow("JSON");
-    expect(() => parseCampaignBackup(" ".repeat(MAX_CAMPAIGN_BACKUP_BYTES + 1))).toThrow("1 MiB");
+    expect(() => parseCampaignBackup(" ".repeat(MAX_CAMPAIGN_BACKUP_BYTES + 1))).toThrow("32 MiB");
   });
 });

@@ -125,4 +125,5 @@ it("matches direct normal-order substitution across generated names and scopes",
     const expected = reduceLambda(source, 25);
     if ("output" in expected) expect(run(source).output, source).toBe(expected.output);
   }
-}, 30_000);
+  // 50 组随机表达式的正常序归约，慢机实测超过 30 秒。
+}, 120_000);

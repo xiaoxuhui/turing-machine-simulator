@@ -28,27 +28,14 @@ footer a, .path button { padding: 8px 14px; border: 1px solid #b8d5ca; border-ra
 footer .primary { background: #14684f; color: white; }
 table { border-collapse: collapse; width: 100%; margin-top: 20px; text-align: center; font-size: 14px; } td, th { border: 1px solid #d7e4df; padding: 5px; } caption { text-align: left; }
 :focus-visible { outline: 3px solid #65bda0; outline-offset: 2px; }
-.rule-guide { margin-top: 26px; border: 1px solid #b8d5ca; border-radius: 10px; padding: 16px; }
-.rule-guide > p { font-size: 13px; }
-.rule-guide-controls { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
-.rule-guide label { display: block; font-size: 13px; }
-.rule-guide select { font: inherit; display: block; width: 100%; max-width: 100%; padding: 8px; border: 1px solid #bcced0; border-radius: 6px; background: white; }
-.guide-count { color: #65768a; }
-.guide-arrows, .guide-targets { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
-.guide-arrows button, .guide-targets button { font: inherit; max-width: 100%; border: 1px solid #b8d5ca; border-radius: 6px; padding: 5px 9px; color: #14684f; background: #f4faf7; cursor: pointer; overflow-wrap: anywhere; text-align: left; }
-.guide-arrows button:disabled { opacity: .4; cursor: default; }
-.guide-rule { margin: 14px 0; border: 1px solid #dce5e9; border-radius: 8px; padding: 12px; }
-.guide-rule summary { color: #203248; font-size: 13px; overflow-wrap: anywhere; }
-.guide-purpose, .guide-context { padding: 12px; background: #eef7f3; border-radius: 6px; font-size: 14px; }
-.guide-context ul { margin-bottom: 0; }
-.rule-guide dl { font-size: 14px; } .rule-guide dt { font-weight: 650; margin: 16px 0 4px; overflow-wrap: anywhere; }
-.rule-guide dd { margin-left: 0; color: #465c70; overflow-wrap: anywhere; }
-.guide-symbols { margin-top: 20px; }
-.guide-symbols dl { max-height: 400px; overflow: auto; padding-right: 12px; }
-.guide-state-content h4 { overflow-wrap: anywhere; }
+.key-states dt { font-weight: 650; margin-top: 12px; overflow-wrap: anywhere; }
+.key-states dd { margin-left: 0; color: #465c70; }
+.key-rules { list-style: none; padding: 0; }
+.key-rules li { border-left: 3px solid #b8d5ca; padding: 10px 14px; margin: 12px 0; background: #f5f9f7; border-radius: 5px; }
+.key-rules code { font-size: 13px; }
+.key-rules p { margin: 5px 0 0; font-size: 14px; color: #465c70; }
 @media (max-width: 760px) {
   header { gap: 14px; padding: 14px 16px; } header a { font-size: 12px; } h1 { font-size: 20px; }
   main { display: block; padding: 14px; } aside { position: static; height: auto; max-height: 230px; margin-bottom: 14px; padding: 14px; }
   article, .binary-help { padding: 18px; } article h2 { font-size: 22px; } .input { display: block; } .input code { display: block; } ol, ul { padding-left: 23px; }
-  .rule-guide-controls { grid-template-columns: minmax(0, 1fr); } .rule-guide { padding: 12px; }
 }
