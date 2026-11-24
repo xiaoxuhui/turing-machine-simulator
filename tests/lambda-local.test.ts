@@ -111,7 +111,9 @@ it("updates the old encoded-input project without overwriting edited rules", () 
   expect(migrateLambdaInput(edited)).toBe(edited);
 });
 
-it("matches direct normal-order substitution across generated names and scopes", () => {
+// 先按原种子一次性生成 50 组表达式（生成很便宜），再把归约拆成 5 条用例：
+// 每条 10 组，单条大约 10 秒，不会把 vitest worker 堵到 RPC 心跳超时。
+const generatedSources = (() => {
   let seed = 29471;
   const pick = (n: number) => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed % n; };
   const names = ["A", "V", "_0", "123", "AB_12"];
@@ -120,10 +122,14 @@ it("matches direct normal-order substitution across generated names and scopes",
     return pick(2) ? `(λ${names[pick(names.length)]}.${expression(depth - 1)})`
       : `(${expression(depth - 1)} ${expression(depth - 1)})`;
   };
-  for (let sample = 0; sample < 50; sample++) {
-    const source = expression(3);
-    const expected = reduceLambda(source, 25);
-    if ("output" in expected) expect(run(source).output, source).toBe(expected.output);
-  }
-  // 50 组随机表达式的正常序归约，慢机实测超过 30 秒。
-}, 120_000);
+  return Array.from({ length: 50 }, () => expression(3));
+})();
+
+for (let chunk = 0; chunk < 5; chunk++) {
+  it(`matches direct normal-order substitution across generated names and scopes (${chunk + 1}/5)`, () => {
+    for (const source of generatedSources.slice(chunk * 10, chunk * 10 + 10)) {
+      const expected = reduceLambda(source, 25);
+      if ("output" in expected) expect(run(source).output, source).toBe(expected.output);
+    }
+  }, 60_000);
+}
