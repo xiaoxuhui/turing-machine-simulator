@@ -11,8 +11,8 @@ android {
         applicationId = "com.xiaoxuhui.turing"
         minSdk = 24
         targetSdk = 34
-        versionCode = 4
-        versionName = "0.7.0"
+        versionCode = 5
+        versionName = "0.8.0"
 
         // 应用为单语言中文工具，去掉无用资源以减小体积
         resourceConfigurations += listOf("zh", "en")
