@@ -53,7 +53,7 @@ export function exampleSource(project: ExampleProject, style: ExampleSourceStyle
       lines.push(`# 定义 ${name}：括号前两个值是函数入口与正常完成状态。`);
     }
     if (/^ret(?:\s|:)/.test(text)) lines.push(`${indent}# 只有到达这里声明的状态，才跳到外部或父函数的对应状态。`);
-    if (/^导出状态(?:\s|:)/.test(text)) lines.push(`${indent}# 公开名称供外部补写或选择入口；这条声明本身不要求返回。`);
+    if (/^(?:pub|导出状态)(?:\s|:)/.test(text)) lines.push(`${indent}# 公开名称供外部补写或选择入口；这条声明本身不要求返回。`);
     const state = text.match(/^([^,\s]+),/)?.[1];
     const note = state && (phaseNotes[state] ?? (project.category === "一进制运算" ? shortPhaseNotes[state] : undefined));
     if (state && note && !seen.has(state)) { lines.push(`${indent}# ${note}`); seen.add(state); }

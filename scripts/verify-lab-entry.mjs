@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+const {chromium}=createRequire(import.meta.url)(process.argv[2] || 'playwright');
+const browser=await chromium.launch({headless:true,...(process.argv[3]?{executablePath:process.argv[3]}:{})});
+const base=process.argv[4] || 'http://127.0.0.1:5173/turing-machine-simulator/';
+try {
+  const context=await browser.newContext();
+  const page=await context.newPage();
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(base);await page.waitForSelector('#rules');
+  const unfinished='q0,1->\n    ';
+  await page.fill('#input','111');
+  await page.fill('#rules',unfinished);
+  await page.goto(base+'campaign.html?level=write-one');
+  await page.waitForSelector('#labEntryMode');
+  await page.selectOption('#labEntryMode','previous');
+  await page.click('#transferRules');
+  await page.waitForSelector('#rules');
+  assert.equal(await page.inputValue('#rules'),unfinished);
+  assert.equal(await page.inputValue('#input'),'111');
+  assert.match(await page.locator('#returnToLevel').getAttribute('href'),/level=write-one/);
+  assert.equal(await page.inputValue('#example'),'campaign-write-one');
+  // Picking the source alone never overwrites the editor.
+  await page.selectOption('#exampleLoadSource','example');
+  assert.equal(await page.inputValue('#rules'),unfinished);
+  await page.click('#loadExample');
+  await page.waitForFunction(()=>document.querySelector('#labHistoryStatus').textContent.includes('已加载'));
+  const reference=await page.inputValue('#rules');
+  assert.notEqual(reference,unfinished);
+  await page.reload();await page.waitForSelector('#rules');
+  await page.waitForFunction(()=>!document.querySelector('#exampleLoadSource').options[1].disabled);
+  assert.equal(await page.inputValue('#rules'),reference);
+  await page.selectOption('#exampleLoadSource','previous');
+  assert.equal(await page.inputValue('#rules'),reference);
+  await page.click('#loadExample');
+  await page.waitForFunction(()=>document.querySelector('#labHistoryStatus').textContent.includes('已恢复'));
+  assert.equal(await page.inputValue('#rules'),unfinished);
+  assert.equal(await page.inputValue('#input'),'111');
+  // Loading the current campaign example must work even with an empty campaign draft.
+  await page.goto(base+'campaign.html?level=write-one');
+  await page.selectOption('#labEntryMode','example');
+  await page.click('#transferRules');
+  await page.waitForSelector('#rules');
+  await page.waitForFunction(()=>document.querySelector('#rules').value!== 'q0,1->\n    ');
+  assert.notEqual(await page.inputValue('#rules'),unfinished);
+  assert.equal(await page.inputValue('#example'),'campaign-write-one');
+  assert.match(await page.locator('#returnToLevel').getAttribute('href'),/level=write-one/);
+  await page.reload();await page.waitForSelector('#rules');
+  await page.waitForFunction(()=>!document.querySelector('#exampleLoadSource').options[1].disabled);
+  assert.equal(await page.locator('#returnToLevel').isVisible(),true);
+  await page.selectOption('#exampleLoadSource','previous');
+  await page.click('#loadExample');
+  await page.waitForFunction(()=>document.querySelector('#labHistoryStatus').textContent.includes('已恢复'));
+  assert.equal(await page.inputValue('#rules'),unfinished);
+  await page.locator('#returnToLevel').click();
+  await page.waitForSelector('#rulesEditor');
+  assert.equal(new URL(page.url()).searchParams.get('level'),'write-one');
+  // Keep the existing transfer-your-own-rules path intact.
+  await page.fill('#rulesEditor','q0,□->HALT,1,N');
+  await page.selectOption('#labEntryMode','draft');await page.click('#transferRules');
+  await page.waitForSelector('#rules');
+  await page.waitForFunction(()=>document.querySelector('#rules').value==='q0,_->H,1,N');
+  assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({resumeWithoutOverwriting:true,currentExample:true,previousAfterReload:true,unfinishedSourcePreserved:true,sourceLevelRemembered:true,ownRulesTransfer:true,pageErrors:errors},null,2));
+} finally {await browser.close();}

@@ -11,6 +11,16 @@ interface ArchiveViewOptions {
 const PENDING = "turing-machine-simulator.archive-restore.v1";
 const kindNames = { project: "实验台项目", draft: "编辑草稿", campaign: "关卡进度与解法" };
 
+export function openArchivePage(entry: Pick<ArchiveEntry, "id" | "kind">, originLevelId?: string): void {
+  localStorage.setItem(PENDING, entry.id);
+  const target = new URL(entry.kind === "campaign" ? "./campaign.html" : "./", location.href);
+  if (originLevelId) {
+    target.searchParams.set("fromLevel", originLevelId);
+    target.searchParams.set("example", `campaign-${originLevelId}`);
+  }
+  location.assign(target.href);
+}
+
 export function attachLocalArchive(options: ArchiveViewOptions): void {
   const dialog = document.createElement("dialog");
   dialog.className = "local-archive-dialog";
@@ -74,8 +84,7 @@ export function attachLocalArchive(options: ArchiveViewOptions): void {
     await saveCurrent("恢复前备份");
     const target = entry.kind === "campaign" ? "campaign" : "project";
     if (target !== options.page) {
-      localStorage.setItem(PENDING, entry.id);
-      location.assign(target === "campaign" ? "./campaign.html" : "./");
+      openArchivePage(entry);
       return;
     }
     await options.restore(entry);

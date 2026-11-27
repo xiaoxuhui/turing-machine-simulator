@@ -92,7 +92,7 @@ function numericStates(project: ExampleProject): ExampleProject {
     if (!indent) owner = undefined;
     const named = text.match(/^([^,():\s]+)\s*:\s*([^,():\s]+)\s*->\s*([^,():\s]+)$/u);
     if (named) return `${rename(named[1])}: ${named[2]} -> ${rename(named[3])}`;
-    const exported = text.match(/^(ret|返回状态|导出状态)(?:\s+|:\s*)(.*)$/u);
+    const exported = text.match(/^(ret|pub|返回状态|导出状态)(?:\s+|:\s*)(.*)$/u);
     if (exported) return indent + exported[1] + " " + exported[2].split(",").map(value => rename(value, owner)).join(",");
     const { text: protectedText, restore } = protectSymbolAnnotations(text);
     const normalized = expandImplicitRead(protectedText);

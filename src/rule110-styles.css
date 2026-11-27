@@ -1,0 +1,22 @@
+:root { font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif; color: #26364b; background: #f2f5f8; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 340px; }
+header { display: flex; gap: 24px; justify-content: space-between; align-items: center; padding: 20px 30px; color: white; background: #142033; }
+header h1 { margin: 4px 0 0; font-size: 24px; } header small { color: #87d6bd; letter-spacing: .13em; font-size: 10px; }
+a { color: #168963; } header a { color: #a6e6d0; text-decoration: none; }
+main { max-width: 1280px; padding: 24px; margin: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.panel { min-width: 0; background: #fff; border: 1px solid #dbe4ec; border-radius: 14px; padding: 22px; box-shadow: 0 4px 18px #20364d08; }
+.intro { border-left: 4px solid #168963; } h2 { font-size: 19px; margin: 0 0 12px; }
+p, li { font-size: 14px; line-height: 1.75; } p { margin: 8px 0; }.hint { color: #718093; font-size: 12px; }
+.heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }.heading h2 { margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; } button { border: 1px solid #cbd6e2; background: white; color: #26364b; padding: 9px 13px; border-radius: 8px; font: inherit; font-size: 13px; cursor: pointer; } button.primary { color: white; background: #168963; border-color: #168963; } button:disabled { opacity: .5; cursor: default; } button:hover:enabled { border-color: #168963; }
+.fields { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }.fields .wide { grid-column: span 2; } label { display: block; font-size: 12px; font-weight: 700; color: #526075; }
+input, textarea { display: block; width: 100%; min-width: 0; margin-top: 6px; border: 1px solid #cbd6e2; border-radius: 8px; padding: 10px; background: white; color: #26364b; font: 13px/1.65 "Cascadia Code", Consolas, monospace; } textarea { resize: vertical; } input:focus, textarea:focus { outline: 2px solid #84d4b9; outline-offset: 1px; }
+select { display: block; width: 100%; min-width: 0; margin-top: 6px; padding: 10px; border: 1px solid #cbd6e2; border-radius: 8px; background: white; color: #26364b; font: inherit; }
+.golly-rule-label { width: 260px; max-width: 100%; }.golly-rule-label input { margin-top: 3px; padding: 5px 10px; }.rule-definition .actions { align-items: end; }.rule-truth { display: grid; grid-template-columns: repeat(8,minmax(0,1fr)); gap: 8px; }.rule-truth > div { display: grid; justify-items: center; gap: 5px; padding: 12px; border: 1px solid #dbe4ec; border-radius: 8px; background: #f8fafc; }.rule-truth code { font-size: 17px; }.rule-truth span { color: #8392a1; }.rule-truth strong { color: #126b4b; font: 700 19px Consolas,monospace; }
+.golly-export { margin-top: 18px; padding-top: 4px; border-top: 1px solid #dbe4ec; }.golly-export h3 { font-size: 16px; }.golly-fields { grid-template-columns: minmax(0,2fr) minmax(0,1.5fr) minmax(0,1fr) auto; align-items: end; }.golly-fields button { margin-top: 6px; min-height: 43px; }
+.error { color: #b74141; white-space: pre-wrap; }.words { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }.words small { display: block; color: #718093; margin-top: 4px; font-size: 11px; overflow-wrap: anywhere; }.words textarea { overflow-wrap: anywhere; font-size: 11px; background: #f8fafc; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px; }.stats div { border-radius: 7px; background: #edf9f4; color: #126b4b; padding: 7px 11px; font-size: 12px; }
+.preview-fields { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); }.canvas-scroll { overflow: auto; max-height: 640px; border: 1px solid #dbe4ec; border-radius: 8px; background: white; }.canvas-scroll canvas { display: block; image-rendering: pixelated; min-width: 100%; } #generation { color: #168963; font-size: 12px; } summary { font-weight: 700; cursor: pointer; } [hidden] { display: none !important; }
+@media(max-width: 680px) { header { flex-wrap: wrap; padding: 16px; gap: 12px; } header div { order: -1; flex-basis: 100%; } main { padding: 12px; }.panel { padding: 16px; }.fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }.words { grid-template-columns: minmax(0, 1fr); }.preview-fields label:first-child { grid-column: 1 / -1; }.actions button { padding: 8px 10px; } }
+@media(max-width: 680px) { .rule-truth { grid-template-columns: repeat(4,minmax(0,1fr)); }.golly-fields > :first-child { grid-column: 1 / -1; } }

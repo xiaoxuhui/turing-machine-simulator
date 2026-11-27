@@ -24,6 +24,95 @@ function execute(source: string, input = "111", initial = "", options: ParseOpti
 }
 
 describe("indented rule functions", () => {
+  it("lets a child call exit a call-only parent without ret or an extra tape step", () => {
+    const result = execute(`g(s,childDone):
+    s,□->childDone,1,R
+f(s,done):
+    g->done
+    g
+f
+after,□->HALT,2,N`, "");
+    expect(result.output).toBe("12");
+    expect(result.machine.stepCount).toBe(2);
+    expect(result.result?.reason).toBe("halt");
+  });
+  it("uses the parent's exit rather than an outer state with the same name", () => {
+    const result = execute(`g(s,childDone):
+    s,□->childDone,1,R
+f(s,done):
+    s,□->g
+    g->done
+    skipped,□->done,9,N
+done,□->HALT,8,N
+f
+after,□->HALT,2,N`, "");
+    expect(result.output).toBe("12");
+    expect(result.machine.stepCount).toBe(3);
+    expect(result.result?.reason).toBe("halt");
+  });
+  it.each(["HALT", "ACCEPT", "REJECT"])("stops directly at %s after the function completes", target => {
+    const result = execute(`g(s,done):
+    s,□->done,1,R
+g->${target}
+after,□->HALT,9,N`, "");
+    expect(result.output).toBe("1");
+    expect(result.machine.stepCount).toBe(1);
+    expect(result.machine.currentState).toBe(target);
+    expect(result.result?.reason).toBe(({ HALT: "halt", ACCEPT: "accept", REJECT: "reject" })[target]);
+  });
+  it.each([false, true])("explicit H stops globally even when it is the parent's exit (mixed=%s)", mixed => {
+    const result = execute(`g(s,done):
+    s,□->done,1,R
+f(s,H):
+${mixed ? "    s,□->g\n" : ""}    g->H
+f
+after,□->H,9,N`, "", "", { haltStates: ["H"] });
+    expect(result.output).toBe("1");
+    expect(result.machine.stepCount).toBe(mixed ? 2 : 1);
+    expect(result.machine.currentState).toBe("H");
+  });
+  it("resolves a bound child alias and continues at a local parent state", () => {
+    const result = execute(`g(s,childDone):
+    s,□->childDone,1,R
+f(s,done,action=g,fn):
+    s,□->action
+    action->next
+    skipped,□->done,9,N
+    next,□->done,2,R
+f
+after,□->HALT,3,N`, "");
+    expect(result.output).toBe("123");
+    expect(result.machine.stepCount).toBe(4);
+    expect(result.parsed.transitions.some(rule => rule.toState.endsWith(".next"))).toBe(true);
+  });
+  it("keeps different call continuations isolated and resolves the next repeated outer block", () => {
+    const result = execute(`g(s,done):
+    s,□->done,1,R
+g->next
+next,□->g,2,R
+g->next
+next,□->HALT,3,N`, "");
+    expect(result.output).toBe("1213");
+    expect(result.machine.stepCount).toBe(4);
+    expect(result.result?.reason).toBe("halt");
+  });
+  it("recognizes a continuation call before its later function definition", () => {
+    const result = execute(`g->HALT
+g(s,done):
+    s,□->done,1,N`, "");
+    expect(result.output).toBe("1");
+    expect(result.machine.stepCount).toBe(1);
+  });
+  it("preserves an intentional ret inside the child despite a normal continuation", () => {
+    const result = execute(`g(s,back):
+    s,□->back,1,R
+    ret back
+g->HALT
+skipped,□->HALT,9,N
+back,□->HALT,2,N`, "");
+    expect(result.output).toBe("12");
+    expect(result.machine.stepCount).toBe(2);
+  });
   it("executes the user's 0.2->succ without changing the read symbol or head", () => {
     const source = "succ(s,end):\n    s,->end,1,*\n0.2->succ\nafter,1->HALT,2,*";
     const result = execute(source, "Z", "0.2");

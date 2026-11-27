@@ -7,11 +7,15 @@ import { extraCampaignLevels } from "./campaign-extra";
 import { exampleCampaignLevels } from "./campaign-from-examples";
 import { compactRuleArrows } from "./rule-format";
 import { MAX_CAMPAIGN_DRAFT_LENGTH } from "./campaign-limits";
+import { orderCampaignLevels } from "./campaign-topics";
+import { campaignTerminalNames, shortCampaignProject, renameCampaignTerminalSource, renameCampaignTerminalText } from "./campaign-terminals";
+import { campaignKeyboardNames, keyboardCampaignProject, keyboardCampaignSource, keyboardCampaignText } from "./campaign-keyboard";
+import { builtinExamples } from "./example-catalog";
 
 export interface CampaignCase {
   input: string;
   expectedOutput: string;
-  mode?: "tape" | "status" | "nonblank-count" | "lambda" | "brainfuck" | "goldbach" | "universal";
+  mode?: "tape" | "status" | "nonblank-count" | "lambda" | "brainfuck" | "goldbach" | "universal" | "decimal-sequence-prefix";
   expectedReason?: StopReason | "step-limit";
   expectedSteps?: number;
   maxSteps?: number;
@@ -398,17 +402,75 @@ const additionsBefore: Record<string, string[]> = {
   "turn-back": ["binary-place-zero", "binary-place-one"],
   "binary-increment": ["binary-carry-local", "binary-carry-chain", "binary-borrow-local", "binary-borrow-chain", "binary-parity-bit", "binary-shift-right"],
 };
-export const coreCampaignLevels: CampaignLevel[] = campaignSections.flatMap(section => [
+const legacyCoreLevels: CampaignLevel[] = campaignSections.flatMap(section => [
   ...originalCampaignLevels.filter(level => level.section === section.id),
   ...advancedCampaignLevels.filter(level => level.section === section.id),
 ].flatMap(level => [...(additionsBefore[level.id] ?? []).map(id => extraCampaignLevels.find(item => item.id === id)!), level]).concat(
   extraCampaignLevels.filter(level => level.section === section.id && !Object.values(additionsBefore).flat().includes(level.id)),
 )).map((level, index) => ({ ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}`, starter: { ...level.starter, rules: compactRuleArrows(level.starter.rules) } }));
 
-export const campaignLevels: CampaignLevel[] = campaignSections.flatMap(section => [
-  ...coreCampaignLevels.filter(level => level.section === section.id),
-  ...exampleCampaignLevels.filter(level => level.section === section.id),
-]).map((level, index) => ({ ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}` }));
+const orderedCampaignLevels = orderCampaignLevels([
+  ...legacyCoreLevels, ...exampleCampaignLevels,
+]);
+const terminalNamesByLevel = new Map(orderedCampaignLevels.map(level => [level.id, campaignTerminalNames(level.starter)]));
+const keyboardNamesByLevel = new Map(orderedCampaignLevels.map(level => [level.id, campaignKeyboardNames(level.starter,
+  level.sourceExampleId && builtinExamples[level.sourceExampleId] ? builtinExamples[level.sourceExampleId].rules : level.starter.rules)]));
+export function normalizeCampaignTerminals(levelId: string, source: string): string {
+  const names = terminalNamesByLevel.get(levelId);
+  return names ? renameCampaignTerminalSource(source, names) : source;
+}
+/** Never merge distinct symbols or identifiers in an older user's draft. */
+export function campaignMigrationConflict(levelId: string, source: string): string | null {
+  const keyboard = keyboardNamesByLevel.get(levelId);
+  if (keyboard && keyboard.oldBlank !== keyboard.blank && source.includes(keyboard.oldBlank) && source.includes(keyboard.blank)) {
+    return `旧空白符 ${keyboard.oldBlank} 与草稿中的 ${keyboard.blank} 可能代表不同符号；原草稿已保留，请先导出备份并手动处理。`;
+  }
+  const tokens = new Set(source.match(/[\p{L}\p{N}_]+/gu) ?? []);
+  const stateTokens = new Set(source.replace(/,\s*[LRN]\s*(?=(?:#.*)?$)/gm, '').match(/[\p{L}\p{N}_]+/gu) ?? []);
+  for (const [from, to] of terminalNamesByLevel.get(levelId) ?? []) {
+    if (from !== to && stateTokens.has(from) && stateTokens.has(to)) return `旧状态 ${from} 与草稿中的 ${to} 可能不同；原草稿已保留，请先导出备份并手动处理。`;
+  }
+  for (const [from, to] of keyboard?.identifiers ?? []) {
+    if (from !== to && tokens.has(from) && tokens.has(to)) return `旧名称 ${from} 与草稿中的 ${to} 可能不同；原草稿已保留，请先导出备份并手动处理。`;
+  }
+  return null;
+}
+export function normalizeCampaignSource(levelId: string, source: string): string {
+  const normalized = normalizeCampaignTerminals(levelId, source);
+  const names = keyboardNamesByLevel.get(levelId);
+  return names ? keyboardCampaignSource(normalized, names) : normalized;
+}
+export const campaignLevels: CampaignLevel[] = orderedCampaignLevels.map((level, index) => {
+  const names = terminalNamesByLevel.get(level.id)!;
+  const keyboard = keyboardNamesByLevel.get(level.id)!;
+  const text = (value: string) => keyboardCampaignText(renameCampaignTerminalText(value, names), keyboard);
+  return {
+    ...level, title: `第 ${index + 1} 关 · ${level.title.replace(/^第 \d+ 关 · /, "")}`,
+    objective: text(level.objective), concept: text(level.concept),
+    starter: { ...keyboardCampaignProject(shortCampaignProject(level.starter), keyboard),
+      description: text(level.starter.description), rules: normalizeCampaignSource(level.id, level.starter.rules),
+    },
+    cases: level.cases.map(item => ({ ...item,
+      input: item.input.replaceAll(keyboard.oldBlank, keyboard.blank),
+      expectedOutput: item.expectedOutput.replaceAll(keyboard.oldBlank, keyboard.blank),
+    })),
+    lesson: { ...level.lesson, explanation: text(level.lesson.explanation), steps: level.lesson.steps.map(text),
+      syntax: [`空白符：${keyboard.blank}；H = 停止，T = 接受，F = 拒绝。`,
+        ...[...keyboard.identifiers].filter(([, short]) => short.startsWith("f")).map(([from, to]) => `函数 ${to}：原名“${from}”。`), ...level.lesson.syntax.map(text)],
+      workedExample: level.lesson.workedExample && { ...level.lesson.workedExample, stages: level.lesson.workedExample.stages.map(text) },
+      implementationGuide: level.lesson.implementationGuide && { ...level.lesson.implementationGuide,
+        tape: text(level.lesson.implementationGuide.tape), steps: level.lesson.implementationGuide.steps.map(text), checkpoints: level.lesson.implementationGuide.checkpoints.map(text),
+      },
+    },
+  };
+});
+const coreIds = new Set(legacyCoreLevels.map(level => level.id));
+export const coreCampaignLevels: CampaignLevel[] = campaignLevels.filter(level => coreIds.has(level.id));
+
+export function nextCampaignLevel(levelId: string): CampaignLevel | undefined {
+  const index = campaignLevels.findIndex(level => level.id === levelId);
+  return index < 0 ? undefined : campaignLevels[index + 1];
+}
 
 export function verifyLevel(level: CampaignLevel, definition: MachineDefinition): CampaignVerification {
   return verifyCampaignCases(level.cases, level.maxSteps, definition);
@@ -419,7 +481,8 @@ export function emptyCampaignProgress(): CampaignProgress {
 }
 
 export function normalizeCampaignDraft(levelId: string, source: string): string {
-  const compact = compactRuleArrows(source);
+  if (campaignMigrationConflict(levelId, source)) return source;
+  const compact = normalizeCampaignSource(levelId, compactRuleArrows(source));
   const previous = levelId === "function-ret" ? "next" : levelId === "function-conditional" ? "after" : null;
   if (!previous || /^done,/m.test(compact)) return compact;
   return compact.replace(/^([^\s,]+),([^,\r\n]+)->([^,\r\n]+),([^\r\n]+)$/gm, (line, from: string, read: string, to: string, tail: string) => {
@@ -435,7 +498,7 @@ export function normalizeCampaignProgress(value: unknown): CampaignProgress {
   const known = new Set(campaignLevels.map((level) => level.id));
   const completedLevelIds = [...new Set(candidate.completedLevelIds.filter((id): id is string => typeof id === "string" && known.has(id)))];
   const drafts = typeof candidate.drafts === "object" && candidate.drafts !== null
-    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= MAX_CAMPAIGN_DRAFT_LENGTH).map(([id, draft]) => [id, normalizeCampaignDraft(id, draft as string)]))
+    ? Object.fromEntries(Object.entries(candidate.drafts).filter(([id, draft]) => known.has(id) && typeof draft === "string" && draft.length <= MAX_CAMPAIGN_DRAFT_LENGTH))
     : {};
   return { version: 1, completedLevelIds, drafts };
 }

@@ -148,18 +148,12 @@ textarea { width: 100%; min-height: 0; resize: vertical; font-family: "Cascadia 
 .puzzle-message { min-height: 20px; margin-top: 9px; color: #536174; font-size: 13px; }
 .route-panel { padding: 20px; }
 .gijswijt-converter { padding: 20px; }
+.direct-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-top: 12px; }
+.direct-actions input { width: 100px; }
 .sequence-mode-bar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 14px; }
 .sequence-mode-bar h2 { margin: 0; font-size: 18px; }
 .sequence-mode-bar label { display: flex; align-items: center; gap: 8px; }
 .sequence-mode-bar select { width: auto; }
-.direct-actions { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; margin-top: 12px; }
-.direct-actions input { width: 100px; }
-.sequence-tape { display: flex; gap: 6px; overflow-x: auto; padding: 10px; margin-top: 10px; border: 1px solid #dfe5ed; border-radius: 10px; background: #f6f8fb; }
-.sequence-cell { flex: 0 0 42px; display: grid; place-items: center; padding: 5px; background: #e3f8ee; border-radius: 7px; color: #146947; }
-.sequence-cell small { font-size: 10px; }
-.sequence-cell strong { font-size: 17px; }
-.sequence-cell.unwritten { color: #8c98a7; background: #edf0f4; }
-#directOutput { min-height: 70px; font-family: Consolas, monospace; resize: vertical; }
 .lambda-output { min-height: 64px; }
 .lambda-aux-option { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
 .lambda-aux-option input { margin: 0; }

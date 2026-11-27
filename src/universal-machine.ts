@@ -3,11 +3,15 @@ import type { ExampleProject } from "./examples";
 import { protectSymbolAnnotations } from "./symbol-annotations";
 import { universalHalt, universalReject, universalRules, universalStart } from "./universal-tape";
 
-export const universalDefault = "q0,/->q1,\\,R/q1,□->HALT,1,N:/,q0,HALT,,";
+export const universalDefault = formatUniversalSource({
+  input: "/", initialState: "q0", acceptStates: "", rejectStates: "", haltStates: "HALT",
+  rules: "q0,/->q1,\\,R\nq1,□->HALT,1,N",
+}, "□");
 export const universalMaxBudget = 250;
 const metadataPrefix = "# universal ";
 const maxPacketLength = 1_200;
 let interpreter: string | undefined;
+const textInterpreters = new Map<string, string>();
 
 interface Alphabet {
   states: string[];
@@ -21,6 +25,63 @@ export interface UniversalMachineInput {
   haltStates: string;
   acceptStates: string;
   rejectStates: string;
+}
+
+/** A slash separates fields/rows; only slash and backslash need escaping. */
+export function parseUniversalSource(source: string): UniversalMachineInput & { blankSymbol: string } {
+  let marker = "\uE100";
+  while (source.includes(marker)) marker += "\uE100";
+  const escaped: string[] = [];
+  const protectedEscapes = source.replace(/\\([\\/])/g, (_, char: string) => `${marker}${escaped.push(char) - 1}${marker}`);
+  const { text, restore } = protectSymbolAnnotations(protectedEscapes);
+  const escapePattern = new RegExp(`${marker}(\\d+)${marker}`, "g");
+  const fields = text.split("/").map(field => restore(field).replace(escapePattern, (_, index: string) => escaped[Number(index)]));
+  if (fields.length < 7) throw new Error("格式：初始输入/空白符/初始状态/接受状态/拒绝状态/普通停机状态/规则第一行/规则第二行/…；留空的状态也要保留分隔斜杠。");
+  const [input, blankSymbol, initialState, acceptStates, rejectStates, haltStates, ...rules] = fields;
+  return { input, blankSymbol, initialState: initialState.trim(), acceptStates: acceptStates.trim(), rejectStates: rejectStates.trim(), haltStates: haltStates.trim(), rules: rules.join("\n") };
+}
+
+export function formatUniversalSource(settings: UniversalMachineInput, blankSymbol: string): string {
+  return [settings.input, blankSymbol, settings.initialState, settings.acceptStates, settings.rejectStates, settings.haltStates, ...settings.rules.split(/\r?\n/)]
+    .map(field => field.replace(/\\/g, "\\\\").replace(/\//g, "\\/")).join("/");
+}
+
+export function isUniversalTextProject(rules: string): boolean { return rules.includes("#(UT.I)"); }
+export function hasUniversalTerminalNameOutput(rules: string): boolean { return rules.includes("#(UT.terminal-name)"); }
+
+export function validateUniversalTextSource(source: string): void {
+  const settings = parseUniversalSource(source);
+  if ([...settings.blankSymbol].length !== 1 || !settings.initialState) throw new Error("请在初始输入中填写一个空白字符和初始状态。");
+  const parsed = parseTransitions(settings.rules);
+  if (parsed.errors.length) throw new Error(parsed.errors[0]);
+  if (parsed.transitions.some(rule => !rule.fromState || !rule.readSymbol || !rule.writeSymbol || rule.fromState.endsWith(".*"))) throw new Error("原文通用机请填写明确的状态、读取和写入；通配规则请先展开。");
+  for (const line of settings.rules.split(/\r?\n/)) {
+    if (!line.trim() || line.trimStart().startsWith("#")) continue;
+    const { text } = protectSymbolAnnotations(line);
+    if (!/^\s*[^,]+,[^,]+(?:->|→)[^,]+,[^,]+,[ \t]*[LRNlrn][ \t]*$/.test(text)) throw new Error("原文通用机每行写齐：当前状态,读取->下一状态,写入,L/R/N；函数请先展开。");
+  }
+}
+
+/** Compile a character alphabet only. Parsing, interning and execution happen on tape. */
+export function makeUniversalTextProject(source = "1/0/q0///HALT/q0,1->HALT,1,N", budget: number | null = null): ExampleProject {
+  if (budget !== null && (!Number.isSafeInteger(budget) || budget < 0 || budget > universalMaxBudget)) throw new Error("最多模拟步数须为 0 至 " + universalMaxBudget + " 的整数。");
+  validateUniversalTextSource(source);
+  const alphabet = [...new Set(source)].sort();
+  let blank = "∅";
+  for (let point = 0x2205; alphabet.includes(blank); point++) blank = String.fromCodePoint(point);
+  const signature = JSON.stringify(["terminal-name-v1", alphabet, blank, budget]);
+  let rules = textInterpreters.get(signature);
+  if (!rules) {
+    rules = universalRules({ alphabet, blank, budget });
+    if (textInterpreters.size >= 2) textInterpreters.delete(textInterpreters.keys().next().value!);
+    textInterpreters.set(signature, rules);
+  }
+  return {
+    category: "基础示例", name: "通用图灵机（原文输入）",
+    description: "在上方初始输入填写：初始输入/空白符/初始状态/接受状态/拒绝状态/普通停机状态/规则第一行/规则第二行/…。规则在纸带上解析，最后输出实际终态名称/当前结果，例如 结束/1。",
+    input: source, blankSymbol: blank, initialState: universalStart, haltStates: universalHalt, acceptStates: "", rejectStates: universalReject,
+    rules, maxSteps: null,
+  };
 }
 
 export function splitUniversalSource(source: string): { rules: string; input: string } {
@@ -79,16 +140,14 @@ export function makeUniversalProject(
   if (budget !== null && (!Number.isSafeInteger(budget) || budget < 0 || budget > universalMaxBudget)) {
     throw new Error("最多模拟步数须为 0 至 " + universalMaxBudget + " 的整数。");
   }
-  if ([...blank].length !== 1) throw new Error("被模拟机器的空白符必须是一个字符。");
   if ((typeof source === "string" ? source.length : JSON.stringify(source).length) > 32_000) throw new Error("规则表或输入过长，请先试一个较小的程序。");
   let settings: UniversalMachineInput;
   if (typeof source === "string") {
-    const { rules, input: configuration } = splitUniversalSource(source);
-    const fields = configuration.split(",");
-    if (fields.length < 5) throw new Error("冒号后请写：初始纸带,初始状态,停止状态,接受状态,拒绝状态。");
-    const [initialState, haltStates, acceptStates, rejectStates] = fields.splice(-4).map(field => field.trim());
-    settings = { rules, input: fields.join(","), initialState, haltStates, acceptStates, rejectStates };
+    const parsed = parseUniversalSource(source);
+    settings = parsed;
+    blank = parsed.blankSymbol;
   } else settings = source;
+  if ([...blank].length !== 1) throw new Error("被模拟机器的空白符必须是一个字符。");
   const { rules, input, initialState, haltStates: halt, acceptStates: accept, rejectStates: reject } = settings;
   const terminalList = (text: string) => text.split("|").map(name => name.trim()).filter(Boolean);
   const terminals = { haltStates: terminalList(halt), acceptStates: terminalList(accept), rejectStates: terminalList(reject) };
@@ -141,8 +200,25 @@ export function readUniversalAlphabet(rules: string): Alphabet | undefined {
   } catch { /* A custom machine may have edited the metadata. */ }
 }
 
-export function readUniversalResult(tape: Tape, alphabet: Alphabet) {
+export function readUniversalResult(tape: Tape, alphabet?: Alphabet, source?: string) {
   const packet = tape.entries().map(([, symbol]) => symbol).join("");
+  let stateName = "";
+  for (let i = 0; i < packet.length; i++) {
+    const char = packet[i];
+    if (char === "\\" && (packet[i + 1] === "/" || packet[i + 1] === "\\")) { stateName += packet[++i]; continue; }
+    if (char !== "/") { stateName += char; continue; }
+    let reason = ({ 停机: "H", 拒绝: "J", 接受: "A", 缺少规则: "M", 达到步数上限: "B" } as Record<string, string>)[stateName] ?? "";
+    if (source) {
+      try {
+        const config = parseUniversalSource(source);
+        for (const [kind, names] of [["A", config.acceptStates], ["J", config.rejectStates], ["H", config.haltStates]]) {
+          if (names.split("|").map(name => name.trim()).includes(stateName)) { reason = kind; break; }
+        }
+      } catch { /* The output remains readable if the editor has since changed. */ }
+    }
+    return { reason, state: stateName, output: packet.slice(i + 1), formatted: packet };
+  }
+  if (!alphabet) return undefined;
   const result = /^([AHJMB])(1*)\.(1*)\.([1.]*)\|(1*)\.\|([1.]*)$/.exec(packet);
   if (!result) return undefined;
   const [, reason, steps, stateCode, left, head, right] = result;

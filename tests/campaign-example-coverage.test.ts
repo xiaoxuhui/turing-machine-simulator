@@ -7,22 +7,24 @@ import { examplePrinciples } from "../src/example-principles";
 import { parseTransitions, type MachineDefinition } from "../src/core";
 import { solutionRules } from "../src/campaign-solutions";
 import { encodeCampaignBackup, parseCampaignBackup } from "../src/campaign-backup";
+import { busyBeaverExamples } from "../src/busy-beaver-examples";
 
 it("maps every original and campaign example to a real playable level without recursive duplication", () => {
-  expect(Object.keys(builtinExamples)).toHaveLength(44);
+  expect(Object.keys(builtinExamples)).toHaveLength(47);
   expect(coreCampaignLevels).toHaveLength(48);
-  expect(campaignLevels).toHaveLength(78);
-  expect(Object.keys(examples)).toHaveLength(122);
-  for (const [id, project] of Object.entries(examples)) {
+  expect(campaignLevels).toHaveLength(79);
+  expect(Object.keys(examples)).toHaveLength(126 + Object.keys(busyBeaverExamples).length);
+  for (const [id, project] of Object.entries(examples).filter(([, item]) => item.category !== "忙碌海狸")) {
     expect(campaignLevels.some(level => level.id === project.campaignLevelId), id).toBe(true);
     expect(examplePrinciples.find(principle => principle.id === id)?.levelId).toBe(project.campaignLevelId);
   }
   for (const id of Object.keys(builtinExamples)) expect(solutionRules[exampleLevelId(id)]).toBeDefined();
-  for (const id of ["gijswijt-tool", "universal-tool"]) expect(campaignLevels.some(level => level.id === examplePrinciples.find(item => item.id === id)?.levelId)).toBe(true);
+  for (const id of ["gijswijt", "fibonacciDecimal", "universal"]) expect(campaignLevels.some(level => level.id === examplePrinciples.find(item => item.id === id)?.levelId)).toBe(true);
 });
 
-it("removes retired busy-beaver content while keeping other progress and old backups usable", () => {
-  expect(Object.keys(examples).some(id => /beaver/i.test(id))).toBe(false);
+it("keeps busy beavers only at the end of laboratory examples and accepts retired course backups", () => {
+  expect(Object.keys(examples).slice(-Object.keys(busyBeaverExamples).length)).toEqual(Object.keys(busyBeaverExamples));
+  for (const project of Object.values(busyBeaverExamples)) expect(project.campaignLevelId).toBeUndefined();
   expect(campaignLevels.some(level => /beaver|海狸/i.test(level.id + level.title))).toBe(false);
   expect(examplePrinciples.some(item => /beaver|海狸/i.test(item.id + item.name))).toBe(false);
   const oldProgress = { version: 1, completedLevelIds: ["write-one", "example-beaver4"], drafts: { "write-one": "saved", "example-beaver4": "retired" } };

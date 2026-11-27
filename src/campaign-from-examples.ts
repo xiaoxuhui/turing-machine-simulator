@@ -3,8 +3,6 @@ import type { ExampleProject } from "./examples";
 import { builtinExamples } from "./example-catalog";
 import { builtinExplanations, type Explanation } from "./example-learning";
 import { existingExampleLevels, exampleLevelId } from "./example-level-links";
-import { compileGijswijtMachine } from "./gijswijt-tm";
-import { makeUniversalProject } from "./universal-machine";
 
 interface ExampleGoal { cases: CampaignCase[]; maxSteps?: number; objective: string; prerequisite: string }
 const output = (input: string, expectedOutput: string): CampaignCase => ({ input, expectedOutput });
@@ -15,6 +13,8 @@ const functionOutputs: Record<string, string> = {
   functionStarDefaults: "RL", functionTypedParameters: "13", functionOmittedFields: "2L", functionStarLiterals: "***", functionWildcards: "A*", functionNestedNames: "111",
 };
 const goals: Record<string, ExampleGoal> = {
+  gijswijt: { objective: "持续生成十进制吉斯维杰特数列，在观察步数内写出前九项，出现 3 后仍继续运行。", cases: [{ input: "", expectedOutput: "1|1|2|1|1|2|2|2|3", mode: "decimal-sequence-prefix", expectedReason: "step-limit" }], maxSteps: 10000, prerequisite: "copy-with-divider" },
+  fibonacciDecimal: { objective: "从 0、1 开始，逐位相加前两项，持续写出十进制斐波那契数列，至少生成到 144。", cases: [{ input: "", expectedOutput: "0|1|1|2|3|5|8|13|21|34|55|89|144", mode: "decimal-sequence-prefix", expectedReason: "step-limit" }], maxSteps: 5000, prerequisite: "binary-addition" },
   palindrome: { objective: "逐对检查两端，回文接受，不是回文则拒绝。", cases: [status("", true), status("1001", true), status("101", true), status("1010", false)], prerequisite: "binary-complement" },
   unaryCompare: { objective: "比较两段一进制数字，只留下 <、= 或 >。", cases: [output("111?11", ">"), output("1?111", "<"), output("11?11", "="), output("?", "=")], prerequisite: "unary-addition" },
   unaryEven: { objective: "保留输入，用接受或拒绝状态报告一进制数能否整除 2。", cases: [status("", true), status("1", false), status("111", false), status("1111", true)], prerequisite: "unary-parity" },
@@ -36,14 +36,11 @@ for (const [id, operator] of [["unarySuperRoot", "~~"], ["unarySuperLog", "@@"],
 };
 
 const tools: Record<string, { project: ExampleProject; learning: Explanation; goal: ExampleGoal }> = {
-  gijswijt: { project: compileGijswijtMachine(2),
-    learning: { summary: "枚举非空后缀块，比较它在末尾连续重复的次数，取最大次数作为下一项。阈值为 2，生成到第一次超过 2 的项也要写出后才停机。", steps: ["从 1 开始，枚举可能的后缀块长度。", "从后向前逐块比较，保存最大的重复次数。", "追加该次数，重复计算；本关第一次写出 3 后停机。"], walkthrough: ["1 → 11 → 112 → 1121", "最后得到 1,1,2,1,1,2,2,2,3"] },
-    goal: { objective: "空纸带按重复后缀定义生成数列，阈值 2，写出第一项 3 后停机。", cases: [output("", "112112223")], maxSteps: 10000, prerequisite: "copy-with-divider" } },
   universal: (() => {
-    const compiled = makeUniversalProject({ rules: "q0,□->HALT,1,N", input: "", initialState: "q0", haltStates: "HALT", acceptStates: "", rejectStates: "" }, "□", null);
-    return { project: compiled.project,
-      learning: { summary: "把被模拟机器的规则与配置作为纸带数据，解释器查找当前状态和符号对应的规则，修改被模拟纸带并报告停止、接受或拒绝。", steps: ["读编码的规则表、纸带、当前状态和头位置。", "找到匹配规则，执行一次目标机器的读写和移动。", "到目标终止状态后输出目标纸带与结论。"], walkthrough: ["目标规则 q0,□->HALT,1,N：空纸带写 1", "目标进入 HALT → 报告输出 1、结论停止"] },
-      goal: { objective: "解释编码规则，模拟目标机器在空纸带写 1 并停止，输出纸带与结论。", cases: [{ input: compiled.project.input, expectedOutput: "1（停止）", mode: "universal", alphabet: compiled.alphabet }], maxSteps: 500000, prerequisite: "function-ret" } };
+    const project = builtinExamples.universal;
+    return { project,
+      learning: { summary: "在实验台上方的初始输入填写完整原文。通用机用转移规则逐字解析六项配置和规则表，在纸带上建立名称字典，再模拟目标机器，最后逐字写出 实际终态名称/当前结果。", steps: ["按 / 分隔读取初始纸带、空白符、初态、接受态、拒绝态和普通停机态；留空项仍保留分隔符。", "在纸带上为状态名和符号建立编号；按规则表匹配当前状态和读取值，执行目标读写和移动。", "遇到终态后从名称字典读出实际状态名，例如 HALT 或 结束，随后写 / 和结果，并清理工作区。"], walkthrough: ["1/0/q0///HALT/q0,1->HALT,1,N", "读写规则执行一次后，最终纸带为 HALT/1；若把终态改成 结束，则输出 结束/1"], notes: ["初始输入原文不在后台预先换成编码。生成器只确定有限字符字母表，解析、名称编号、模拟和最终输出都由转移规则执行。", "使用完整的五项普通转移规则；函数和通配规则先展开。字面 / 写 \\/，字面反斜杠写 \\\\。"] },
+      goal: { objective: "直接读取原文配置和规则表，模拟目标机器，并在纸带上输出实际终态名称 HALT/1。", cases: [{ input: project.input, expectedOutput: "HALT/1", mode: "universal" }], maxSteps: 500000, prerequisite: "function-ret" } };
   })(),
 };
 const sources: Record<string, ExampleProject> = { ...builtinExamples, ...Object.fromEntries(Object.entries(tools).map(([id, tool]) => [id, tool.project])) };

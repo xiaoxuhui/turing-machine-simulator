@@ -2,9 +2,12 @@ import type { RuleGuide } from "./rule-guide";
 import { builtinExamples } from "./example-catalog";
 import { campaignExamples } from "./campaign-examples";
 import { exampleLevelId } from "./example-level-links";
+import { busyBeaverExamples } from "./busy-beaver-examples";
 
 export interface ExampleProject {
-  category?: "基础示例" | "函数教程" | "一进制运算" | "二进制运算" | "猜想验证" | "关卡示例";
+  category?: "基础示例" | "函数教程" | "一进制运算" | "二进制运算" | "猜想验证" | "数列生成" | "关卡示例" | "忙碌海狸";
+  sourceUrl?: string;
+  unavailableReason?: string;
   campaignLevelId?: string;
   ruleGuide?: RuleGuide;
   /** State or state-prefix to numeric section path, used by the numeric example variant. */
@@ -29,4 +32,5 @@ export interface ExampleProject {
 export const examples: Record<string, ExampleProject> = {
   ...Object.fromEntries(Object.entries(builtinExamples).map(([id, project]) => [id, { ...project, campaignLevelId: exampleLevelId(id) }])),
   ...campaignExamples,
+  ...busyBeaverExamples,
 };

@@ -1,0 +1,3912 @@
+{
+  "checkedAt": "2026-11-24",
+  "records": [
+    {
+      "states": 1,
+      "symbols": 2,
+      "table": "1RZ1RZ",
+      "kind": "proven",
+      "runtime": "1",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-1x2-75b3bcc003d2"
+    },
+    {
+      "states": 2,
+      "symbols": 2,
+      "table": "1RB1LB_1LA1RZ",
+      "kind": "proven",
+      "runtime": "6",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 1,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x2-ea03a17c066d"
+    },
+    {
+      "states": 2,
+      "symbols": 2,
+      "table": "1RB1RZ_1LB1LA",
+      "kind": "proven",
+      "runtime": "6",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 1,
+          "row": 2
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x2-e4ad200ec106"
+    },
+    {
+      "states": 2,
+      "symbols": 2,
+      "table": "1RB0LB_1LA1RZ",
+      "kind": "proven",
+      "runtime": "6",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 1,
+          "row": 3
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x2-7de8231142ae"
+    },
+    {
+      "states": 2,
+      "symbols": 2,
+      "table": "1RB1RZ_0LB1LA",
+      "kind": "proven",
+      "runtime": "6",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x2-4cea5e8cd4ab"
+    },
+    {
+      "states": 2,
+      "symbols": 2,
+      "table": "0RB1RZ_1LA1RB",
+      "kind": "proven",
+      "runtime": "6",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x2-d320a0531426"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1RZ_1LB0RC_1LC1LA",
+      "kind": "proven",
+      "runtime": "21",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x2-e0282c80a765"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1RZ_0LC0RC_1LC1LA",
+      "kind": "historical",
+      "runtime": "20",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 2
+        }
+      ],
+      "id": "beaver-3x2-909c4e77f0c4"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1LA_0RC1RZ_1LC0LA",
+      "kind": "historical",
+      "runtime": "20",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 3
+        }
+      ],
+      "id": "beaver-3x2-6aa3c884a6b7"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "0RB1RZ_0LC1RA_1RB1LC",
+      "kind": "historical",
+      "runtime": "17",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 4
+        }
+      ],
+      "id": "beaver-3x2-077350ba3d18"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "0RB1LC_1LA1RB_1LB1RZ",
+      "kind": "historical",
+      "runtime": "16",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 5
+        }
+      ],
+      "id": "beaver-3x2-01746097b691"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1RZ_0RC1RB_1LC1LA",
+      "kind": "historical",
+      "runtime": "14",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 6
+        }
+      ],
+      "id": "beaver-3x2-4dc81dc50f7f"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1RC_1LC1RZ_1RA0LB",
+      "kind": "historical",
+      "runtime": "13",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 7
+        }
+      ],
+      "id": "beaver-3x2-a830fdae421e"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1LC_1LA1RB_1LB1RZ",
+      "kind": "historical",
+      "runtime": "13",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 8
+        }
+      ],
+      "id": "beaver-3x2-66cbe2c6a1ba"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "0RB1LC_1RC1RB_1LA1RZ",
+      "kind": "historical",
+      "runtime": "13",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 9
+        }
+      ],
+      "id": "beaver-3x2-4a8d66c06041"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1RZ_1RA1LB",
+      "kind": "historical",
+      "runtime": "12",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 10
+        }
+      ],
+      "id": "beaver-3x2-fc8e1c563f13"
+    },
+    {
+      "states": 3,
+      "symbols": 2,
+      "table": "1RB1LC_1RC1RZ_1LA0LB",
+      "kind": "historical",
+      "runtime": "11",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 2,
+          "row": 11
+        }
+      ],
+      "id": "beaver-3x2-1cd4910cf1a3"
+    },
+    {
+      "states": 4,
+      "symbols": 2,
+      "table": "1RB1LB_1LA0LC_1RZ1LD_1RD0RA",
+      "kind": "proven",
+      "runtime": "107",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 3,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x2-0291609603af"
+    },
+    {
+      "states": 4,
+      "symbols": 2,
+      "table": "1RB1LD_1LC0RB_1RA1LA_1RZ0LC",
+      "kind": "historical",
+      "runtime": "97",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 3,
+          "row": 2
+        }
+      ],
+      "id": "beaver-4x2-c8f74effe443"
+    },
+    {
+      "states": 4,
+      "symbols": 2,
+      "table": "1RB0RC_1LA1RA_1RZ1RD_1LD0LB",
+      "kind": "historical",
+      "runtime": "96",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 3,
+          "row": 3
+        }
+      ],
+      "id": "beaver-4x2-afa7ce3b7444"
+    },
+    {
+      "states": 4,
+      "symbols": 2,
+      "table": "1RB1LB_0LC0RD_1RZ1LA_1RA0LA",
+      "kind": "historical",
+      "runtime": "96",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 3,
+          "row": 4
+        }
+      ],
+      "id": "beaver-4x2-c19604f6d2b5"
+    },
+    {
+      "states": 4,
+      "symbols": 2,
+      "table": "1RB1LD_0LC0RC_1LC1LA_1RZ0LA",
+      "kind": "historical",
+      "runtime": "84",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 3,
+          "row": 5
+        }
+      ],
+      "id": "beaver-4x2-2a71438ea68c"
+    },
+    {
+      "states": 4,
+      "symbols": 2,
+      "table": "1RB1RZ_1LC0RD_1LA1LB_0LC1RD",
+      "kind": "historical",
+      "runtime": "83",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 3,
+          "row": 6
+        }
+      ],
+      "id": "beaver-4x2-62c1002e7295"
+    },
+    {
+      "states": 4,
+      "symbols": 2,
+      "table": "1RB0RD_1LC0LA_1RA1LB_1RZ0RC",
+      "kind": "historical",
+      "runtime": "78",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 3,
+          "row": 7
+        }
+      ],
+      "id": "beaver-4x2-6109a19d01ad"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1LC_1RC1RB_1RD0LE_1LA1LD_1RZ0LA",
+      "kind": "proven",
+      "runtime": "47176870",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-5x2-071f52cbe426"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB0LD_1LC1RD_1LA1LC_1RZ1RE_1RA0RB",
+      "kind": "historical",
+      "runtime": "23,554,764",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 2
+        }
+      ],
+      "id": "beaver-5x2-c7f23081ff8c"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_1RA0LD_0RB1LE_1RZ0RB",
+      "kind": "historical",
+      "runtime": "11,821,234",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 3
+        }
+      ],
+      "id": "beaver-5x2-e58974979a6e"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_1RA0LD_1RC1LE_1RZ0RB",
+      "kind": "historical",
+      "runtime": "11,821,220",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 4
+        }
+      ],
+      "id": "beaver-5x2-7966a41ff8ec"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_0LC0RC_1RZ1RD_1LE0LA_1LA1LE",
+      "kind": "historical",
+      "runtime": "11,821,190",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 5
+        }
+      ],
+      "id": "beaver-5x2-0bcc289a1865"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC0RD_1LA1LC_1RZ1RE_1LC0LA",
+      "kind": "historical",
+      "runtime": "11,815,076",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 6
+        }
+      ],
+      "id": "beaver-5x2-83a16109321f"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_1RA0LD_0RB1LE_1RZ1LC",
+      "kind": "historical",
+      "runtime": "11,811,040",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 7
+        }
+      ],
+      "id": "beaver-5x2-95ff2337b82f"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_0RC1LD_1RA0LE_1RZ1LC",
+      "kind": "historical",
+      "runtime": "11,811,040",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 8
+        }
+      ],
+      "id": "beaver-5x2-f2856787302f"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_1RA0LD_1RC1LE_1RZ1LC",
+      "kind": "historical",
+      "runtime": "11,811,026",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 9
+        }
+      ],
+      "id": "beaver-5x2-3de09434eb44"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_0LC0RC_1RZ1RD_1LE1RB_1LA1LE",
+      "kind": "historical",
+      "runtime": "11,811,010",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 10
+        }
+      ],
+      "id": "beaver-5x2-5188ac698d2b"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_1RA1LD_0RE0LE_1RZ1LC",
+      "kind": "historical",
+      "runtime": "11,804,940",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 11
+        }
+      ],
+      "id": "beaver-5x2-819ae7427e53"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_1RA1LD_1RA0LE_1RZ1LC",
+      "kind": "historical",
+      "runtime": "11,804,926",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 12
+        }
+      ],
+      "id": "beaver-5x2-2300a017eff2"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC0RD_1LA1LC_1RZ1RE_0LE1RB",
+      "kind": "historical",
+      "runtime": "11,804,910",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 13
+        }
+      ],
+      "id": "beaver-5x2-33cd18b3acbc"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC0RD_1LA1LC_1RZ1RE_1LC1RB",
+      "kind": "historical",
+      "runtime": "11,804,896",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 14
+        }
+      ],
+      "id": "beaver-5x2-1e097b455729"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1LB_1RA1LD_1RA1LE_1RZ0LC",
+      "kind": "historical",
+      "runtime": "11,798,826",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 15
+        }
+      ],
+      "id": "beaver-5x2-fcf45109d53b"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1RD_1LA1LC_1RZ0RE_1LC1RB",
+      "kind": "historical",
+      "runtime": "11,798,796",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 16
+        }
+      ],
+      "id": "beaver-5x2-fc9a2bd858d9"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1RD_1LA1LC_1RZ1RE_0LE0RB",
+      "kind": "historical",
+      "runtime": "11,792,724",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 17
+        }
+      ],
+      "id": "beaver-5x2-657d9ddbbd0f"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1RD_1LA1LC_1RZ1RE_1LA0RB",
+      "kind": "historical",
+      "runtime": "11,792,696",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 18
+        }
+      ],
+      "id": "beaver-5x2-c1c01d9dba3c"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RA_1LC1RD_1LA1LC_1RZ1RE_1RA0RB",
+      "kind": "historical",
+      "runtime": "11,792,682",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 19
+        }
+      ],
+      "id": "beaver-5x2-5c34a0c6f17e"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "0RB0LC_1RC1RD_1LA0LE_1RE1RZ_1LA1RA",
+      "kind": "historical",
+      "runtime": "2,358,065",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 20
+        }
+      ],
+      "id": "beaver-5x2-3cabd34135c3"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1RZ_1LC1RC_0RE0LD_1LC0LB_1RD1RA",
+      "kind": "historical",
+      "runtime": "2,358,064",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 21
+        }
+      ],
+      "id": "beaver-5x2-d8aff77c6166"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB1LC_0LA0LD_1LA1RZ_1LB1RE_0RD0RB",
+      "kind": "historical",
+      "runtime": "2,133,492",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 22
+        }
+      ],
+      "id": "beaver-5x2-6f4c177cee3b"
+    },
+    {
+      "states": 5,
+      "symbols": 2,
+      "table": "1RB0LC_1RC1RD_1LA0RB_0RE1RZ_1LC1RA",
+      "kind": "historical",
+      "runtime": "134,467",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 4,
+          "row": 23
+        }
+      ],
+      "id": "beaver-5x2-6333e0aae33b"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB1RA_1RC1RZ_1LD0RF_1RA0LE_0LD1RC_1RA0RE",
+      "kind": "current",
+      "runtime": ">10↑↑10↑↑10↑↑8",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x2-f00031239e60"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB1LC_1LA1RE_0RD0LA_1RZ1LB_1LD0RF_0RD1RB",
+      "kind": "historical",
+      "runtime": "> 10 ↑↑ 11,010,000",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 3
+        }
+      ],
+      "id": "beaver-6x2-679afddb5541"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LF0RB_0RC0RE",
+      "kind": "historical",
+      "runtime": "> 10 ↑↑ 15",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 5
+        }
+      ],
+      "id": "beaver-6x2-10fb409c0b80"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LA_1LC1LF_0LD0LC_0LE0LB_1RE0RA_1RZ1LD",
+      "kind": "historical",
+      "runtime": "> 10^10^10^10^20823",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 6
+        }
+      ],
+      "id": "beaver-6x2-863ce0e3ec66"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB1RZ_0LC0LD_1LD1LC_1RE1LB_1RF1RD_0LD0RA",
+      "kind": "historical",
+      "runtime": "> 8.2 × 10^1,292,913,985",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 7
+        }
+      ],
+      "id": "beaver-6x2-7aca8b9d33b5"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB1RZ_1RC1RA_1RD0RB_1LE0RC_0LF0LD_0LB1LA",
+      "kind": "historical",
+      "runtime": "> 5.4 × 10^197282",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 8
+        }
+      ],
+      "id": "beaver-6x2-6f29dc0f190d"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB1RC_1LC0RF_1RA0LD_0LC0LE_1LD0RA_1RE1RZ",
+      "kind": "historical",
+      "runtime": "> 9.6 × 10^78913",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 9
+        }
+      ],
+      "id": "beaver-6x2-6fb0824cea66"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB1LE_1RC1RF_1LD0RB_1RE0LC_1LA0RD_1RZ1RC",
+      "kind": "historical",
+      "runtime": "> 7.4 × 10^36534",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 10
+        }
+      ],
+      "id": "beaver-6x2-2e87db667f05"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LD_1RC0RF_1LC1LA_0LE1RZ_1LA0RB_0RC0RE",
+      "kind": "historical",
+      "runtime": "> 3.8 × 10^21132",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 11
+        }
+      ],
+      "id": "beaver-6x2-d1f571c62acb"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LE_1LC0RA_1LD0RC_1LE0LF_1LA1LC_1LE1RZ",
+      "kind": "historical",
+      "runtime": "> 2.5 × 10^2879",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 12
+        }
+      ],
+      "id": "beaver-6x2-3c31d4634cad"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0RF_0LB1LC_1LD0RC_1LE1RZ_1LF0LD_1RA0LE",
+      "kind": "historical",
+      "runtime": "> 8.9 × 10^1762",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 13
+        }
+      ],
+      "id": "beaver-6x2-49cf30bb2cb8"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LF_0RC0RD_1LD1RE_0LE0LD_0RA1RC_1LA1RZ",
+      "kind": "historical",
+      "runtime": "> 3.0 × 10^1730",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 14
+        }
+      ],
+      "id": "beaver-6x2-10c64e031918"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LB_0RC1LB_1RD0LA_1LE1LF_1LA0LD_1RZ1LE",
+      "kind": "historical",
+      "runtime": "> 6.1 × 10^925",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 15
+        }
+      ],
+      "id": "beaver-6x2-a207ed10a0a0"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LC_1LA1RC_1RA0LD_1LE1LC_1RF1RZ_1RA1RE",
+      "kind": "historical",
+      "runtime": "> 6.1 × 10^119",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 16
+        }
+      ],
+      "id": "beaver-6x2-d2b323d23474"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LB_1LC0RE_1RE0LD_1LA1LA_0RA0RF_1RE1RZ",
+      "kind": "historical",
+      "runtime": "> 5.5 × 10^99",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 17
+        }
+      ],
+      "id": "beaver-6x2-259d29ceedbf"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LC_1LA1LD_1RD0RC_0LB0RE_1RC1LF_1LE1RZ",
+      "kind": "historical",
+      "runtime": "> 3.2 × 10^98",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 18
+        }
+      ],
+      "id": "beaver-6x2-3254d3d8d59b"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LC_1LA1RD_1RA0LE_1RA0RB_1LF1LC_1RD1RZ",
+      "kind": "historical",
+      "runtime": "> 2.0 × 10^95",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 19
+        }
+      ],
+      "id": "beaver-6x2-d1d3d8f7bad0"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0LC_1LA1RD_0LB0LE_1RA0RB_1LF1LC_1RD1RZ",
+      "kind": "historical",
+      "runtime": "> 2.0 × 10^95",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 20
+        }
+      ],
+      "id": "beaver-6x2-e4b419624e54"
+    },
+    {
+      "states": 6,
+      "symbols": 2,
+      "table": "1RB0RC_0LA0RD_1RD1RZ_1LE0LD_1RF1LB_1RA1RE",
+      "kind": "historical",
+      "runtime": "> 5.3 × 10^42",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 5,
+          "row": 21
+        }
+      ],
+      "id": "beaver-6x2-b8090b43b906"
+    },
+    {
+      "states": 7,
+      "symbols": 2,
+      "table": "1RB0RG_1RC1RB_0RD1RZ_0LE0LD_0LF1LE_1RA1LF_1LC0RB",
+      "kind": "unverified",
+      "runtime": ">3↑203>fω(20)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x2-a37a0e777c7b"
+    },
+    {
+      "states": 7,
+      "symbols": 2,
+      "table": "1RB0RA_1LC1LF_1RD0LB_1RA1LE_1RZ0LC_1RG1LD_0RG0RF",
+      "kind": "historical",
+      "runtime": "> 2 ↑11 (2 ↑11 3)",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 7,
+          "row": 1
+        }
+      ],
+      "id": "beaver-7x2-29bb33e5e948"
+    },
+    {
+      "states": 8,
+      "symbols": 2,
+      "table": "1RB0RA_1LC1LF_1RD0LB_1RA1LE_1LH0LC_1RG1LD_0RG0RF_1RG1RZ",
+      "kind": "unverified",
+      "runtime": ">fω3(12)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-8x2-85ebb458fe88"
+    },
+    {
+      "states": 9,
+      "symbols": 2,
+      "table": "1RB0RA_1LC1LF_1RD0LB_1RA1LE_0LH0LC_1RG1LD_0RG0RF_0LI1RZ_1RI1RC",
+      "kind": "unverified",
+      "runtime": ">fω7(12)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-9x2-046ca46142a5"
+    },
+    {
+      "states": 10,
+      "symbols": 2,
+      "table": "1RB0RA_1LC1LF_1RD0LB_1RA1LE_1LI0LC_0RG1LD_1RH1LG_1LC0RG_0LJ0LI_1RZ0LC",
+      "kind": "unverified",
+      "runtime": ">fω+1(2↑363)>g64",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-10x2-25f379771a4f"
+    },
+    {
+      "states": 11,
+      "symbols": 2,
+      "table": "1RB1RH_1RC0LD_1LD1RJ_1LE1LB_1LF1LE_1RG0LE_1RA1RG_0LI1LF_0RC1LI_1RK0RG_1RZ0LB",
+      "kind": "unverified",
+      "runtime": ">fω+22(f5(34))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-11x2-11297d45654f"
+    },
+    {
+      "states": 12,
+      "symbols": 2,
+      "table": "1RB1RA_1RI1RC_0LD1LG_0RE1LD_1RZ1RF_0LL0RA_1RA0LH_1LG1LH_1RK0LJ_1LH1LI_0LL0RD_0LH1LK",
+      "kind": "unverified",
+      "runtime": ">fω+28(f3(6))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-12x2-e60c20e7a335"
+    },
+    {
+      "states": 13,
+      "symbols": 2,
+      "table": "1RB1RA_1RI1RC_0LD1LG_0RE1LD_0LM1RF_1RG0RA_1RA0LH_1LG1LH_1RE0LJ_1LH1LI_1RZ0LL_0LM1LK_0LG1LL",
+      "kind": "unverified",
+      "runtime": ">fω+3(19)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-13x2-5f244688023b"
+    },
+    {
+      "states": 14,
+      "symbols": 2,
+      "table": "1RB0LK_1RC1RB_1RD1RM_1RE0LH_1LF1RI_0LA1LG_1RL0LF_1LK1LD_1RJ0RB_1RG0LK_1LA1LK_1RZ0LF_0LN1LA_0RE1LN",
+      "kind": "unverified",
+      "runtime": ">fω+34(fω(4))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-14x2-663793580345"
+    },
+    {
+      "states": 15,
+      "symbols": 2,
+      "table": "1LH0LG_0LI1RC_0LD1LA_0RE1LD_0RH1RL_1RB1RF_1LA1LG_1RF0RO_1LJ1LI_0LK1LI_1RL1RE_0RL0RF_0LA0RN_0LA1RO_1RZ1RM",
+      "kind": "unverified",
+      "runtime": ">fω×2(13)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-15x2-a6e8769051f5"
+    },
+    {
+      "states": 16,
+      "symbols": 2,
+      "table": "1LG1LA_0LI1RC_0LD1LG_0RE1LD_0RM1RL_1RB1RF_1LH0LA_1RF0RN_1LJ1LI_0LK1LI_1RL1RE_0RL0RF_0LG0RN_0RP1RO_1RZ1RM_1LB1LI",
+      "kind": "unverified",
+      "runtime": ">fω×2(fω(14))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-16x2-8f7fbef2fc33"
+    },
+    {
+      "states": 17,
+      "symbols": 2,
+      "table": "1LG1RH_0LI1RC_0LD1LQ_0RE1LD_0RP1RL_1RB1RF_1LQ1LG_1RF0RO_1LJ1LI_0LK1LI_1RL1RE_0RL0RF_0LQ0RN_0LQ1RO_1RZ1RM_0LQ0RA_1LH0LG",
+      "kind": "unverified",
+      "runtime": ">fω×2(fω4(13))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-17x2-5e4117231f3b"
+    },
+    {
+      "states": 18,
+      "symbols": 2,
+      "table": "1LB0LM_1RC1RN_1RD1RC_0LE1RQ_1LF1LE_0LG1LE_1RH1RI_0RH0RC_0RJ1RH_1LQ0RK_1RZ1RL_1LH1RJ_1LA1LM_0LA0RO_0LC1RP_0LA1RN_0LR1LA_0RI1LR",
+      "kind": "unverified",
+      "runtime": ">fω×22(f5(2))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-18x2-0618ed7270a4"
+    },
+    {
+      "states": 19,
+      "symbols": 2,
+      "table": "1LB0LM_1RC1RN_1RD1RC_0LE1RQ_1LF1LE_0LG1LE_1RH1RI_0RH0RC_0RJ1RH_1RZ0RK_1LS1RL_1RK1RJ_1LA1LM_0LA0RO_0LC1RP_0LA1RN_0LR1LA_0RI1LR_0LS0LA",
+      "kind": "unverified",
+      "runtime": ">fω×25(f5(2))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-19x2-a05c20952fb4"
+    },
+    {
+      "states": 20,
+      "symbols": 2,
+      "table": "1LB0LM_1RC1RN_1RD1RC_0LE1RQ_1LF1LE_0LG1LE_1RH1RI_0RH0RC_0RJ1RH_0RT0RK_1LS1RL_1RK1RJ_1LA1LM_0LA0RO_0LC1RP_0LA1RN_0LR1LA_0RI1LR_0LS0LA_1RZ0RK",
+      "kind": "unverified",
+      "runtime": ">fω×28(f5(2))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-20x2-77aee6b61496"
+    },
+    {
+      "states": 21,
+      "symbols": 2,
+      "table": "0LI0LF_0RJ1RG_0RD1LC_1RH1RE_1LO0RH_1LA1LF_0LC1LA_1RB1RH_1RD0LF_1LP0RK_0LM1LL_0LL1LM_1LE1LN_0RQ0LM_0RP1LO_1LR0RH_1LF1RQ_1RZ0LS_0RC0LT_1LH1LU_0RS1LR",
+      "kind": "unverified",
+      "runtime": ">fω23(fω2(f33(21)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-21x2-f2d0ca8268e6"
+    },
+    {
+      "states": 22,
+      "symbols": 2,
+      "table": "0LI0LF_0RJ1RG_0RD1LC_1RH1RE_1LO0RH_1LA1LF_0LC1LA_1RB1RH_1RD0LF_1LP0RK_0LM1LL_0LL1LM_1LE1LN_0RQ0LM_0RP1LO_1LR0RH_1LF1RQ_1RZ0LS_0LV0LT_1LH1LU_0RS1LR_1RF0LQ",
+      "kind": "unverified",
+      "runtime": ">fω23(fω4(f9(21)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-22x2-793b7342802d"
+    },
+    {
+      "states": 23,
+      "symbols": 2,
+      "table": "0LI0LF_0RJ1RG_0RD1LC_1RH1RE_1LO0RH_1LA1LF_0LC1LA_1RB1RH_1RD0LF_1LP0RK_0LM1LL_0LL1LM_1LE1LN_0RQ0LM_0RP1LO_1LR0RH_1LF1RQ_1RZ0LS_1LH0LT_1LH1LU_1RV1LR_0LW0LW_0LS1LV",
+      "kind": "unverified",
+      "runtime": ">fω23(fω6(4↑↑341))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-23x2-fbb6109ce0af"
+    },
+    {
+      "states": 24,
+      "symbols": 2,
+      "table": "0LI0LF_0RJ1RG_0RD1LC_1RH1RE_1LO0RH_1LA1LF_0LC1LA_1RB1RH_1RD0LF_1LP0RK_0LM1LL_0LL1LM_1LE1LN_0RQ0LM_0RP1LO_1LR0RH_1LF1RQ_1RZ0LS_1LH0LT_1LH1LU_1RW1LR_0LX0LW_0LP0LX_0LS1LV",
+      "kind": "unverified",
+      "runtime": ">fω23(fω12(4↑↑341))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-24x2-78af371366a1"
+    },
+    {
+      "states": 25,
+      "symbols": 2,
+      "table": "0LI0LF_0RJ1RG_0RD1LC_1RH1RE_1LO0RH_1LA1LF_0LC1LA_1RB1RH_1RD0LF_1LP0RK_0LM1LL_0LL1LM_1LE1LN_0RQ0LM_0RP1LO_1LR0RH_1LF1RQ_1RZ0LS_0LV0LT_1LH1LU_0RW1LV_0LH0LW_1LX0LX_1LH1LY_1LW1LR",
+      "kind": "unverified",
+      "runtime": ">fω25(fω4(f35(21)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-25x2-2bfcff597388"
+    },
+    {
+      "states": 27,
+      "symbols": 2,
+      "rules": "Q9,0->Q23,1,L\nQ9,1->Q26,1,L\nQ7,0->Q37,0,R\nQ7,1->Q8,1,R\nQ8,0->Q9,0,R\nQ8,1->Q8,1,R\nQ10,0->BOTTOM,0,R\nQ10,1->Q11,1,L\nQ11,0->Q11,0,L\nQ11,1->Q12,0,L\nQ12,0->Q13,1,R\nQ12,1->Q15,1,R\nQ13,0->Q13,0,R\nQ13,1->Q10,0,R\nQ15,0->Q15,0,R\nQ15,1->Q10,1,R\nQ16,0->REST1,0,L\nQ16,1->SEEK,0,L\nQ22,0->Q23,0,R\nQ22,1->Q22,1,R\nQ23,0->Q24,1,L\nQ23,1->Q23,1,R\nQ24,0->F0,1,R\nQ24,1->Q25,0,R\nQ25,0->Q26,1,L\nQ25,1->Q25,1,R\nQ26,0->Q12,1,R\nQ26,1->Q27,0,L\nQ27,0->Q28,0,L\nQ27,1->Q27,1,L\nQ28,0->Q29,0,L\nQ28,1->Q28,1,L\nQ29,0->Q22,1,R\nQ29,1->Q29,1,L\nQ37,0->Q37,0,R\nQ37,1->Q7,0,R\nBOTTOM,0->HALT,0,R\nBOTTOM,1->BACKEND,1,L\nBACKEND,0->Q16,0,L\nBACKEND,1->Q28,0,L\nREST1,0->REST1,1,L\nREST1,1->REST2,1,L\nREST2,0->REST2,1,L\nREST2,1->BACKEND,1,L\nF0,0->HALT,0,R\nF0,1->F1,1,R\nF1,0->BACKEND,1,R\nF1,1->F2,0,R\nF2,0->Q9,1,L\nF2,1->Q13,1,L\nSEEK,0->SEEK,0,L\nSEEK,1->KILL,0,L\nKILL,0->Q37,0,R\nKILL,1->KILL,0,L",
+      "initialState": "Q9",
+      "kind": "conditional",
+      "runtime": ">2q(5)",
+      "sources": [
+        {
+          "url": "https://github.com/hzyhhzy/laver-table-atlas/blob/main/busy-beaver/q5-27/machine.tm"
+        }
+      ],
+      "id": "beaver-27x2-15255537e233"
+    },
+    {
+      "states": 29,
+      "symbols": 2,
+      "table": "0LP1LD_---0LC_1LR0LB_1RF1LE_0LD1LD_0R[1RG_1RN0RK_0RI1RJ_1LZ1RH_0RH1RH_0RL1RM_1L\\1RK_0RK1RK_0RO1RO_0L\\1RN_1R[1LA_0RV0RV_0LT1LS_0R[1LT_0RY1LU_0LR1L\\_0RW1RX_0RN1RV_0LC1RV_0LA1LZ_0LY1LY_0RQ0RH_1L]1LR_1LH1LZ",
+      "kind": "unverified",
+      "runtime": ">fωω(3)",
+      "sources": [
+        {
+          "url": "https://github.com/jeff87654/busy-beaver/blob/main/BB29/hydra29.md"
+        }
+      ],
+      "id": "beaver-29x2-e83234b4eed2"
+    },
+    {
+      "states": 30,
+      "symbols": 2,
+      "table": "1RC1L[_---0LY_0RD1RW_0RE0RN_0RF0RF_0RG1RX_0RH1RF_0RI1RI_0LJ1RH_1LK1LU_0LL1LP_1LM0RD_0RD1LT_0RO1RV_1LP1RN_0LQ1LQ_0LR1LP_0LS1LA_1RD1LR_0RQ1LZ_0LT1LM_0RN1RN_1RH0R\\_0LY1RF_1LU0LB_0LU1LJ_0LA1LA_0R^1R]_0R\\1R\\_1LJ1R\\",
+      "kind": "unverified",
+      "runtime": ">fωω(9)",
+      "sources": [
+        {
+          "url": "https://github.com/jeff87654/busy-beaver/blob/main/BB30/hydra30.md"
+        }
+      ],
+      "id": "beaver-30x2-e63eb0bed191"
+    },
+    {
+      "states": 31,
+      "symbols": 2,
+      "table": "0RK1RK_---0LC_1LQ0LB_1RF1LE_0LD1LD_0R\\1RG_1RM0RK_0RI1RJ_1L[1RH_0RH1RH_0RL1RA_1L]1RK_0RN1RN_0L]1RM_1R\\1L^_0RW0RW_0LU1LR_0R\\1LS_0L]1LT_0LQ1LU_0RZ1LV_0LS1L]_0RX1RY_0RM1RW_0LC1RW_0L^1L[_0LZ1LZ_0RP0RH_1L_1LQ_0LO1LD_1LH1L[",
+      "kind": "unverified",
+      "runtime": ">fω↑↑4(3)",
+      "sources": [
+        {
+          "url": "https://github.com/jeff87654/busy-beaver/blob/main/BB31/hydra31.md"
+        }
+      ],
+      "id": "beaver-31x2-bde061be6dfb"
+    },
+    {
+      "states": 32,
+      "symbols": 2,
+      "table": "1RC1LT_---0LZ_0RD1RU_0RE0RW_0RF0RF_0RG1RS_0RH1RF_0RI1RI_0LJ1RH_1LK1L[_0RL1LO_1RM1RL_0RN1RV_1LJ1RM_0LP1LP_0LQ1LO_0LR1LA_1RD1LQ_0LZ1RF_0LA1LA_1RH0RM_0RM1RM_0RX1RY_1LO1RW_0RW1RW_1L[0LB_0L_1L\\_0RD1L]_0LJ1L^_0L[1L__0RP1L`_0L]1LJ",
+      "kind": "unverified",
+      "runtime": ">fω↑↑4(8)",
+      "sources": [
+        {
+          "url": "https://github.com/jeff87654/busy-beaver/blob/main/BB32/hydra32.md"
+        }
+      ],
+      "id": "beaver-32x2-46e8b27d48be"
+    },
+    {
+      "states": 33,
+      "symbols": 2,
+      "table": "1LH1L^_---0LC_1LR0LB_1RF1LE_0LD1LD_0R_1RG_1RN0RK_0RI1RJ_1L^1RH_0RH1RH_0RL1RM_1L`1RK_0RK1RK_0RO1RO_0L`1RN_1R_1La_0RZ0RZ_0LX1LS_0R_1LT_0L`1LU_0LR1LV_0LS1LW_0LT1LX_0R]1LY_0LV1L`_0R[1R\\_0RN1RZ_0LC1RZ_0La1L^_0L]1L]_0RQ0RH_1LA1LR_0LP1LD",
+      "kind": "unverified",
+      "runtime": ">fω↑↑6(3)",
+      "sources": [
+        {
+          "url": "https://github.com/jeff87654/busy-beaver/blob/main/BB33/hydra33.md"
+        }
+      ],
+      "id": "beaver-33x2-f0dbba904072"
+    },
+    {
+      "states": 34,
+      "symbols": 2,
+      "table": "1LC1LT_---0LS_1RD1LH_0RE0RC_0RF1RF_0RG1RE_1LA1RF_0LI1LI_0LJ1LH_0LK1LY_1RL1LJ_0RM0RV_0RN0RN_0RO1RR_0RP1RN_0RQ1RQ_0LA1RP_0LS1RN_1LT0LB_0La1LU_0RL1L\\_0RX1RW_0RV1RV_1LH1RV_1RZ1L^_0RL1R[_1RP0RF_0LA1L]_0LT1L__0LY1LY_0LU1L`_0L\\1La_0RI1Lb_0L_1LA",
+      "kind": "unverified",
+      "runtime": ">fω↑↑6(4)",
+      "sources": [
+        {
+          "url": "https://github.com/jeff87654/busy-beaver/blob/main/BB34_2/hydra34.md"
+        }
+      ],
+      "id": "beaver-34x2-6fe4675139e7"
+    },
+    {
+      "states": 150,
+      "symbols": 2,
+      "rules": "A,0->B,1,R\nA,1->D,0,L\nB,0->C,1,R\nB,1->F,0,R\nC,0->C,1,L\nC,1->A,1,L\nD,0->E,0,L\nD,1->d0,1,N\nE,0->F,1,L\nE,1->B,0,R\nF,0->C,0,R\nF,1->E,0,R\nd0,1->d1,0,L\nd0,0->e1,0,R\nd1,1->d1,1,L\nd1,0->d2,1,R\nd2,1->d2,1,R\nd2,0->d0,1,R\ne1,0->e1,0,R\ne1,1->e2,0,R\ne2,1->e3,1,L\ne3,0->e3,0,L\ne3,1->e4,1,L\ne4,1->e4,1,L\ne4,0->d0,0,R\ne2,0->e5,1,L\ne5,0->e5,1,L\ne5,1->e6,0,L\ne6,1->e6,1,L\ne6,0->S13,0,L\nS1,1->S2,1,R\nS2,1->S2,1,R\nS2,0->S3,0,R\nS3,1->S2,1,R\nS3,0->S4,1,L\nS4,0->S4,0,L\nS4,1->S5,0,L\nS5,1->S6,1,R\nS6,0->S6,0,R\nS6,1->S7,1,R\nS7,1->S7,1,R\nS7,0->S8,1,L\nS8,1->S8,1,L\nS8,0->S4,0,L\nS5,0->S9,0,R\nS9,0->S9,1,R\nS9,1->S10,1,L\nS10,1->S11,0,L\nS11,1->S11,1,L\nS11,0->S12,0,L\nS12,1->S11,1,L\nS12,0->S13,0,R\nS13,0->S13,0,R\nS13,1->S1,0,R\nS1,0->T1,1,R\nT1,1->T1,1,R\nT1,0->T2,0,L\nT2,1->T3,0,L\nT3,1->T3,1,L\nT3,0->T2,0,L\nT2,0->A1,1,N\nA1,1->A1,1,R\nA1,0->A2,1,L\nA2,1->A3,0,L\nA3,0->A2,0,R\nA2,0->A4,1,R\nA4,1->A4,1,R\nA4,0->A5,0,L\nA5,1->A6,1,L\nA6,1->A3,0,L\nA3,1->B1,0,L\nB1,1->B1,1,L\nB1,0->B2,0,L\nB2,1->B2,1,L\nB2,0->B3,1,R\nB3,1->B3,1,R\nB3,0->B4,0,R\nB4,1->B4,1,R\nB4,0->A3,0,L\nA6,0->C1,0,R\nC1,1->C2,1,R\nC2,0->C2,1,R\nC2,1->C3,1,L\nC3,1->C4,0,R\nC4,1->C4,1,R\nC4,0->C5,0,R\nC5,0->C5,0,R\nC5,1->C6,1,R\nC6,1->C6,1,R\nC6,0->D2,0,R\nD1,0->D2,1,R\nD2,1->D2,1,R\nD2,0->D3,0,R\nD3,0->HALT,0,R\nD3,1->D4,0,L\nD4,1->D4,1,L\nD4,0->D5,0,L\nD5,1->D4,1,L\nD5,0->D6,0,R\nD6,0->D6,0,R\nD6,1->D7,0,R\nD7,1->D8,1,R\nD8,1->D8,1,R\nD8,0->D1,0,R\nD1,1->D8,1,R\nD7,0->E1,1,L\nE1,0->E1,0,L\nE1,1->E2,1,L\nE2,1->E2,1,L\nE2,0->E3,0,L\nE3,1->E3,1,L\nE3,0->E4,0,L\nE4,1->E4,1,L\nE4,0->E5,0,L\nE5,1->E5,1,L\nE5,0->E6,1,R\nE6,1->E6,1,R\nE6,0->E7,0,R\nE7,1->E6,1,R\nE7,0->E8,0,R\nE8,1->E8,1,R\nE8,0->E9,1,R\nE9,0->E10,0,L\nE10,1->E10,1,L\nE10,0->E1,0,L\nE9,1->E11,0,L\nE11,1->E11,1,L\nE11,0->F1,1,R\nF1,1->F1,1,R\nF1,0->F2,0,R\nF2,1->F1,1,R\nF2,0->F3,0,L\nF3,0->F3,0,L\nF3,1->F4,0,L\nF4,1->F5,1,L\nF5,1->F5,1,L\nF5,0->F6,0,L\nF6,1->F5,1,L\nF6,0->F7,0,L\nF7,1->F7,1,L\nF7,0->F8,1,R\nF8,1->F8,1,R\nF8,0->F1,0,R\nF4,0->G1,0,R\nG1,0->G1,1,R\nG1,1->G2,1,L\nG2,1->G3,1,L\nG3,1->G4,0,L\nG4,1->G4,1,L\nG4,0->G5,0,R\nG5,1->G6,0,L\nG6,1->G6,1,L\nG6,0->G7,0,L\nG7,1->G6,1,L\nG7,0->H1,1,R\nH1,0->H1,0,R\nH1,1->H2,1,R\nH2,1->H2,1,R\nH2,0->H3,0,R\nH3,0->H3,0,R\nH3,1->H4,0,R\nH4,1->H5,1,L\nH5,0->H5,0,L\nH5,1->H6,1,L\nH6,1->H6,1,L\nH6,0->H7,0,L\nH7,0->H7,0,L\nH7,1->H8,0,L\nH8,1->H1,1,R\nH4,0->I1,0,L\nI1,0->I1,1,L\nI1,1->I2,1,R\nI2,1->I3,0,L\nI3,1->I3,1,L\nI3,0->I4,0,L\nI4,0->I4,1,L\nI4,1->I5,1,R\nI5,1->I5,1,R\nI5,0->I6,0,R\nI6,1->I6,1,R\nI6,0->I7,0,R\nI7,1->I7,1,R\nI7,0->I8,0,R\nI8,1->I8,1,R\nI8,0->I9,0,R\nI9,1->I9,1,R\nI9,0->I10,0,R\nI10,1->I10,1,R\nI10,0->I11,0,L\nI11,1->I12,0,L\nI12,1->I13,1,L\nI13,1->I13,1,L\nI13,0->I14,0,L\nI14,1->I13,1,L\nI14,0->I11,0,R\nI11,0->I5,1,R\nI12,0->J1,0,R\nJ1,0->J1,1,R\nJ1,1->J2,1,L\nJ2,1->J3,0,L\nH8,0->K1,0,R\nK1,0->K1,1,R\nK1,1->K2,1,L\nK2,1->K3,0,R\nK3,1->K3,1,R\nK3,0->K4,0,R\nK4,0->K4,1,R\nK4,1->K5,1,R\nK5,1->K5,1,R\nK5,0->K6,0,R\nK6,1->K6,1,R\nK6,0->K7,0,R\nK7,1->K7,1,R\nK7,0->K8,0,R\nK8,1->K8,1,R\nK8,0->J3,0,L\nJ3,1->J4,0,L\nJ4,1->J4,1,L\nJ4,0->J5,1,L\nJ5,1->J6,0,L\nJ6,1->J6,1,L\nJ6,0->J7,1,L\nJ7,1->J8,0,L\nJ8,1->J8,1,L\nJ8,0->J9,1,L\nJ9,1->J10,0,L\nJ10,1->J10,1,L\nJ10,0->J11,1,L\nJ11,1->J12,0,L\nJ12,1->J12,1,L\nJ12,0->J13,1,L\nJ13,1->J14,0,R\nJ14,1->J14,1,R\nJ14,0->J15,0,R\nJ15,1->J14,1,R\nJ15,0->K8,0,L\nJ13,0->L1,0,R\nL1,1->L1,1,R\nL1,0->L2,1,L\nL2,1->L3,0,L\nL3,1->L4,1,R\nL4,1->L4,1,R\nL4,0->L5,0,R\nL5,1->L4,1,R\nL5,0->L6,1,R\nL6,0->L6,1,R\nL6,1->L7,1,L\nL7,1->F1,0,R\nL3,0->M1,0,R\nM1,0->M2,0,R\nM2,1->M2,0,R\nM2,0->M1,0,R\nM1,1->M4,0,R\nM4,1->M4,1,R\nM4,0->M5,1,R\nM5,1->M6,0,R\nM6,1->M6,1,R\nM6,0->M7,1,R\nM7,1->M8,0,R\nM8,1->M7,1,L\nM7,0->M9,0,L\nM9,1->M9,1,L\nM9,0->M10,0,L\nM10,1->M10,1,L\nM10,0->M1,0,R\nM8,0->N1,0,R\nN1,0->N1,1,R\nN1,1->N2,1,L\nN2,1->N3,0,R\nN3,1->N3,1,R\nN3,0->N4,0,R\nN4,1->N3,1,R\nN4,0->N5,1,L\nN5,1->N5,1,L\nN5,0->N6,0,L\nN6,1->N5,1,L\nN6,0->N7,0,L\nN7,1->N7,1,L\nN7,0->N8,0,L\nN8,1->N8,1,L\nN8,0->A1,0,R",
+      "initialState": "A",
+      "kind": "unverified",
+      "runtime": ">flim(BMS)(10↑↑15)",
+      "sources": [
+        {
+          "url": "https://morphett.info/turing/turing.html?c95a199c8e8a3dd56452f8b7e28fabbf"
+        }
+      ],
+      "id": "beaver-150x2-6dec6b81bb21"
+    },
+    {
+      "states": 2,
+      "symbols": 3,
+      "table": "1RB2LB1RZ_2LA2RB1LB",
+      "kind": "proven",
+      "runtime": "38",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 9,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x3-dda4ddc379c3"
+    },
+    {
+      "states": 2,
+      "symbols": 3,
+      "table": "1RB0LB1RZ_2LA1RB1RA",
+      "kind": "historical",
+      "runtime": "29",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 9,
+          "row": 2
+        }
+      ],
+      "id": "beaver-2x3-d95ca49d42c3"
+    },
+    {
+      "states": 2,
+      "symbols": 3,
+      "table": "0RB2LB1RZ_1LA1RB1RA",
+      "kind": "historical",
+      "runtime": "27",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 9,
+          "row": 3
+        }
+      ],
+      "id": "beaver-2x3-607a3d72abe8"
+    },
+    {
+      "states": 2,
+      "symbols": 3,
+      "table": "1RB2LA1RZ_1LB1LA0RA",
+      "kind": "historical",
+      "runtime": "26",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 9,
+          "row": 4
+        }
+      ],
+      "id": "beaver-2x3-1ab9ce7581b9"
+    },
+    {
+      "states": 2,
+      "symbols": 3,
+      "table": "1RB1LA1LB_0LA2RA1RZ",
+      "kind": "historical",
+      "runtime": "26",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 9,
+          "row": 5
+        }
+      ],
+      "id": "beaver-2x3-45b134051ce1"
+    },
+    {
+      "states": 2,
+      "symbols": 3,
+      "table": "1RB1LB1RZ_2LA2RB1LB",
+      "kind": "historical",
+      "runtime": "24",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 9,
+          "row": 6
+        }
+      ],
+      "id": "beaver-2x3-483b9af09aeb"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "0RB2LA1RA_1LA2RB1RC_1RZ1LB1LC",
+      "kind": "current",
+      "runtime": ">1017",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x3-6e7db69d2264"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2LA1LC_0LA2RB1LB_1RZ1RA1RC",
+      "kind": "historical",
+      "runtime": "119,112,334,170,342,540",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 2
+        }
+      ],
+      "id": "beaver-3x3-3e01f1a2a1e4"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2RC1LA_2LA1RB1RZ_2RB2RA1LC",
+      "kind": "historical",
+      "runtime": "4,345,166,620,336,565",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 3
+        }
+      ],
+      "id": "beaver-3x3-cbcd3d6778f0"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB1RZ2LC_1LC2RB1LB_1LA2RC2LA",
+      "kind": "historical",
+      "runtime": "4,144,465,135,614",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 4
+        }
+      ],
+      "id": "beaver-3x3-325843d0542f"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2LA1RA_1RC2RB0RC_1LA1RZ1LA",
+      "kind": "historical",
+      "runtime": "987,522,842,126",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 5
+        }
+      ],
+      "id": "beaver-3x3-9dc1b3da4db8"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB1RZ2RB_1LC0LB1RA_1RA2LC1RC",
+      "kind": "historical",
+      "runtime": "4,939,345,068",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 6
+        }
+      ],
+      "id": "beaver-3x3-ac18247d7db7"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2LA1RA_1LB1LA2RC_1RZ1LC2RB",
+      "kind": "historical",
+      "runtime": "1,808,669,066",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 7
+        }
+      ],
+      "id": "beaver-3x3-b6867414c96f"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2LA1RA_1LC1LA2RC_1RZ1LA2RB",
+      "kind": "historical",
+      "runtime": "1,808,669,046",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 8
+        }
+      ],
+      "id": "beaver-3x3-156c89599bc1"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB1LB2LA_1LA1RC1RZ_0LA2RC1LC",
+      "kind": "historical",
+      "runtime": "544,884,219",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 9
+        }
+      ],
+      "id": "beaver-3x3-edd6ef8c93d9"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB0LA1LA_2RC1RC1RZ_2LC1RA0RC",
+      "kind": "historical",
+      "runtime": "408,114,977",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 10
+        }
+      ],
+      "id": "beaver-3x3-7dc45130259f"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2RA2RC_1LC1RZ1LA_1RA2LB1LC",
+      "kind": "historical",
+      "runtime": "310,341,163",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 11
+        }
+      ],
+      "id": "beaver-3x3-d29df87e6b64"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB1RZ2LC_1LC2RB1LB_1LA0RB2LA",
+      "kind": "historical",
+      "runtime": "92,649,163",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 12
+        }
+      ],
+      "id": "beaver-3x3-a4836b7b5e3f"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2LA1LA_2LA1RC2RB_1RZ0LC0RA",
+      "kind": "historical",
+      "runtime": "51,525,774",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 13
+        }
+      ],
+      "id": "beaver-3x3-9a9bc22e3ea4"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2RA1LA_2LA2LB2RC_1RZ2RB1RB",
+      "kind": "historical",
+      "runtime": "47,287,015",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 14
+        }
+      ],
+      "id": "beaver-3x3-4157daf803ed"
+    },
+    {
+      "states": 3,
+      "symbols": 3,
+      "table": "1RB2RA1LA_2LC0RC1RB_1RZ2LA1RB",
+      "kind": "historical",
+      "runtime": "29,403,894",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 10,
+          "row": 15
+        }
+      ],
+      "id": "beaver-3x3-df0eb9249ab2"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB1RD1LC_2LB1RB1LC_1RZ1LA1LD_0RB2RA2RD",
+      "kind": "current",
+      "runtime": ">10↑44",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x3-82fbf22136e8"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "0RB1RZ0RB_1RC1LB2LB_1LB2RD1LC_1RA2RC0LD",
+      "kind": "historical",
+      "runtime": "> 2^^^(2^(2^32))",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 2
+        }
+      ],
+      "id": "beaver-4x3-9a45cbf4b869"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB1RZ2RC_2LC2RD0LC_1RA2RB0LB_1LB0LD2RC",
+      "kind": "historical",
+      "runtime": "> 1.0 × 10^14072",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 3
+        }
+      ],
+      "id": "beaver-4x3-49e7a39c0b47"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB0LB1RD_2RC2LA0LA_1LB0LA0LA_1RA0RA1RZ",
+      "kind": "historical",
+      "runtime": "> 5.3 × 10^12068",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 4
+        }
+      ],
+      "id": "beaver-4x3-878219e76d2f"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB1LD1RZ_1RC2LB2LD_1LC2RA0RD_1RC1LA0LA",
+      "kind": "historical",
+      "runtime": "> 7.9 × 10^9863",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 5
+        }
+      ],
+      "id": "beaver-4x3-5aedcd9d664a"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB2LD1RZ_2LC2RC2RB_1LD0RC1RC_2LA2LD0LB",
+      "kind": "historical",
+      "runtime": "> 3.9 × 10^9122",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 6
+        }
+      ],
+      "id": "beaver-4x3-7b722e7a314b"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB1LA1RD_2LC0RA1LB_2LA0LB0RD_2RC1RZ0LC",
+      "kind": "historical",
+      "runtime": "> 3.9 × 10^7721",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 7
+        }
+      ],
+      "id": "beaver-4x3-1cd3fabab3af"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB1RA0LB_2LC1LB1RC_0RD2LC1RA_2RA1RZ1RC",
+      "kind": "historical",
+      "runtime": "> 3.7 × 10^1973",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 8
+        }
+      ],
+      "id": "beaver-4x3-d12be45aa145"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB2RC1RA_2LC1LA1LB_2LD0LB0RC_0RD1RZ0RA",
+      "kind": "historical",
+      "runtime": "> 7.7 × 10^1618",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 9
+        }
+      ],
+      "id": "beaver-4x3-dd70d0518912"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "1RB0LC1RZ_2LC1RD0LB_2LA1LC1LA_1RB2LD2RA",
+      "kind": "historical",
+      "runtime": "> 1.5 × 10^1426",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 10
+        }
+      ],
+      "id": "beaver-4x3-cc9c8ecf4021"
+    },
+    {
+      "states": 4,
+      "symbols": 3,
+      "table": "0RB1LD1RZ_1LA1RC1RD_1RB2LC1RC_1LA1LC2RB",
+      "kind": "historical",
+      "runtime": "250,096,776",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 12,
+          "row": 11
+        }
+      ],
+      "id": "beaver-4x3-d20fe6041093"
+    },
+    {
+      "states": 5,
+      "symbols": 3,
+      "table": "1RB1LC1RA_1LA2LC1RB_1LB1LD2LC_2RE2LD1RA_1RZ2RE1RB",
+      "kind": "unverified",
+      "runtime": ">fω(2↑77)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-5x3-d14ecf8a8278"
+    },
+    {
+      "states": 6,
+      "symbols": 3,
+      "table": "1LE2LD2LC_2RB1RB1RA_2RB1LC0LC_1RB1LD2LD_2RD2LE2LF_1RZ---1LE",
+      "kind": "unverified",
+      "runtime": ">fω2(10↑↑↑6)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x3-7343d12fbb37"
+    },
+    {
+      "states": 7,
+      "symbols": 3,
+      "table": "2RD1LE2RA_0LE2LE2RB_1RF1RC2RB_0RC0LG1LD_1RC2LE1LG_1RG0LA1RZ_1LD2RA2LG",
+      "kind": "unverified",
+      "runtime": ">fω+1(11)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x3-5793b4d84eb5"
+    },
+    {
+      "states": 8,
+      "symbols": 3,
+      "table": "2LH1LE2RA_0LE2LE2RB_1RF1RC2RB_0RC0LD0RH_1RC2LE1LG_0LA0LD1RZ_1LD2RA2LG_2RD1LF1LG",
+      "kind": "unverified",
+      "runtime": ">fω+13(fω3(14))>g64",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-8x3-dbe8c617a388"
+    },
+    {
+      "states": 9,
+      "symbols": 3,
+      "table": "2LI1LE2RA_0LE2LE2RB_1RF1RC2RB_0RC0LD2RA_1RC2LE1LG_0LA0LD1RH_1LD2RA2LG_1RZ2LA2LI_1RD1LI2LH",
+      "kind": "unverified",
+      "runtime": ">fω+23(fω+12(fω(14)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-9x3-627f25e8540f"
+    },
+    {
+      "states": 10,
+      "symbols": 3,
+      "table": "1LD2RG2LA_2LE2LH2RB_1LI1RC2RB_0RC1RD0LG_0LF1LE1LE_1RG1RZ---_0RC1LH2RG_1RC2LH1LA_1RJ2LI2LB_0RF1LA0RI",
+      "kind": "unverified",
+      "runtime": ">fω×2(11)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-10x3-4c32abcf6f7a"
+    },
+    {
+      "states": 11,
+      "symbols": 3,
+      "table": "1LD2RG2LA_2LE2LH2RB_1LG1RC2RB_0RC1RD0LG_0LF1LE1LE_1RG1RI1LK_0RC1LH2RG_1RC2LH1LA_0RI2RI2RJ_1LK0LH1RZ_1RA2LB0RA",
+      "kind": "unverified",
+      "runtime": ">fω×2+1(21)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-11x3-fca1e8fd0e57"
+    },
+    {
+      "states": 13,
+      "symbols": 3,
+      "table": "1LD2RG2LA_2LE2LH2RB_2LM1RC2RB_0RC1RD0LG_0LF1LE1LE_1RG1RI1LM_0RC1LH2RG_1RC2LH1LA_0RI2RI2RJ_1RZ0LH1LK_0LK2LL1LK_0LF1RB2RA_2RL0LL0LL",
+      "kind": "unverified",
+      "runtime": ">fω×2+13(3)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-13x3-abd286f54a18"
+    },
+    {
+      "states": 14,
+      "symbols": 3,
+      "table": "1LD2RG2LA_2LE2LH2RB_2LM1RC2RB_0RC1RD0LG_0LF1LE1LE_1RG1RI1LL_0RC1LH2RG_1RC2LH1LA_0RI2RI2RJ_1RZ0LH1LK_0LK2LL1LK_0LF1LG0LM_0LN2RM2LM_2RF1RB0RB",
+      "kind": "unverified",
+      "runtime": ">fω×2+2(14)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-14x3-d033b0027c5d"
+    },
+    {
+      "states": 17,
+      "symbols": 3,
+      "table": "0LL1LE2RA_0LG2LE2RB_1RC1RC2RB_0LF2RA2LD_1RC2LE1LD_0RC0RC2RN_0RJ2RH1LG_1LI2RH1LP_1LQ1LI0LG_0RK2RJ2RJ_1RZ1RK2RB_2LN1LI0LH_0RM2LE2RM_2RN2RN2LL_0RM0LP0LP_2LO2LO2LP_1RQ0LQ2RL",
+      "kind": "unverified",
+      "runtime": ">fω2(5)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-17x3-a37c805a8f32"
+    },
+    {
+      "states": 18,
+      "symbols": 3,
+      "table": "2LL1LE2RA_0LG2LE2RB_1RC1RC2RB_0LF2RA2LD_1RC2LE1LD_0RC0RC2RN_0RJ2RH1LG_1LI2RH1LP_1LQ1LI0LG_0RK2RJ2RJ_1RZ1RK2RB_2LR0RA0LH_0RM2LE2RM_2RN2RN2LL_0RM0LP0LP_2LO2LO2LP_1RQ0LQ2RR_1LH---0LN",
+      "kind": "unverified",
+      "runtime": ">fω2(8)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-18x3-060f32910999"
+    },
+    {
+      "states": 20,
+      "symbols": 3,
+      "table": "1LT1LE2RA_0LG2LE2RB_1RC1RC2RB_0LF2RA2LD_1RC2LE1LD_0RC0RC2RN_0RJ2RH1LG_1LI2RH1LP_0LQ1LI0LG_0RK2RJ2RJ_0RL1RK2RB_1RZ0LI0LH_0RM2LE2RM_2RN2RN2LL_0RM0LP0LP_2LO2LO2LP_1LR1LQ1LQ_1RS1LP1LQ_0LR1RS0RD_2LQ1LL1LA",
+      "kind": "unverified",
+      "runtime": ">fω2+1(3)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-20x3-96d8291dce30"
+    },
+    {
+      "states": 21,
+      "symbols": 3,
+      "table": "1LT1LE2RA_0LG2LE2RB_1RC1RC2RB_0LF2RA2LD_1RC2LE1LD_0RC0RC2RN_0RJ2RH1LG_1LI2RH1LP_0LQ1LI0LG_0RK2RJ2RJ_0RL1RK2RB_1RZ0LI0LH_0RM2LE2RM_2RN2RN2LL_0RM0LP0LP_2LO2LO2LP_1LR1LQ1LQ_1RS1LP1LQ_0LR1RS2LU_0RD0LS0LU_2LR2LA1RA",
+      "kind": "unverified",
+      "runtime": ">fω2+1(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-21x3-711c2493e160"
+    },
+    {
+      "states": 22,
+      "symbols": 3,
+      "table": "1LT1LE2RA_0LG2LE2RB_1RC1RC2RB_0LF2RA2LD_1RC2LE1LD_0RC0RC2RN_0RJ2RH1LG_1LI2RH1LP_0LQ1LI0LG_0RK2RJ2RJ_0RL1RK2RB_1RZ0LI0LH_0RM2LE2RM_2RN2RN2LL_0RM0LP0LP_2LO2LO2LP_1LR1LQ1LQ_1RS1LP1LQ_0LR1RS1RD_2LQ---1RU_2RV2RU1LU_1LU1LL---",
+      "kind": "unverified",
+      "runtime": ">fω2+1(14)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-22x3-cdf6ce274f60"
+    },
+    {
+      "states": 2,
+      "symbols": 4,
+      "table": "1RB2LA1RA1RA_1LB1LA3RB1RZ",
+      "kind": "proven",
+      "runtime": "3932964",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 13,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x4-f5fecd8d5b6d"
+    },
+    {
+      "states": 2,
+      "symbols": 4,
+      "table": "1RB3LA1LA1RA_2LA1RZ3RA3RB",
+      "kind": "historical",
+      "runtime": "7,195",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 13,
+          "row": 2
+        }
+      ],
+      "id": "beaver-2x4-d71c8e7b2fba"
+    },
+    {
+      "states": 2,
+      "symbols": 4,
+      "table": "1RB3LA1LA1RA_2LA1RZ3LA3RB",
+      "kind": "historical",
+      "runtime": "6,445",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 13,
+          "row": 3
+        }
+      ],
+      "id": "beaver-2x4-e24eb6f7b002"
+    },
+    {
+      "states": 2,
+      "symbols": 4,
+      "table": "1RB3LA1LA1RA_2LA1RZ2RA3RB",
+      "kind": "historical",
+      "runtime": "6,445",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 13,
+          "row": 4
+        }
+      ],
+      "id": "beaver-2x4-6949ac01862c"
+    },
+    {
+      "states": 2,
+      "symbols": 4,
+      "table": "1RB2RB3LA2RA_1LA3RB1RZ1LB",
+      "kind": "historical",
+      "runtime": "2,351",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 13,
+          "row": 5
+        }
+      ],
+      "id": "beaver-2x4-5eef295dff48"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB3LB1RZ2RA_2LC3RB1LC2RA_3RB1LB3LC2RC",
+      "kind": "current",
+      "runtime": ">2↑155",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x4-8f26e7cf80b7"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB0LB1RZ3LA_0LC3RB3RC1LB_2RB2LA3RA1LC",
+      "kind": "historical",
+      "runtime": "> 10^^2048",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 2
+        }
+      ],
+      "id": "beaver-3x4-d647df111c55"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB1RA2LB3LA_2LA0LB1LC1LB_3RB3RC1RZ1LC",
+      "kind": "historical",
+      "runtime": "> 5.2 × 10^13036",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 3
+        }
+      ],
+      "id": "beaver-3x4-032a7e806ed5"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB1RA1LB1RC_2LA0LB3LC1RZ_1LB0RC2RA2RC",
+      "kind": "historical",
+      "runtime": "> 5.9 × 10^4744",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 4
+        }
+      ],
+      "id": "beaver-3x4-ff97ce981937"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB2LB2RA1LA_2LA1RC0LB2RA_1RB3LC1LA1RZ",
+      "kind": "historical",
+      "runtime": "> 3.4 × 10^4710",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 5
+        }
+      ],
+      "id": "beaver-3x4-4913c8ba962a"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB1LA3LA3RC_2LC2LB1RB1RA_2LA3LC1RZ1LB",
+      "kind": "historical",
+      "runtime": "> 8.4 × 10^2601",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 6
+        }
+      ],
+      "id": "beaver-3x4-e65ad6ecb5cb"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB3LA3RC1RA_2RC1LA1RZ2RB_1LC1RB1LB2RA",
+      "kind": "historical",
+      "runtime": "> 3.1 × 10^1256",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 7
+        }
+      ],
+      "id": "beaver-3x4-a2a70381cf49"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB0RB3LC1RC_0RC1RZ2RC3RC_1LB2LA3LA2RB",
+      "kind": "historical",
+      "runtime": "> 7.6 × 10^868",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 8
+        }
+      ],
+      "id": "beaver-3x4-c92d8df9fad3"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB3RB2LC3LA_0RC1RZ2RC1LB_1LB2LA3RC2LC",
+      "kind": "historical",
+      "runtime": "> 4.3 × 10^281",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 9
+        }
+      ],
+      "id": "beaver-3x4-03309cdc82e1"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB1LA1LB1RA_0LA2RB2LC1RZ_3RB2LB1RC0RC",
+      "kind": "historical",
+      "runtime": "> 5.7 × 10^52",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 10
+        }
+      ],
+      "id": "beaver-3x4-77f524421b1c"
+    },
+    {
+      "states": 3,
+      "symbols": 4,
+      "table": "1RB3LC0RA0LC_2LC3RC0RC1LB_1RA0LB0RB1RZ",
+      "kind": "historical",
+      "runtime": "262,759,288",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 14,
+          "row": 11
+        }
+      ],
+      "id": "beaver-3x4-10ea3d8f49cc"
+    },
+    {
+      "states": 4,
+      "symbols": 4,
+      "table": "1RB2LC3RA1RZ_2RC3LB2LB0LC_1LB2RC3RA1LD_2RC1LC3RD2LD",
+      "kind": "unverified",
+      "runtime": ">fω(2↑53)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x4-53f02924d9a7"
+    },
+    {
+      "states": 5,
+      "symbols": 4,
+      "table": "1RB3LC1LD2RA_2RC1RZ2LB2LB_1LD3RC1LE2RA_3RC0LB1LD3LD_3RC1LC3LE2RE",
+      "kind": "unverified",
+      "runtime": ">fω+1(65536)>g64",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-5x4-b72abbb24ced"
+    },
+    {
+      "states": 6,
+      "symbols": 4,
+      "table": "1RB3LC1LD2RA_2RC3RF2LB2LB_1LD3RC1LE2RA_3RC0LB1LD3LD_3RC1LC3LE2RE_0LC1RF0LB1RZ",
+      "kind": "unverified",
+      "runtime": ">fω+16(65536)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x4-5ffda4d212d8"
+    },
+    {
+      "states": 7,
+      "symbols": 4,
+      "table": "3RD1LE2RA1LF_0LE2LE2RB2RD_1RF1RC2RB0LB_0RC0LD3RC2RA_1RC2LE1LG2RF_0LA0LD3LG1RZ_1LD2RA2LG0RB",
+      "kind": "unverified",
+      "runtime": ">fω+3(21)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x4-fe7ef080a3ee"
+    },
+    {
+      "states": 8,
+      "symbols": 4,
+      "table": "1LD2RG2LA---_2LE2LH2RB1LF_2LA1RC2RB---_0RC1RD0LG1RH_0LF1LE1LE3LB_1RG1RZ3RD3LF_0RC1LH2RG0LC_1RC2LH1LA2LB",
+      "kind": "unverified",
+      "runtime": ">fω+82(4)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-8x4-4ba6e32141f7"
+    },
+    {
+      "states": 9,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_1LI2LH2RB2RF_1LG1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RZ3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0RC3LI1RI0RI",
+      "kind": "unverified",
+      "runtime": ">fω2(18)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-9x4-37deebff5cbc"
+    },
+    {
+      "states": 10,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_0LI2LH2RB2RF_1LB1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ1RZ0RE0LI_3RC3LJ3LJ3LJ",
+      "kind": "unverified",
+      "runtime": ">fω23(3)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-10x4-0b25523f3a46"
+    },
+    {
+      "states": 11,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_2LI2LH2RB2RF_3RB1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1RZ1LI_3RC3LJ3LJ3LJ_0LF0LK0LK0LK",
+      "kind": "unverified",
+      "runtime": ">fω2+1(fω2(fω+32(4)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-11x4-e2dd4e94a563"
+    },
+    {
+      "states": 12,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_2LL2LH2RB2RF_1LG1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1RZ---_3RC3LJ3LJ3LJ_0LF0LK0LK0LK_1LF1LL1LL---",
+      "kind": "unverified",
+      "runtime": ">fω2+2(15)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-12x4-55f8568963d6"
+    },
+    {
+      "states": 13,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_3LM2LH2RB2RF_1LG1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1LL1RZ_3RC3LJ3LJ3LJ_0LF0LK0LK0LK_0LK1LL1LL1LL_2LF2LM2LM---",
+      "kind": "unverified",
+      "runtime": ">fω2+3(15)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-13x4-b296943dbf99"
+    },
+    {
+      "states": 14,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_3LM2LH2RB2RF_2LF1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1LL3RM_3RC3LJ3LJ3LJ_0LF0LK0LK0LK_0LK1LL1LL1LL_1RZ3LM3LM3LN_0LL2LN2LN2LN",
+      "kind": "unverified",
+      "runtime": ">fω2+4(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-14x4-8f58f38c39c5"
+    },
+    {
+      "states": 15,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_---2LH2RB2RF_2LM1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1LL3RM_3RC3LJ3LJ3LJ_0LF0LK0LK0LK_0LK1LL1LL1LL_1RZ2LI3LO3LN_0LL2LN2LN2LN_0LN3LO3LO3LO",
+      "kind": "unverified",
+      "runtime": ">fω2+5(3)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-15x4-b1eb4d861c15"
+    },
+    {
+      "states": 16,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_1LP2LH2RB2RF_1LG1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1LL3RM_3RC3LJ3LJ3LJ_0LF0LK0LK0LK_0LK1LL1LL1LL_1RZ2LP3LO3LN_0LL2LN2LN2LN_0LN3LO3LO3LO_3LO2LP2LP2LP",
+      "kind": "unverified",
+      "runtime": ">fω2+5(15)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-16x4-01f2e99add91"
+    },
+    {
+      "states": 17,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_1LQ2LH2RB2RF_1LG1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1LL3RM_3RC3LJ3LJ3LJ_0LF0LK0LK0LK_0LK1LL1LL1LL_1RZ2LP3LO3LN_0LL2LN2LN2LN_0LN3LO3LO3LO_3LO2LP2LP2LP_1LP1LQ1LQ---",
+      "kind": "unverified",
+      "runtime": ">fω2+6(17)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-17x4-62f599f771e5"
+    },
+    {
+      "states": 18,
+      "symbols": 4,
+      "table": "1LD2RG2LA3LG_1RQ2LH2RB2RF_2LE1RC2RB3LG_0RC1RC1LD3RD_3RD1LE1LE3LE_1RI3LD2LE3LE_1RG1LH2RG3LG_1RC2LH1LA1LE_0LJ0LK1LL3RM_3RC3LJ3LJ3LJ_0LF0LK0LK0LK_0LK1LL1LL1LL_1RZ2LP3LO3LN_0LL2LN2LN2LN_0LN3LO3LO3LO_3LO2LP2LP2LP_2RR2RQ1LQ1LI_1LQ------3LP",
+      "kind": "unverified",
+      "runtime": ">fω2+6(39)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-18x4-4c127a8b5dfc"
+    },
+    {
+      "states": 21,
+      "symbols": 4,
+      "table": "2LS1RA2LJ3RA_0RA3RB1LD2RI_3RB1LB3LC2RC_1RE0LG3LC2RC_1RZ1RE0LF2LD_2LD1LF2LN3LF_1RG1LU3LC---_0RH1RH2RA---_2RE3LB3LM2RI_2LP0LK2LF0LL_1LM1LK2LK3LK_3LN1LL2LL3LL_3RB0LO1LM1LM_3RI0LP1LN3LN_1RQ1LO------_1RR1LP------_0RQ1RQ2RS3RQ_0RR1RR2RT3RR_1LJ1RS0LF3RS_3LJ1RT2RC3RT_0RH1LU------",
+      "kind": "unverified",
+      "runtime": ">fωω+1(fωω(20))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-21x4-8c7bbcf7ccfe"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LA4RB0RB2LA_1LB2LA3LA1RA1RZ",
+      "kind": "current",
+      "runtime": ">1010103314360",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x5-0dd89bb6e5c6"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2LB4LB3LA1RZ_1LA3RA3LB0LB0RA",
+      "kind": "historical",
+      "runtime": "> 6.5 × 10^38033",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 2
+        }
+      ],
+      "id": "beaver-2x5-dc4d6c4eed52"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2LA1RA2LB2LA_0LA2RB3RB4RA1RZ",
+      "kind": "historical",
+      "runtime": "> 1.9 × 10^704",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 3
+        }
+      ],
+      "id": "beaver-2x5-137238bf357d"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2LA4RA2LB2LA_0LA2RB3RB4RA1RZ",
+      "kind": "historical",
+      "runtime": "> 1.6 × 10^211",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 4
+        }
+      ],
+      "id": "beaver-2x5-ef6ad9698cc7"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2LA4RA2LB2LA_0LA2RB3RB1RA1RZ",
+      "kind": "historical",
+      "runtime": "> 1.6 × 10^211",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 5
+        }
+      ],
+      "id": "beaver-2x5-4da8755eb5f8"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2LA4RA1LB2LA_0LA2RB3RB2RA1RZ",
+      "kind": "historical",
+      "runtime": "> 5.2 × 10^61",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 6
+        }
+      ],
+      "id": "beaver-2x5-13309e3558b5"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB0RB4RA2LB2LA_2LA1LB3RB4RA1RZ",
+      "kind": "historical",
+      "runtime": "7,069,449,877,176,007,352,687",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 7
+        }
+      ],
+      "id": "beaver-2x5-43a42900efa4"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LA3LB0LB1RA_2LA4LB4LA1RA1RZ",
+      "kind": "historical",
+      "runtime": "339,466,124,499,007,251",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 8
+        }
+      ],
+      "id": "beaver-2x5-41ecc83d426d"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3RB3RA1RZ2LB_2LA4RA4RB2LB0RA",
+      "kind": "historical",
+      "runtime": "339,466,124,499,007,214",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 9
+        }
+      ],
+      "id": "beaver-2x5-6e8a22e1b5c3"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB1RZ4LA4LB2RA_2LB2RB3RB2RA0RB",
+      "kind": "historical",
+      "runtime": "91,791,666,497,368,316",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 10
+        }
+      ],
+      "id": "beaver-2x5-89581ca65f6b"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LA1LA0LB1RA_2LA4LB4LA1RA1RZ",
+      "kind": "historical",
+      "runtime": "37,716,251,406,088,468",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 11
+        }
+      ],
+      "id": "beaver-2x5-98d52fb7cafe"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2RA1LA3LA2RA_2LA3RB4LA1LB1RZ",
+      "kind": "historical",
+      "runtime": "9,392,084,729,807,219",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 12
+        }
+      ],
+      "id": "beaver-2x5-6f925d8432e9"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2RA1LA1LB3LB_2LA3RB1RZ4RA1LA",
+      "kind": "historical",
+      "runtime": "417,310,842,648,366",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 15,
+          "row": 13
+        }
+      ],
+      "id": "beaver-2x5-239379e12eec"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LA1LA4LA1RA_2LB2RA1RZ0RA0RB",
+      "kind": "historical",
+      "runtime": "26,375,397,569,930",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 1
+        }
+      ],
+      "id": "beaver-2x5-2ad5fd40ccc7"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LB4LB4LA2RA_2LA1RZ3RB4RA3RB",
+      "kind": "historical",
+      "runtime": "14,103,258,269,249",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 2
+        }
+      ],
+      "id": "beaver-2x5-9c8cba56dde2"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3RA4LB2RA3LA_2LA1RZ4RB4RB2LB",
+      "kind": "historical",
+      "runtime": "3,793,261,759,791",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 3
+        }
+      ],
+      "id": "beaver-2x5-d4ca21d2d95f"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3RA1LA1LB3LB_2LA4LB3RA2RB1RZ",
+      "kind": "historical",
+      "runtime": "924,180,005,181",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 4
+        }
+      ],
+      "id": "beaver-2x5-57dd52970a84"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LB1RZ1LA1LA_2LA3RB4LB4LB3RA",
+      "kind": "historical",
+      "runtime": "912,594,733,606",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 5
+        }
+      ],
+      "id": "beaver-2x5-591a16b71e50"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2RB3LA2RA3RA_2LB2LA3LA4RB1RZ",
+      "kind": "historical",
+      "runtime": "469,121,946,086",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 6
+        }
+      ],
+      "id": "beaver-2x5-de5ddd06e39e"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3RB3RB1LA3LB_2LA3RA4LB2RA1RZ",
+      "kind": "historical",
+      "runtime": "233,431,192,481",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 7
+        }
+      ],
+      "id": "beaver-2x5-2e02029fbf9d"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LA1LB1RA3RA_2LB3LA3RA4RB1RZ",
+      "kind": "historical",
+      "runtime": "8,619,024,596",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 8
+        }
+      ],
+      "id": "beaver-2x5-120dd81b8de2"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2RB3RB4LA3RA_0LA4RB1RZ0RB1LB",
+      "kind": "historical",
+      "runtime": "7,543,673,517",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 9
+        }
+      ],
+      "id": "beaver-2x5-2a043240c0eb"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB4LA1LA1RZ2RB_2LB3LA1LB2RA0RB",
+      "kind": "historical",
+      "runtime": "7,021,292,621",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 10
+        }
+      ],
+      "id": "beaver-2x5-f15e7d24f81b"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB2RB3LA2RA3RA_2LB2LA1LA4RB1RZ",
+      "kind": "historical",
+      "runtime": "4,561,535,055",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 11
+        }
+      ],
+      "id": "beaver-2x5-c968ce996a5c"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LA4LA1RA1LA_2LA1RZ4RA3RB1RA",
+      "kind": "historical",
+      "runtime": "148,304,214",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 12
+        }
+      ],
+      "id": "beaver-2x5-5c4e08403665"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3LA4LA1RA1LA_2LA1RZ1LA3RB1RA",
+      "kind": "historical",
+      "runtime": "16,268,767",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 13
+        }
+      ],
+      "id": "beaver-2x5-6a0ba2af3448"
+    },
+    {
+      "states": 2,
+      "symbols": 5,
+      "table": "1RB3RB2LA0RB1RZ_2LA4RB3LB2RB3RB",
+      "kind": "historical",
+      "runtime": "15,754,273",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 16,
+          "row": 14
+        }
+      ],
+      "id": "beaver-2x5-4eb0541e4759"
+    },
+    {
+      "states": 3,
+      "symbols": 5,
+      "table": "1RB3LB4LC2RA4LB_2LC3RB1LC2RA1RZ_3RB1LB3LC2RC4LC",
+      "kind": "unverified",
+      "runtime": ">fω(2↑155)>fω2(15)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x5-2fe3a5b9d1b5"
+    },
+    {
+      "states": 4,
+      "symbols": 5,
+      "table": "1RB3LB4LC2RA4LB_2LC3RB1LC2RA4RD_3RB1LB3LC2RC4LC_2RC2RD1RZ4RB1LC",
+      "kind": "unverified",
+      "runtime": ">fω+1(27041)>g64",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x5-a718968b14a2"
+    },
+    {
+      "states": 5,
+      "symbols": 5,
+      "table": "4LE3RA1LC2RB4RE_1RZ3LA1LD2RB2LE_3RA1LA3LC2RC1RE_3RA4LD1LD3LD1RD_2RC4RA2LE2LE1RA",
+      "kind": "unverified",
+      "runtime": ">fω+2(55)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-5x5-28950c4b082f"
+    },
+    {
+      "states": 6,
+      "symbols": 5,
+      "table": "1LF3LB4LC2RA4LB_2LE3RB1LC2RA2RD_3RB1LB3LC2RC4LC_1RZ4LD1LE2RD2RD_3RF1LD3LE2RE3LF_1LC3RF4LE2RD4LC",
+      "kind": "unverified",
+      "runtime": ">fω×2(1019728)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x5-a4728206fc2a"
+    },
+    {
+      "states": 7,
+      "symbols": 5,
+      "table": "1LF3LB4LC2RA4LB_2RF3RB1LC2RA2RD_3RB1LB3LC2RC4LC_1RZ4LD1LE2RD2RD_3RF1LD3LE2RE3LF_1LG3RF4LE2RD4LC_2LC2RB3LG2RG0LA",
+      "kind": "unverified",
+      "runtime": ">fω×2(2↑166)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x5-0c335c6eddf6"
+    },
+    {
+      "states": 8,
+      "symbols": 5,
+      "table": "1LD2RG2LA3LG---_4LC2LH2RB2RF0RB_4LE1RC2RB3LG4RB_0RC1RC1LD3RD3LA_3RD1LE1LE3LE4RE_1RZ3LD2LE3LE4RD_1RG1LH2RG3LG3LF_1RC2LH1LA1LE---",
+      "kind": "unverified",
+      "runtime": ">fω2(13)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-8x5-d7853bf1049c"
+    },
+    {
+      "states": 9,
+      "symbols": 5,
+      "table": "1LD2RG2LA3LG---_4RI2LH2RB2RF0LD_4LC1RC2RB3LG4RB_0RC1RC1LD3RD4LB_3RD1LE1LE3LE---_3LI3LD2LE3LE1RZ_1RG1LH2RG3LG---_1RC2LH1LA1LE---_0RC3LI3LI3LI0LI",
+      "kind": "unverified",
+      "runtime": ">fω2+1(6)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-9x5-616669e4c82b"
+    },
+    {
+      "states": 10,
+      "symbols": 5,
+      "table": "3LB2LH2RA2RF0LE_1LD2RG2LB3LG3LG_0LJ1RC2RA3LG1RZ_0RC1RC1LD3RD---_3RD1LE1LE3LE0LA_4RC3LD2LE3LE3LI_1RG1LH2RG3LG---_1RC2LH1LB1LE4RE_0RC3LI3LI3LI---_3RB4LJ4LJ4LJ4RH",
+      "kind": "unverified",
+      "runtime": ">fω2+2(4)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-10x5-26e8623e5aaf"
+    },
+    {
+      "states": 11,
+      "symbols": 5,
+      "table": "4LG2LH2RA2RF2RD_1LD2RG2LB3LG3LG_0LJ1RC2RA3LG1RZ_0RC1RC1LD3RD0LK_3RD1LE1LE3LE---_4RC3LD2LE3LE3LI_1RG1LH2RG3LG4RA_1RC2LH1LB1LE1RK_0RC3LI3LI3LI---_3RB4LJ4LJ4LJ4RA_1LJ4RJ0LD4LG---",
+      "kind": "unverified",
+      "runtime": ">fω2+2(6)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-11x5-394beba48948"
+    },
+    {
+      "states": 12,
+      "symbols": 5,
+      "table": "1LH3RA1LD2RB---_1RZ3LA4LH2RB3LL_3RA1LA3LC2RC---_2RE---3LC2RC---_3RA2RE2RE4RF2LG_1LG1RF3LG3RF4LG_2RJ0LH2LG2LI4LK_0LD1LH1LG3LH4LH_2RC1LI3LG3LI4LI_4LE1RJ2RJ3RJ4RF_---1LK3LE3LK---_3RA1LL1LL1LL---",
+      "kind": "unverified",
+      "runtime": ">fωω6(14)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-12x5-47428d2e6476"
+    },
+    {
+      "states": 13,
+      "symbols": 5,
+      "table": "4LH3LB1RZ2RA3LL_3LH3RB1LD2RA3LB_3RB1LB3LC2RC4RC_2RE2LL3LC2RC4LB_3RB2RE2RE4RF0RH_1LG1RF3LG3RF4LG_2RJ0LH2LG2LI4LK_4RJ1LH1LG3LH4LH_2RC1LI3LG3LI4LI_2LB1RJ2RJ3RJ4RF_---1LK3LE3LK1RF_3RB1LL1LL1LL0LM_3LL---0LM------",
+      "kind": "unverified",
+      "runtime": ">fωω+1(9)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-13x5-fb5bdff62039"
+    },
+    {
+      "states": 14,
+      "symbols": 5,
+      "table": "1RE1LA1LG3LA4LA_2RH3RB1LD2RH2LM_3RB1LB3LC2RC4RJ_2RE---3LC2RC---_3RB2RE2RE4RF0LJ_1LG1RF3LG3RF4LG_2RJ0LA2LG2LI4LK_4LA3LB2RM2RH3LL_2RC1LI3LG3LI4LI_4LL1RJ2RJ3RJ4RF_2LD1LK3LE3LK1LJ_3RB1LL1LL1LL2RN_1RZ2RC0LN4RF---_3RB---0LN0LN2LG",
+      "kind": "unverified",
+      "runtime": ">fωω+2(21)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-14x5-790d727e3140"
+    },
+    {
+      "states": 15,
+      "symbols": 5,
+      "table": "2RG1LA1LG3LA4LA_2RH3RB1LD2RH---_3RB1LB3LC2RC4RH_2RE---3LC2RC---_3RB2RE2RE4RF---_1LG1RF3LG3RF4LG_2RJ0LA2LG2LI4LK_4LA3LB2RM2RH3LL_2RC1LI3LG3LI4LI_0RK1RJ2RJ3RJ4RF_2LH1LK3LE3LK---_3RB1LL1LL1LL---_1RZ4LJ0LN---2LO_3RB---0LN0LN---_0RC---2LO2LO2LD",
+      "kind": "unverified",
+      "runtime": ">fωω+3(27)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-15x5-19e09af4a295"
+    },
+    {
+      "states": 16,
+      "symbols": 5,
+      "table": "3LN3RA0RF0RD1LN_1RZ1RB2LC4RA4LM_0LI4RC2RC3RC2RC_1LE1RD2RD3RD4RK_3LA1LE2LE3LE---_0LG1RF2RF3RF2LH_0RI0LH---3RI---_2LA1LH2LH3LH---_3RP---0LA0LI---_2RO0LB2LJ3LJ---_2LL---2RK3RK4RK_3RO2RO2LL3LL4LL_3LL0LA2RM3RM4RM_1RB1LN2LN3LN1LO_1RB4RP1RK0RM4LN_4LJ1RP2RP3RP0RP",
+      "kind": "unverified",
+      "runtime": ">fε0(1686)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-16x5-524ecd3d98b1"
+    },
+    {
+      "states": 18,
+      "symbols": 5,
+      "table": "1LL---0RF0RD1LN_2LI1RB2LC1RB---_0LI4RC2RC3RC2RC_1LE1RD2RD3RD---_3LA1LE2LE3LE---_0LG1RF2RF3RF---_0RI0LH---3RI---_2LA1LH2LH3LH---_3RP2LI0LA0LI---_2RO0RB2LJ3LJ3RJ_2LL---2RK3RK4RK_3RO2RO2LL3LL4LL_3LL2RN2RM3RM4RM_1LQ1LN2LN3LN1LO_1LQ4RP1RK0RM4LN_4LJ1RP2RP3RP0RP_1RZ2LR0LL1LR---_1RR4LR0RB0LL1RR",
+      "kind": "unverified",
+      "runtime": ">fε0+1(215)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-18x5-33961892b141"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB3RB5RA1LB5LA2LB_2LA2RA4RB1RZ3LB2LA",
+      "kind": "current",
+      "runtime": ">10↑↑10↑↑1010115",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 1
+        },
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x6-cfef669f46b9"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB3LA4LB0RB1RA3LA_2LA2RA4LA1RA5RB1RZ",
+      "kind": "historical",
+      "runtime": "> 10^^91",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 2
+        }
+      ],
+      "id": "beaver-2x6-15b4c3745609"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB2LA1RA4LA5RA0LB_1LA3RA2RB1RZ3RB4LA",
+      "kind": "historical",
+      "runtime": "> 10^^70",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 3
+        }
+      ],
+      "id": "beaver-2x6-dec909e6890b"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB2LA1RZ5LB5LA4LB_1LA4RB3RB5LB1LB4RA",
+      "kind": "historical",
+      "runtime": "> 2.4 × 10^9866",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 4
+        }
+      ],
+      "id": "beaver-2x6-e900f15838ff"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB1LB3RA4LA2LA4LB_2LA2RB3LB1LA5RA1RZ",
+      "kind": "historical",
+      "runtime": "> 2.5 × 10^9863",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 5
+        }
+      ],
+      "id": "beaver-2x6-d7d48e3e5f62"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB2LB4RB1LA1RB1RZ_1LA3RA5RA4LB0RA4LA",
+      "kind": "historical",
+      "runtime": "> 4.9 × 10^1643",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 6
+        }
+      ],
+      "id": "beaver-2x6-f011c2685957"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB0RB3LA5LA1RZ4LB_1LA2RB3LA4LB3RB3RA",
+      "kind": "historical",
+      "runtime": "> 2.3 × 10^54",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 7
+        }
+      ],
+      "id": "beaver-2x6-4ae59d45969e"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB2LA1RA1RA5LB4LB_1LB1LA3RB4LA1RZ3LA",
+      "kind": "historical",
+      "runtime": "493,600,387",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 8
+        }
+      ],
+      "id": "beaver-2x6-79662d4926f1"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB3LA3LA1RA1RA3LB_1LB2LA2RA4RB5LB1RZ",
+      "kind": "historical",
+      "runtime": "98,364,599",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 9
+        }
+      ],
+      "id": "beaver-2x6-070469d665e6"
+    },
+    {
+      "states": 2,
+      "symbols": 6,
+      "table": "1RB3LA4LA1RA3RB1RZ_2LB1LA1LB3RB5RA1RZ",
+      "kind": "historical",
+      "runtime": "94,842,383",
+      "sources": [
+        {
+          "url": "https://bbchallenge.org/~pascal.michel/ha.html",
+          "table": 18,
+          "row": 10
+        }
+      ],
+      "id": "beaver-2x6-c635b422f52e"
+    },
+    {
+      "states": 3,
+      "symbols": 6,
+      "table": "1RB3LB4LC2RA4LB5LB_2LC3RB1LC2RA5LC1RZ_3RB1LB3LC2RC4LC5LC",
+      "kind": "unverified",
+      "runtime": ">fω3(15)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x6-4060eb0aa6d9"
+    },
+    {
+      "states": 4,
+      "symbols": 6,
+      "table": "5LD3LB5LC2RA4LB4LC_1RZ3RB1LC2RA3RD0LA_3RB1LB3LC2RC4LC1RA_3RB0LA2LC4LD4LC4LD",
+      "kind": "unverified",
+      "runtime": ">fω+2(29)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x6-107fad2b02fd"
+    },
+    {
+      "states": 5,
+      "symbols": 6,
+      "table": "1LE3LB2LA2RA4LB5RA_1RZ3RB1LC2RA3RD4RA_3RB1LB3LC2RC4LC2LB_3RB0LA5LE4LD4LC4LD_4LC5LC0RE5LE1RE2RE",
+      "kind": "unverified",
+      "runtime": ">fω+3(31)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-5x6-f1a6455508bc"
+    },
+    {
+      "states": 6,
+      "symbols": 6,
+      "table": "5RE3LB4LF2RA4LB1RZ_5LE3RB1LD2RA3LF3RD_3RB1LB3LC2RC4LC0LE_3RB2RD3LC2RC1LE3RE_5RC3RE2RA4LC2LE2LA_5RB1RZ1LF1LF1RF5LF",
+      "kind": "unverified",
+      "runtime": ">fω×22(fω2(29))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x6-33584d312c8d"
+    },
+    {
+      "states": 7,
+      "symbols": 6,
+      "table": "1LE3LB2LF2RA4LB2RA_4LF3RB1LD2RA3LF5RB_3RB1LB3LC2RC4LC1LE_3RB3RE3LC2RC1RZ3RD_5RB3RE1RZ4LC3LG5LE_5RB4RF1LF1LF2LF5RG_5LF5RG1LA1LG1RD5LG",
+      "kind": "unverified",
+      "runtime": ">fω22(6)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x6-08f3326eebab"
+    },
+    {
+      "states": 8,
+      "symbols": 6,
+      "table": "2LF3LB2LH2RA4LB4LH_1RH3RB1LD2RA3LF5RB_3RB1LB3LC2RC4LC1LE_3RB3RE3LC2RC1RZ3RD_5RB3RE4RG4LC3LG5LE_5RB5RE1RZ1LF5LF5LF_5LF4RG1LB1LG2LH5LG_1RA1RZ1LH1LH2LH5RG",
+      "kind": "unverified",
+      "runtime": ">fω2+2(4)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-8x6-49ef9865db17"
+    },
+    {
+      "states": 9,
+      "symbols": 6,
+      "table": "4LH3LB2LH2RA4LB2RI_4LA3RB1LD2RA3LF5RB_3RB1LB3LC2RC4LC1LE_3RB3RE3LC2RC5LC3RD_5RB3RE4RG4LC3LG5LE_5RB5RB1RH1LF5LF5LF_5LF4RG1LB1LG2RG5LG_1LC1RD1LH1LH5RC5RG_1RZ5LI2LI2LI1LB5RG",
+      "kind": "unverified",
+      "runtime": ">fω2+2(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-9x6-316644307a9f"
+    },
+    {
+      "states": 10,
+      "symbols": 6,
+      "table": "1LJ3LB2LH2RA4LB2RI_1LA3RB1LD2RA3LF5RB_3RB1LB3LC2RC4LC1LE_3RB3RE3LC2RC2RF3RD_5RB3RE4RG4LC3LG5LE_5RB5RB1LA1LF5LF5LF_5LF4RG1LB1LG4LJ5LG_1RJ3LD1LH1LH3RD5RG_1RZ4LH2LI2LI5LI5RG_1RD1RI0LB3RB4LJ5RH",
+      "kind": "unverified",
+      "runtime": ">fω2+3(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-10x6-219cd58c5e56"
+    },
+    {
+      "states": 11,
+      "symbols": 6,
+      "table": "2RK3LB2LH2RA4LB2RI_0LK3RB1LD2RA3LF5RB_3RB1LB3LC2RC4LC1LE_3RB3RE3LC2RC2RF3RD_5RB3RE4RG4LC3LG5LE_5RB1RJ1LA1LF5LF5LF_5LF4RG1LB1LG4LJ5LG_2LE2RF1LH1LH3RD5RG_1RZ4LH1LJ5LJ5LK0RC_3RB5LA1LJ1LJ4LJ5RH_1RH4RA2LK2LK0LD5RG",
+      "kind": "unverified",
+      "runtime": ">fω2+4(8)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-11x6-34bfefb0d1bf"
+    },
+    {
+      "states": 12,
+      "symbols": 6,
+      "table": "5LC3LB4LH2RA3LL1RZ_2LC3RB1LD2RA4RB0LC_3RB1LB3LC2RC0RL5LG_2RE2RD3LC2RC------_3RB2RE2RE4RF------_1LG1RF3LG3RF4LG1RB_2RJ0LH2LG2LI4LK---_---1LH1LG3LH4LH---_2RC1LI3LG3LI4LI---_---1RJ2RJ3RJ4RF1RA_---1LK3LE3LK------_3RB1LL1LL1LL------",
+      "kind": "unverified",
+      "runtime": ">fωω+1(330)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-12x6-ba97b5f5f7e8"
+    },
+    {
+      "states": 13,
+      "symbols": 6,
+      "table": "1LF3RA1LD2RB---4LF_---3LA4LH2RB3LL2LM_3RA1LA3LC2RC------_2RE4RM3LC2RC------_3RA2RE2RE4RF------_1LG1RF3LG3RF4LG---_2RJ0LH2LG2LI4LK---_0LD1LH1LG3LH4LH---_2RC1LI3LG3LI4LI---_1RM1RJ2RJ3RJ4RF---_---1LK3LE3LK------_3RA1LL1LL1LL------_0RC5LM2LM2LM1RA---",
+      "kind": "unverified",
+      "runtime": ">fωω+2(17)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-13x6-1608c5c6e97c"
+    },
+    {
+      "states": 14,
+      "symbols": 6,
+      "table": "5RK1LA1LG3LA4LA5LH_2RH3RB1LD2RH2RJ---_3RB1LB3LC2RC------_2RE---3LC2RC------_3RB2RE2RE4RF5RC---_1LG1RF3LG3RF4LG---_2RJ0LA2LG2LI4LK---_4LA3LB2RM2RH3LL1RF_2RC1LI3LG3LI4LI1RL_1LE1RJ2RJ3RJ4RF2LA_3LA1LK3LE3LK2LK2LG_3RB1LL1LL1LL5LI0RB_1RZ0RA0LN5RE------_3RB---0LN0LN------",
+      "kind": "unverified",
+      "runtime": ">fωω+2(27)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-14x6-8eed6a0af9bd"
+    },
+    {
+      "states": 15,
+      "symbols": 6,
+      "table": "1RJ1LA1LG3LA4LA---_2RH3RB1LD2RH3LJ---_3RB1LB3LC2RC0LN---_2RE---3LC2RC---4RG_3RB2RE2RE4RF1LL---_1LG1RF3LG3RF4LG---_2RJ0LA2LG2LI4LK0RM_4LA3LB2RM2RH3LL---_2RC1LI3LG3LI4LI---_4RI1RJ2RJ3RJ4RF---_0RG1LK3LE3LK------_3RB1LL1LL1LL------_1RZ4RC0LN---2LO---_3RB---0LN0LN5RB---_0RC---2LO2LO------",
+      "kind": "unverified",
+      "runtime": ">fωω+3(35)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-15x6-124f2564cb33"
+    },
+    {
+      "states": 18,
+      "symbols": 6,
+      "table": "1LM---0RF0RD1LQ5LA_1RZ1RB2LC5LE---5LC_0LI4RC2RC3RC2RC5RC_1LE1RD2RD3RD------_3LA1LE2LE3LE------_0LG1RF2RF3RF------_0RI0LH2LQ3RI5RG5LR_2LA1LH2LH3LH------_3RN---0LA0LI---2LR_2RO---2LJ3LJ------_2LL---2RK3RK4RK---_3RO2RO2LL3LL4LL---_3LL4RR2RM3RM4RM---_4LJ1LN2LN3LN1LO5LN_1RB4RP1RK0RM4LN---_4LJ1RP2RP3RP0RP5RP_1RB1LQ2LQ3LQ1LQ5LQ_1RG5RR2LI5RR5RR4LR",
+      "kind": "unverified",
+      "runtime": ">fε0+1(15)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-18x6-9bad1d219fc6"
+    },
+    {
+      "states": 21,
+      "symbols": 6,
+      "table": "5RD1LN0RK0RM4LN0RQ_1RZ1RB2LI5LS1RB5LI_0LI5RC2RC3RC2RC5RC_1LE1RD2RD3RD5LE5RD_3LO1LE2LE3LE5LD5LE_0LG1RF2RF3RF1LR5RF_0RI0LH---3RI4RI4RR_2LO1LH2LH3LH5LO5LH_3RP4RC0LO0LI---2LS_2RA0RF2LJ3LJ0RF5LJ_2LU1RK2RK3RK4RK5RK_3RA1LL2LL3LL4LL5LL_3LL1RM2RM3RM4RM5RM_1RB1LN2LN3LN1LO5LN_1RB4RP0RF0RD1LN4RF_4LJ1RP2RP3RP0RP5RP_5LR1RQ2RQ3RQ4RQ5RQ_5RA1LR2LR3LR4LR5LR_1RB4RT2LS3LS4LS5LS_2LS5LO2RT3RT4RT5RT_2RA1LU2LU3LU4LU5LU",
+      "kind": "unverified",
+      "runtime": ">fε1(5)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-21x6-6aaf4bd05243"
+    },
+    {
+      "states": 22,
+      "symbols": 6,
+      "table": "3LO1LN0RK0RM4LN0RQ_1RZ1RB2LI4RV1RB5LI_0LI5RC2RC3RC2RC5RC_1LE1RD2RD3RD4LA5RD_3LO1LE2LE3LE---5LE_0LG1RF2RF3RF1LR5RF_0RI0LH5LS3RI4RI5LL_2LO1LH2LH3LH5LO5LH_3RP4RC0LO0LI1RL2LS_2RA0RF2LJ3LJ0RF5LJ_2LU1RK2RK3RK4RK5RK_3RA1LL2LL3LL4LL5LL_3LL1RM2RM3RM4RM5RM_1RB1LN2LN3LN1LO5LN_1RB4RP0RF0RD1LN4RF_4LJ1RP2RP3RP0RP5RP_5LR1RQ2RQ3RQ4RQ5RQ_5RA1LR2LR3LR4LR5LR_1RB4RT2LS3LS4LS5LS_2LS5LG2RT3RT4RT5RT_2RA1LU2LU3LU4LU5LU_1RL1LD---3LN---0LI",
+      "kind": "unverified",
+      "runtime": ">fε1(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-22x6-353198c42c06"
+    },
+    {
+      "states": 23,
+      "symbols": 6,
+      "table": "1LE1LN0RK0RM4LN0RQ_1RZ1RB2LI1RV1RB5LI_0LI5RC2RC3RC2RC5RC_1LE1RD2RD3RD3LW5RD_3LO1LE2LE3LE4RS5LE_0LG1RF2RF3RF1LR5RF_0RI0LH---3RI4RI0LW_2LO1LH2LH3LH5LO5LH_3RP4RC0LO0LI0LD2LS_2RA0RF2LJ3LJ0RF5LJ_2LU1RK2RK3RK4RK5RK_3RA1LL2LL3LL4LL5LL_3LL1RM2RM3RM4RM5RM_1RB1LN2LN3LN1LO5LN_1RB4RP0RF0RD1LN4RF_4LJ1RP2RP3RP0RP5RP_5LR1RQ2RQ3RQ4RQ5RQ_5RA1LR2LR3LR4LR5LR_1RB4RT2LS3LS4LS5LS_2LS5LF2RT3RT4RT5RT_2RA1LU2LU3LU4LU5LU_3RH4RE4LW---5LW4RS_4RD5RV---------0RD",
+      "kind": "unverified",
+      "runtime": ">fε1(10)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-23x6-6e3e47a2c95f"
+    },
+    {
+      "states": 2,
+      "symbols": 7,
+      "table": "1RB2LB3LA4LA3RA6RB3RB_2LA4RA3LB2RB5RA3RA1RZ",
+      "kind": "unverified",
+      "runtime": ">10↑↑↑10↑↑30",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-2x7-087b658cb3fb"
+    },
+    {
+      "states": 3,
+      "symbols": 7,
+      "table": "6LC3LB6RA2RA4LB5LC5LA_1RZ3RB1LC2RA3RB4LC5RA_3RB1LB3LC2RC4LC1RA6LA",
+      "kind": "unverified",
+      "runtime": ">fω+1(117)>g64",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x7-c8a0a6e49246"
+    },
+    {
+      "states": 4,
+      "symbols": 7,
+      "table": "5LC3LB6LA2RA4LB2LD3RB_1RZ3RB1LC2RA3RD2LC4LC_3RB1LB3LC2RC4LC1RA5LD_3RB5LD6LC4LD4LC4LD6LC",
+      "kind": "unverified",
+      "runtime": ">fω+3(34)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x7-21c1374df37e"
+    },
+    {
+      "states": 5,
+      "symbols": 7,
+      "table": "4LD3RA1LD2RB3LA2RA0LE_1RZ3LA4LE2RB6LE3LC5RB_3RA1LA3LC2RC2LA1LC1LC_6RE0LA3LC2RC4LE6LD5RD_3RA5RE5LE5LE6RE4LD5RB",
+      "kind": "unverified",
+      "runtime": ">fω×22(fω+2(fω+1(2↑64)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-5x7-3c9248b3a378"
+    },
+    {
+      "states": 6,
+      "symbols": 7,
+      "table": "5LF6LA5RA4RF6RA4LD5RB_1RZ3LE6LC2RB6LA1LE5RB_6RA4RC4LC4LC4LA6LC5RC_3RE1LE3LD2RD4LA6LC5RC_6RA3RE1LD2RB2RE2LE2LE_3LC0RA------3LA5LF5RE",
+      "kind": "unverified",
+      "runtime": ">fω×2+1(fω+12(fω2(5)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x7-12d04e49bf8f"
+    },
+    {
+      "states": 7,
+      "symbols": 7,
+      "table": "6RG3LB6LA2RA4LB5RC5LA_1RZ3RB1LD2RA3LF5RB6LD_3RB1LB3LC2RC4LC1LE5RB_3RB3RE3LC2RC2LF3RD1LA_5RB3RE4RF4LC3LG5LE2LA_5RB5RB2LD1LF2LE5LF2LA_5LF6LF2RE1LG---5LG1LG",
+      "kind": "unverified",
+      "runtime": ">fω24(fω+1(fω(30)))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x7-a9a9fd9a850d"
+    },
+    {
+      "states": 8,
+      "symbols": 7,
+      "table": "6LC3LB2LH2RA4LB6LH1RZ_5RA3RB1LD2RA3LF5RB0RH_3RB1LB3LC2RC4LC1LE4LH_3RB3RE3LC2RC5RF3RD1RZ_5RB3RE4RG4LC3LG5LE1RZ_5RB5RB1RZ1LF5LF5LF1RH_5LF4RG1LB1LG5LD5LG2LH_5LA0LH1LH1LH2LH5RG1RZ",
+      "kind": "unverified",
+      "runtime": ">fω2+2(8)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-8x7-faadd5397c39"
+    },
+    {
+      "states": 9,
+      "symbols": 7,
+      "table": "2RH3LB2LH2RA4LB4RI6LH_1LH3RB1LD2RA3LF5RB3RC_3RB1LB3LC2RC4LC1LE3RD_3RB3RE3LC2RC3LC3RD3RE_5RB3RE4RG4LC3LG5LE2RA_5RB5RB6RD1LF5LF5LF6RE_5LF4RG1LB1LG6RI5LG2LH_1LF6RC1LH1LH2LH5RG5LE_1RZ5LI6LI6LI6LI5RB1RZ",
+      "kind": "unverified",
+      "runtime": ">fω2+3(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-9x7-2ae665135d3b"
+    },
+    {
+      "states": 10,
+      "symbols": 7,
+      "table": "2RH3LB2LH2RA4LB4RI6LH_4RJ3RB1LD2RA3LF5RB3RC_3RB1LB3LC2RC4LC1LE3RD_3RB3RE3LC2RC0LD3RD3RE_5RB3RE4RG4LC3LG5LE2RA_5RB1RJ1RD1LF5LF5LF1RZ_5LF4RG1LB1LG4LG5LG2LH_2RG2RF1LH1LH2LH5RG1RZ_1RZ5LJ1LI1LI1LI5RH1RZ_4LG5LA6LJ6LJ6LJ5RB1RZ",
+      "kind": "unverified",
+      "runtime": ">fω2+4(4)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-10x7-6bc9971a1336"
+    },
+    {
+      "states": 11,
+      "symbols": 7,
+      "table": "0LB3LB4LH2RA3LK1RZ---_5LI3RB1LD2RA---2LB5LG_3RB1LB3LC2RC---------_5RE1LD3LC2RC---3LE3LD_3RB5RE2RE4RF1LB5RE---_1LG1RF3LG6RF4LG0LA---_5RJ0LH------4LD5LG2LI_3RE1LH4LH2LH4LH1LG3LH_0LD1LI---0LD4LI3LG3LI_5LB1RJ---6RJ4RF5RJ---_3RB1LK1LK1LK---0LI---",
+      "kind": "unverified",
+      "runtime": ">fωω+1(30)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-11x7-846e85b9fda9"
+    },
+    {
+      "states": 17,
+      "symbols": 7,
+      "table": "1LL5LQ2LB------5RA---_0LH2LB2RB3RB2RB4RB1RB_3LC2LC0RE0RD5LP5LC3LC_5LC---1RD6RD---5RD---_0LF---2RE3RE---5RE---_0RH---1LD3RH---0LG---_2LC---2LG3LG---5LG---_3RM---0LC0LH2LC0LN---_2RN---2LI3LI---------_2LK---2RJ3RJ4RJ------_3RN---2LK3LK4LK2RN---_3LK5RB2RL3RL4RL6LL5RO_4LI---2LM3LM5LN5LM---_5RA0LQ5RJ0RL4LM4RO1RN_4LI5RQ2RO3RO0RO5RO1RZ_5RA0LQ2LP3LP5LP5LP---_1RN6LQ---------1LQ---",
+      "kind": "unverified",
+      "runtime": ">fε0+1(65534)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-17x7-ca4b90ba5001"
+    },
+    {
+      "states": 20,
+      "symbols": 7,
+      "table": "6LF---0RF0RD1LN6RF---_1RZ1RB2LC4RF1RB5LC3LP_0LI4RC2RC3RC2RC5RC5RC_1LE1RD2RD3RD---5RD---_3LA1LE2LE3LE4LF5LE---_0LG1RF2RF3RF6LJ5RF5LH_0RI0LH5LN3RI------6RI_2LA1LH2LH3LH6LM5LH5LA_3RP---0LA0LI---2LS---_2RO5RO2LJ3LJ2RH5LJ1RF_2LL---2RK3RK4RK5RK6RK_3RO2RO2LL3LL4LL5LL6LL_3LL6LO2RM3RM4RM5RM6RM_1RB1LN2LN3LN1LO5LN5RE_1RB4RP1RK0RM4LN0RQ6LN_4LJ1RP2RP3RP0RP5RP6RP_5LR---2RQ3RQ4RQ5RQ6RQ_5RO---2LR3LR4LR5LR6LR_1RB4RT2LS3LS4LS5LS---_2LS---2RT3RT4RT5RT---",
+      "kind": "unverified",
+      "runtime": ">fε1(20)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-20x7-e42d13d91d18"
+    },
+    {
+      "states": 21,
+      "symbols": 7,
+      "table": "6LF---0RF0RD1LN6RF---_1RZ1RB2LC4RF1RB5LC3LP_0LI4RC2RC3RC2RC5RC5RC_1LE1RD2RD3RD---5RD---_3LA1LE2LE3LE5LU5LE---_0LG1RF2RF3RF6LJ5RF5LH_0RI0LH---3RI------6RI_2LA1LH2LH3LH6LM5LH5LA_3RP---0LA0LI---2LS---_2RO5RO2LJ3LJ---5LJ1RF_2LL---2RK3RK4RK5RK6RK_3RO2RO2LL3LL4LL5LL6LL_3LL6LO2RM3RM4RM5RM6RM_1RB1LN2LN3LN1LO5LN4RE_1RB4RP1RK0RM4LN0RQ6LN_4LJ1RP2RP3RP0RP5RP6RP_5LR---2RQ3RQ4RQ5RQ6RQ_5RO---2LR3LR4LR5LR6LR_1RB4RT2LS3LS4LS5LS---_2LS---2RT3RT4RT5RT---_---------4RA6RH------",
+      "kind": "unverified",
+      "runtime": ">fε1(21)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-21x7-31f59e1191a5"
+    },
+    {
+      "states": 3,
+      "symbols": 8,
+      "table": "7LC3LB5LA2RA4LB4LC5LA6LA_1RZ3RB1LC2RA3RB4LC6LC2LC_3RB1LB3LC2RC4LC7RA6LC5RA",
+      "kind": "unverified",
+      "runtime": ">fω+12(fω(30))",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x8-b943f6097d43"
+    },
+    {
+      "states": 4,
+      "symbols": 8,
+      "table": "5LC3LB7LA2RA4LB1LB4LB6LA_1RZ3RB1LC2RA3RD3RA4LC0RD_3RB1LB3LC2RC4LC7LC5LD7RA_3RB3LA6LC4LD4LC4LD6LC7LA",
+      "kind": "unverified",
+      "runtime": ">fω+4(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x8-06cc266e17ed"
+    },
+    {
+      "states": 6,
+      "symbols": 8,
+      "table": "5RE3LB7LF2RA4LB6LF1RZ5RF_5LE3RB1LD2RA3LF7RC3LB3RA_3RB1LB3LC2RC4LC0LE6LE5LF_3RB6RD3LC2RC5LA3RE2LE1LB_5RC3RE2RA4LC6RA5LA2LE3RE_5RB7RD1LF1LF5RA5RF5LE0RD",
+      "kind": "unverified",
+      "runtime": ">fω×2+2(11)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x8-0684537338d2"
+    },
+    {
+      "states": 7,
+      "symbols": 8,
+      "table": "7LD3LB6LA2RA4LB5RC5LA2LG_1RZ3RB1LD2RA3LF5RB6LD4RG_3RB1LB3LC2RC4LC1LE5RB3RF_3RB3RE3LC2RC7RB3RD1LA7LD_5RB3RE7RD4LC3LG5LE0LA1LG_5RB5RB2RA1LF2LA5LF5RD7LF_5LF3LA7LA1LG7LA5LG7RD0RG",
+      "kind": "unverified",
+      "runtime": ">fω2+2(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x8-ccc2ae2fe4ac"
+    },
+    {
+      "states": 8,
+      "symbols": 8,
+      "table": "6RH3LB1RZ2RA3LG---4LB6LC_7RH3RB1LD2RA4LF0LC2LD7LB_3RB1LB3LC2RC4LC1LC3LC1LB_7RE---3LC2RC4LD1LD3LD3LB_3RB7RE0LA4RF---------7RE_1LB5RF3LB6RF4LB1LF3LF3LE_3RB1LG1LG1LG------------_2LB5RH4LA6RH4RF------7RH",
+      "kind": "unverified",
+      "runtime": ">fωω(245)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-8x8-7d9f29dc2ed7"
+    },
+    {
+      "states": 9,
+      "symbols": 8,
+      "table": "0LB3LB4LE2RA3LG1RZ------_7RH3RB1LD2RA4LF0LC2LD7LB_3RB1LB3LC2RC4LC1LC3LC1LB_7RE---3LC2RC4LD1LD3LD3LB_3RB7RE1LI4RF---1LC---7RE_1LB5RF3LB6RF4LB1LF3LF3LE_3RB1LG1LG1LG---2LG---2LI_5LG5RH---6RH4RF---2LG7RH_3RI3LB2RI2LI---5RH---6LC",
+      "kind": "unverified",
+      "runtime": ">fωω+1(103)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-9x8-747b68b8b4fc"
+    },
+    {
+      "states": 19,
+      "symbols": 8,
+      "table": "6LL---0RF0RD1LN6RF------_1RZ1RB2LC5LK1RB5LC7LK---_0LI4RC2RC3RC2RC5RC5RC5RC_1LE1RD2RD3RD6RF5RD6LJ7RQ_3LA1LE2LE3LE---5LE---6LN_0LG1RF2RF3RF6LJ5RF------_0RI0LH1LR3RI---5RP6RI---_2LA1LH2LH3LH7LP5LH5LA---_3RP---0LA0LI1LF2LR------_2RO5RO2LJ3LJ---5LJ1RF6RG_2LL7RD2RK3RK4RK5RK6RK---_3RO2RO2LL3LL4LL5LL6LL5RO_3LL4RO2RM3RM4RM5RM6RM---_1RB1LN2LN3LN1LO5LN7RE4LF_1RB4RP1RK0RM4LN7RQ6LN1LB_4LJ1RP2RP3RP0RP5RP6RP7LM_5LL---2RQ3RQ4RQ5RQ6RQ---_1RB4RS2LR3LR4LR5LR7LR4LN_2LR---2RS3RS4RS5RS------",
+      "kind": "unverified",
+      "runtime": ">fε1(9)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-19x8-c3e418d040a6"
+    },
+    {
+      "states": 3,
+      "symbols": 9,
+      "table": "7LC3LB5LA2RA4LB4LC5LA8RC6LB_1RZ3RB1LC2RA3RB4LC6LC8LC8RC_3RB1LB3LC2RC4LC8LB6LC5RB7RA",
+      "kind": "unverified",
+      "runtime": ">fω+2(4)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-3x9-187854738650"
+    },
+    {
+      "states": 4,
+      "symbols": 9,
+      "table": "5LC3LB7LA2RA4LB8LB4LB6LA7RA_1RZ3RB1LC2RA3RD3RA4LC0LC2LA_3RB1LB3LC2RC4LC5LC5LD8LC3RA_3RB---6LC4LD4LC4LD6LC7LA---",
+      "kind": "unverified",
+      "runtime": ">fω+4(12)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-4x9-a3f00a67a24c"
+    },
+    {
+      "states": 5,
+      "symbols": 9,
+      "table": "8LC3RA1LD2RB---7LE4LD3LC0RC_1RZ3LA1LD2RB6LE3LC5RB7LA---_3RA1LA3LC2RC---1LC1LC7LC7RD_6RE2RA3LC2RC4LE6LD5RD6LB7LD_8RA5RE1LE5LE6RE4LD5RB5LE1LD",
+      "kind": "unverified",
+      "runtime": ">fω×2+1(80)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-5x9-cef0256e5843"
+    },
+    {
+      "states": 6,
+      "symbols": 9,
+      "table": "8LE3LB7LF2RA4LB6LF1RZ1LC8LF_6LE3RB1LD2RA3LF2RA3LB3RA8RD_3RB1LB3LC2RC4LC0LE5LC3RB6RE_3RB6RD3LC2RC5LC3RE2LE1LB5LC_5RC3RE2RA4LC8LE8RE2LE3RE1RB_5RB7RD1LF1LF8LE5RF8RE1RZ8RB",
+      "kind": "unverified",
+      "runtime": ">fω×2+3(6)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-6x9-2eea0f7b27da"
+    },
+    {
+      "states": 7,
+      "symbols": 9,
+      "table": "8RG3LB6LA2RA4LB5RC5LA2LG7LE_1RZ3RB1LD2RA3LF5RB6LD1RZ5LD_3RB1LB3LC2RC4LC1LE5RB3RF3RD_3RB3RE3LC2RC7LF3RD1LA2RA8LE_5RB3RE8LA4LC3LG5LE1RZ1RZ3LA_5RB5RB2RA1LF8LF5LF1RZ1RF8LC_5LF4RG7LA1LG8RC5LG1LC4RF8RG",
+      "kind": "unverified",
+      "runtime": ">fω2+3(7)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-7x9-b87bb84d1ac1"
+    },
+    {
+      "states": 20,
+      "symbols": 9,
+      "table": "6LF---0RF0RD1LN6RF---5LN---_1RZ1RB2LC4RF1RB5LC3LP---8RO_0LI4RC2RC3RC2RC5RC5RC5RC5RC_1LE1RD2RD3RD---5RD---------_3LA1LE2LE3LE---5LE---------_0LG1RF2RF3RF6LJ5RF5LH------_0RI0LH---3RI------6RI------_2LA1LH2LH3LH6LM5LH5LA------_3RP---0LA0LI8LO2LS---------_2RO5RO2LJ3LJ---5LJ1RF------_2LL---2RK3RK4RK5RK6RK------_3RO2RO2LL3LL4LL5LL6LL------_3LL6LO2RM3RM4RM5RM6RM------_1RB1LN2LN3LN1LO5LN5LI---7RA_1RB4RP1RK0RM4LN0RQ6LN------_4LJ1RP2RP3RP0RP5RP6RP------_5LR---2RQ3RQ4RQ5RQ6RQ------_5RO---2LR3LR4LR5LR6LR------_1RB4RT2LS3LS4LS5LS---------_2LS---2RT3RT4RT5RT---------",
+      "kind": "unverified",
+      "runtime": ">fε1(21)",
+      "sources": [
+        {
+          "url": "https://wiki.bbchallenge.org/wiki/Champions"
+        }
+      ],
+      "id": "beaver-20x9-b768fccee87a"
+    }
+  ],
+  "references": [
+    {
+      "states": 48,
+      "symbols": 2,
+      "kind": "unverified",
+      "runtime": ">fε1(3)",
+      "links": [
+        "https://discord.com/channels/960643023006490684/1331570843829932063/1567585091172040726"
+      ],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 1015,
+      "symbols": 2,
+      "kind": "unverified",
+      "runtime": ">D5(99) = Loader's Number",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 67,
+      "symbols": 2,
+      "kind": "conditional",
+      "runtime": ">q81(q(5)−2)",
+      "links": [
+        "https://wiki.bbchallenge.org/wiki/Talk:Champions"
+      ],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 36,
+      "symbols": 3,
+      "kind": "unverified",
+      "runtime": ">fε0(7)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 37,
+      "symbols": 3,
+      "kind": "unverified",
+      "runtime": ">fε0(373676378)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 31,
+      "symbols": 4,
+      "kind": "unverified",
+      "runtime": ">fε0(373676378)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 94,
+      "symbols": 5,
+      "kind": "unverified",
+      "runtime": ">fψ0(Ω2)(1.7⋅10352)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 61,
+      "symbols": 6,
+      "kind": "unverified",
+      "runtime": ">fψ0(Ω2)(1.7⋅10352)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 46,
+      "symbols": 7,
+      "kind": "unverified",
+      "runtime": ">fψ0(Ω2)(1.7⋅10352)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 134,
+      "symbols": 7,
+      "kind": "unverified",
+      "runtime": ">fψ0(Ωω)(2050)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    },
+    {
+      "states": 42,
+      "symbols": 9,
+      "kind": "unverified",
+      "runtime": ">fψ0(Ω2)(1.7⋅10352)",
+      "links": [],
+      "source": "https://wiki.bbchallenge.org/wiki/Champions"
+    }
+  ]
+}

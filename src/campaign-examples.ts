@@ -9,7 +9,7 @@ export const campaignExamples: Record<string, ExampleProject> = Object.fromEntri
   { ...level.starter, category: "关卡示例", campaignLevelId: level.id, name: level.title,
     input: level.cases.find(item => item.input === level.starter.input)?.input ?? level.cases.at(-1)!.input,
     description: `${level.concept} ${level.lesson.explanation} 完整参考程序；在实验台运行不会改变关卡进度。`,
-    maxSteps: level.maxSteps > 1000000 ? null : level.maxSteps,
+    maxSteps: level.starter.maxSteps === null || level.maxSteps > 1000000 ? null : level.maxSteps,
     rules: compactRuleArrows([
       `# ${level.title}`, `# ${level.objective}`, `# ${level.lesson.explanation}`,
       ...level.lesson.steps.map((step, index) => `# ${index + 1}. ${step}`),

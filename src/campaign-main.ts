@@ -1,5 +1,5 @@
 import "./campaign-styles.css";
-import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, normalizeCampaignProgress, resetDraft, uncompleteLevel, type CampaignLevel, type CampaignProgress, type CampaignVerification } from "./campaign";
+import { campaignLevels, campaignSections, completeLevel, emptyCampaignProgress, isLevelUnlocked, nextCampaignLevel, normalizeCampaignProgress, normalizeCampaignDraft, campaignMigrationConflict, resetDraft, uncompleteLevel, type CampaignLevel, type CampaignProgress, type CampaignVerification } from "./campaign";
 import { parseTransitions, resolveInitialState, type MachineDefinition } from "./core";
 import { attachSpaceIndentation, insertAtSelection } from "./text-insertion";
 import { attachRuleDiagnostics } from "./rule-diagnostics";
@@ -9,7 +9,8 @@ import { compactRuleArrows } from "./rule-format";
 import { downloadFile } from "./download-file";
 import { campaignTopics, campaignTopicFor } from "./campaign-topics";
 import { captureExistingLocalSaves, queueArchive, saveArchive } from "./local-archive";
-import { attachLocalArchive } from "./local-archive-view";
+import { attachLocalArchive, openArchivePage } from "./local-archive-view";
+import { functionHeader } from "./function-parameters";
 
 const STORAGE_KEY = "turing-machine-simulator.campaign.v1";
 const localArchiveReady = captureExistingLocalSaves();
@@ -29,9 +30,9 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
     </header>
     <main class="course-layout">
       <nav class="level-sidebar" aria-label="教学关卡">
-        <div class="sidebar-heading"><strong>学习路线 · ${campaignLevels.length} 关</strong><small>${campaignTopics.length} 类主题 · 可按内容和学习阶段筛选</small></div>
+        <div class="sidebar-heading"><strong>学习路线 · ${campaignLevels.length} 关</strong><small>保留原顺序 · 连续划分 ${campaignTopics.length} 个章节</small></div>
         <div class="level-filters">
-          <label>主题分类<select id="levelTopic"><option value="all">全部主题（${campaignTopics.length} 类）</option>${campaignTopics.map(topic => `<option value="${topic.id}">${topic.title}</option>`).join("")}</select></label>
+          <label>学习章节<select id="levelTopic"><option value="all">全部章节（${campaignTopics.length} 章）</option>${campaignTopics.map(topic => `<option value="${topic.id}">${topic.title}</option>`).join("")}</select></label>
           <label>学习阶段<select id="levelStage"><option value="all">全部阶段</option>${campaignSections.map(section => `<option value="${section.id}">${section.title}</option>`).join("")}</select></label>
         </div>
         <label class="level-search">搜索关卡或示例<input id="levelSearch" type="search" placeholder="函数、运算、数列……" /></label>
@@ -72,7 +73,8 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
 
         <div class="practice-grid">
           <section class="editor-card">
-            <div class="section-heading"><div><span>STEP 1</span><h3>编写规则</h3></div><div class="section-heading-actions"><small>草稿会自动保存</small><button type="button" id="resetDraft" class="button ghost">重置本关</button></div></div>
+            <div class="section-heading"><div><span>STEP 1</span><h3>编写规则</h3></div><div class="section-heading-actions"><small>草稿会自动保存</small><button type="button" id="transferRules" class="button ghost">转到实验台</button><button type="button" id="resetDraft" class="button ghost">重置本关</button></div></div>
+            <label for="labEntryMode">转到实验台时使用<select id="labEntryMode"><option value="draft">本关编写的规则</option><option value="previous">上次实验台内容</option><option value="example">当前关卡示例</option></select></label>
             <div class="fixed-config">
               <div><span>示例输入</span><code id="starterInput"></code></div>
               <div><span>初始状态</span><code id="starterState"></code></div>
@@ -84,10 +86,13 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
             <div class="symbol-keyboard" aria-label="规则符号键盘">
               <span>不会输入空白符？点这里</span>
               <button type="button" class="blank-key" data-insert-symbol="□" aria-label="插入空白符方框">□ <small>空白符</small></button>
-              ${[["->", "箭头"], [",", "逗号"], ["L", "左"], ["R", "右"], ["N", "不动"]].map(([symbol, label]) => `<button type="button" data-insert-symbol="${symbol}" aria-label="插入${label}">${symbol}</button>`).join("")}
+              ${[["->", "箭头"], ["L", "左"], ["R", "右"], ["N", "不动"]].map(([symbol, label]) => `<button type="button" data-insert-symbol="${symbol}" aria-label="插入${label}">${symbol}</button>`).join("")}
+              <div id="terminalStateKeys" class="terminal-state-keys" aria-label="终止状态快捷输入"></div>
+              <div id="functionNameKeys" class="function-name-keys" aria-label="函数名快捷输入"></div>
             </div>
             <p id="editorHelp" class="editor-help">格式：当前状态,读取符号-&gt;下一状态,写入符号,方向</p>
             <p id="ruleRecognition" class="rule-recognition" aria-live="polite"></p>
+            <p id="rulesTransferStatus" class="editor-help" role="status" hidden></p>
             <div id="editorError" class="editor-error" aria-live="polite"></div>
           </section>
 
@@ -101,6 +106,7 @@ document.querySelector<HTMLDivElement>("#campaign-app")!.innerHTML = `
             <button id="cancelVerification" class="button secondary" hidden>取消后台计算</button>
             <button type="button" id="undoCompleteNearSubmit" class="button secondary" hidden>撤销本关通关</button>
             <div id="verifyResult" class="verify-result" aria-live="polite">完成规则后再提交。</div>
+            <button type="button" id="nextLevel" class="button secondary">下一关</button>
           </aside>
         </div>
       </section>
@@ -161,7 +167,6 @@ function loadProgress(): CampaignProgress {
     const source = localStorage.getItem(STORAGE_KEY);
     if (!source) return emptyCampaignProgress();
     const loaded = normalizeCampaignProgress(JSON.parse(source));
-    try { if (JSON.stringify(loaded) !== source) localStorage.setItem(STORAGE_KEY, JSON.stringify(loaded)); } catch { /* Keep the restored text even if persistence is unavailable. */ }
     return loaded;
   } catch {
     return emptyCampaignProgress();
@@ -203,7 +208,10 @@ function definitionFromEditor(): MachineDefinition | null {
     byId("editorError").textContent = "当前可预习原理；完成前面的关卡后解锁练习。";
     return null;
   }
-  const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value, terminalConfig(level));
+  const source = byId<HTMLTextAreaElement>("rulesEditor").value;
+  const conflict = campaignMigrationConflict(level.id, source);
+  if (conflict) { byId("editorError").textContent = conflict; return null; }
+  const parsed = parseTransitions(normalizeCampaignDraft(level.id, source), terminalConfig(level));
   ruleDiagnosticView.update(parsed.errors);
   if (parsed.errors.length) {
     byId("editorError").textContent = parsed.errors.slice(0, 4).join("；");
@@ -218,9 +226,47 @@ function definitionFromEditor(): MachineDefinition | null {
   };
 }
 
+const lessonFunctionNames = new Map<string, string[]>();
+function collectFunctionNames(source: string): string[] {
+  return source.split(/\r?\n/).flatMap(line => {
+    const header = functionHeader(line.trim());
+    return header ? [header.name] : [];
+  });
+}
+
+function renderFunctionNameKeys(level: CampaignLevel, draft: string): void {
+  let prescribed = lessonFunctionNames.get(level.id);
+  if (!prescribed) {
+    prescribed = collectFunctionNames([level.starter.rules, ...level.lesson.syntax, solutionRules[level.id] ?? ""].join("\n"));
+    lessonFunctionNames.set(level.id, prescribed);
+  }
+  const names = [...new Set([...prescribed, ...collectFunctionNames(draft)])];
+  const host = byId("functionNameKeys");
+  host.replaceChildren();
+  if (names.length) {
+    const label = document.createElement("span");
+    label.textContent = "函数名";
+    host.append(label);
+  }
+  for (const name of names) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.dataset.insertSymbol = name;
+    button.textContent = name;
+    button.setAttribute("aria-label", `插入函数名 ${name}`);
+    button.title = `在光标处插入函数名 ${name}`;
+    button.disabled = !isLevelUnlocked(progress, level.id);
+    host.append(button);
+  }
+}
+
 function updateRuleRecognition(): void {
   const level = activeLevel();
-  const parsed = parseTransitions(byId<HTMLTextAreaElement>("rulesEditor").value, terminalConfig(level));
+  const source = byId<HTMLTextAreaElement>("rulesEditor").value;
+  renderFunctionNameKeys(level, source);
+  const conflict = campaignMigrationConflict(level.id, source);
+  if (conflict) { byId("editorError").textContent = conflict; byId("ruleRecognition").textContent = conflict; byId("ruleRecognition").classList.add("warning"); return; }
+  const parsed = parseTransitions(normalizeCampaignDraft(level.id, source), terminalConfig(level));
   ruleDiagnosticView.update(parsed.errors);
   byId("editorError").textContent = parsed.errors.slice(0, 4).join("；");
   const blankRules = parsed.transitions.filter((rule) => rule.readSymbol === level.starter.blankSymbol);
@@ -287,6 +333,11 @@ function render(): void {
   });
   const section = campaignSections.find((item) => item.id === level.section)!;
   const unlocked = isLevelUnlocked(progress, level.id);
+  const next = nextCampaignLevel(level.id);
+  const nextButton = byId<HTMLButtonElement>("nextLevel");
+  nextButton.hidden = !next;
+  nextButton.disabled = !next || !isLevelUnlocked(progress, next.id);
+  nextButton.textContent = next ? `下一关 · ${next.title.replace(/^第 \d+ 关 · /, "")}` : "下一关";
   byId("sectionBadge").textContent = `${campaignTopicFor(level).title} · ${section.title}`;
   byId("levelBadge").textContent = `第 ${index + 1} / ${campaignLevels.length} 关`;
   byId("levelTitle").textContent = level.title.replace(/^第 \d+ 关 · /, "");
@@ -317,7 +368,21 @@ function render(): void {
   const blankKey = document.querySelector<HTMLButtonElement>(".blank-key")!;
   blankKey.dataset.insertSymbol = level.starter.blankSymbol;
   blankKey.replaceChildren(document.createTextNode(`${level.starter.blankSymbol} `), Object.assign(document.createElement("small"), { textContent: "空白符" }));
-  byId<HTMLTextAreaElement>("rulesEditor").value = progress.drafts[level.id] ?? level.starter.rules;
+  const terminalKeys = byId("terminalStateKeys");
+  terminalKeys.replaceChildren();
+  for (const [label, states] of [["停止", level.starter.haltStates], ["接受", level.starter.acceptStates], ["拒绝", level.starter.rejectStates]]) {
+    for (const state of states.split(",").map(name => name.trim()).filter(Boolean)) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.insertSymbol = state;
+      button.textContent = `${label} ${state}`;
+      button.setAttribute("aria-label", `插入${label}状态 ${state}`);
+      button.title = `在光标处插入 ${state}`;
+      terminalKeys.append(button);
+    }
+  }
+  byId<HTMLTextAreaElement>("rulesEditor").value = progress.drafts[level.id] ?? "";
+  byId("rulesTransferStatus").hidden = true;
   byId<HTMLTextAreaElement>("rulesEditor").readOnly = !unlocked;
   for (const id of ["tryExample", "verifyLevel", "resetDraft"]) byId<HTMLButtonElement>(id).disabled = !unlocked;
   document.querySelectorAll<HTMLButtonElement>("[data-insert-symbol]").forEach(button => { button.disabled = !unlocked; });
@@ -391,11 +456,25 @@ byId("levelList").addEventListener("click", (event) => {
   const button = (event.target as HTMLElement).closest<HTMLElement>("[data-level-id]");
   const levelId = button?.dataset.levelId;
   if (!levelId) return;
+  goToLevel(levelId);
+});
+
+function goToLevel(levelId: string): void {
   activeLevelId = levelId;
   const url = new URL(location.href);
   url.searchParams.set("level", levelId);
   history.replaceState(null, "", url);
   render();
+}
+
+byId("nextLevel").addEventListener("click", () => {
+  const next = nextCampaignLevel(activeLevelId);
+  if (!next || !isLevelUnlocked(progress, next.id)) return;
+  const topic = byId<HTMLSelectElement>("levelTopic"), stage = byId<HTMLSelectElement>("levelStage");
+  if (topic.value !== "all" && topic.value !== campaignTopicFor(next).id) topic.value = campaignTopicFor(next).id;
+  if (stage.value !== "all" && stage.value !== next.section) stage.value = next.section;
+  byId<HTMLInputElement>("levelSearch").value = "";
+  goToLevel(next.id);
 });
 
 attachSpaceIndentation(byId<HTMLTextAreaElement>("rulesEditor"));
@@ -461,8 +540,8 @@ byId("verifyLevel").addEventListener("click", () => {
       }
       progress = completeLevel(progress, level.id);
       const warning = saveProgress();
-      const next = campaignLevels.find(item => !progress.completedLevelIds.includes(item.id) && isLevelUnlocked(progress, item.id));
-      const completion = progress.completedLevelIds.length === campaignLevels.length ? `全部 ${campaignLevels.length} 关完成！` : next ? `可继续“${next.title}”。` : "本关已完成。";
+      const next = nextCampaignLevel(level.id);
+      const completion = progress.completedLevelIds.length === campaignLevels.length ? `全部 ${campaignLevels.length} 关完成！` : next ? isLevelUnlocked(progress, next.id) ? `可继续“${next.title}”。` : `下一关为“${next.title}”，完成前置练习后解锁。` : "已到学习路线末尾，可从列表补做未完成的关卡。";
       render();
       byId("verifyResult").textContent = `通过！${result.totalCount} 组测试全部正确。${completion}${warning ? ` ${warning}` : ""}`;
     });
@@ -502,9 +581,43 @@ function shortTitle(level: CampaignLevel): string {
   return level.title.replace(/^第 \d+ 关 · /, "");
 }
 
+byId("transferRules").addEventListener("click", async () => {
+  const button = byId<HTMLButtonElement>("transferRules");
+  if (button.disabled) return;
+  const status = byId("rulesTransferStatus");
+  const levelId = activeLevelId;
+  const level = activeLevel();
+  const mode = byId<HTMLSelectElement>("labEntryMode").value;
+  if (mode === "previous") {
+    const target = new URL("./", location.href);
+    target.searchParams.set("fromLevel", levelId);
+    target.searchParams.set("example", `campaign-${levelId}`);
+    location.assign(target.href);
+    return;
+  }
+  const source = mode === "example" ? solutionRules[levelId] : byId<HTMLTextAreaElement>("rulesEditor").value;
+  const conflict = campaignMigrationConflict(levelId, source);
+  if (conflict) { status.hidden = false; status.textContent = conflict; return; }
+  const rules = normalizeCampaignDraft(levelId, source).split(/\r?\n/)
+    .filter(line => line.trim() && !line.trimStart().startsWith("#")).join("\n");
+  status.hidden = false;
+  if (!rules) { status.textContent = "当前没有可转到实验台的规则。"; return; }
+  button.disabled = true;
+  status.textContent = "正在转到实验台……";
+  try {
+    const entry = await saveArchive({ kind: "project", title: `${shortTitle(level)} · ${mode === "example" ? "当前示例" : "我的规则"}`, content: JSON.stringify({
+      ...level.starter, rules, campaignLevelId: levelId, format: "turing-machine-simulator", version: 1,
+      maxSteps: level.starter.maxSteps === null || level.maxSteps > 1000000 ? null : level.maxSteps, speed: 5,
+    }) }, "从关卡转到实验台");
+    openArchivePage(entry, levelId);
+  } catch (error) {
+    if (activeLevelId === levelId) status.textContent = error instanceof Error ? error.message : "转到实验台失败。";
+  } finally { button.disabled = false; }
+});
+
 byId("resetDraft").addEventListener("click", () => {
   const level = activeLevel();
-  askConfirm(`重置本关会清空「${shortTitle(level)}」的草稿，恢复为初始提示。`, "确认重置", async () => {
+  askConfirm(`重置本关会清空「${shortTitle(level)}」的草稿，编辑器将留空。`, "确认重置", async () => {
     try { await saveArchive({ kind: "campaign", title: "重置前的关卡进度与解法", content: JSON.stringify(progress) }, "重置前备份"); }
     catch { byId("editorError").textContent = "未能备份草稿，尚未重置，请先下载备份。"; return; }
     progress = resetDraft(progress, level.id);

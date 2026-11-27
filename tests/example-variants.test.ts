@@ -14,7 +14,7 @@ function compile(project: ExampleProject, source = project.rules) {
 
 // λ 两例是 6 万多条规则的生成机，整套变体超过 40 秒，单独放在 lambda-variants.test.ts 里按组合拆分。
 const heavy = new Set(["lambda", "campaign-example-lambda"]);
-it.each(Object.entries(examples).filter(([key]) => !heavy.has(key)))("preserves all state-name and structure variants of %s", (_key, project) => {
+it.each(Object.entries(examples).filter(([key, project]) => !heavy.has(key) && !project.unavailableReason))("preserves all state-name and structure variants of %s", (_key, project) => {
   const baseline = compile(project);
   expect(exampleVariant(project, "descriptive", "original")).toBe(project);
   for (const names of ["descriptive", "numeric"] as const) for (const structure of ["original", "flat", "functions"] as const) {

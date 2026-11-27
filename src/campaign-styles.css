@@ -41,7 +41,7 @@ button { cursor: pointer; }
 .level-button.completed > span { background: #168963; color: white; }
 .level-button.locked { color: #758294; cursor: pointer; }
 .level-button.locked:hover { background: #f4f7fb; border-color: #d4dde8; }
-.lesson-workspace { min-width: 0; display: grid; gap: 16px; }
+.lesson-workspace { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .save-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 9px 16px; padding: 14px 20px; }
 .save-card strong { font-size: 14px; }
 .save-card p { margin: 3px 0 0; color: #718093; font-size: 11px; line-height: 1.5; }
@@ -89,9 +89,12 @@ textarea[readonly] { background: #f3f5f8; color: #718093; }
 .fixed-config span { display: block; color: #7b8796; font-size: 10px; }
 .fixed-config code { display: block; margin-top: 3px; color: #26364b; font-weight: 700; }
 .editor-card label { display: block; margin-bottom: 6px; color: #526075; font-size: 12px; font-weight: 700; }
+.editor-card #labEntryMode { display: block; width: 100%; margin: 6px 0 12px; padding: 8px; border: 1px solid #cbd6e2; border-radius: 8px; background: white; font: inherit; color: #26364b; }
 textarea { width: 100%; min-height: 270px; padding: 13px; border: 1px solid #cbd6e2; border-radius: 10px; resize: vertical; font: 13px/1.7 "Cascadia Code", Consolas, monospace; color: #1e293b; }
 textarea:focus { outline: 2px solid #58c89f; outline-offset: 1px; }
 .symbol-keyboard { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 9px; }
+.terminal-state-keys, .function-name-keys { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; max-width: 100%; }
+.terminal-state-keys button, .function-name-keys button { overflow-wrap: anywhere; text-align: left; }
 .symbol-keyboard span { margin-right: 2px; color: #7b8796; font-size: 11px; font-weight: 700; }
 .symbol-keyboard button { min-width: 38px; min-height: 38px; padding: 6px 10px; border: 1px solid #cbd6e2; border-radius: 8px; background: #f7fafc; color: #26364b; font-family: "Cascadia Code", Consolas, monospace; font-weight: 800; }
 .symbol-keyboard .blank-key { display: inline-flex; align-items: center; gap: 6px; border-color: #58c89f; background: #edf9f4; color: #126b4b; }

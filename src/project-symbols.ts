@@ -88,7 +88,7 @@ export function renameProjectSymbol(project: SymbolProject, parsed: ParseResult,
     if (!content || content.startsWith("#") || !content.includes(",")) return line;
     const header = parsed.hasFunctions ? mapSymbolParameters(line, map) : line;
     if (header !== line || !content.includes("->")) return header;
-    if (parsed.hasFunctions && /^(?:ret|返回状态|导出状态)(?:\s|:)/.test(content)) return line;
+    if (parsed.hasFunctions && /^(?:ret|pub|返回状态|导出状态)(?:\s|:)/.test(content)) return line;
     const [rule] = parseTransitions(content).transitions;
     return rule && (rule.readSymbol === from || rule.writeSymbol === from)
       ? line.slice(0, line.length - content.length) + rewrite(rule) : line;

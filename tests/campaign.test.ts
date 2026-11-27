@@ -21,8 +21,8 @@ function definitionFor(levelIndex: number): MachineDefinition {
 describe("campaign verification", () => {
   it("provides a three-section curriculum including every built-in example", () => {
     expect(campaignSections.map((section) => section.id)).toEqual(["tutorial", "challenge", "hard"]);
-    expect(campaignLevels).toHaveLength(78);
-    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([40, 19, 19]);
+    expect(campaignLevels).toHaveLength(79);
+    expect(campaignSections.map((section) => campaignLevels.filter((level) => level.section === section.id).length)).toEqual([40, 19, 20]);
     expect(campaignLevels.map((level) => level.id).every((id, index, ids) => ids.indexOf(id) === index)).toBe(true);
   });
   it("keeps every original level id and its saved completion/draft", () => {
@@ -127,7 +127,7 @@ describe("campaign progress", () => {
       version: 1,
       completedLevelIds: [],
       drafts: { "write-one": "q0,□ -> HALT,1,N", unknown: "answer", "erase-one": 42 },
-    }).drafts).toEqual({ "write-one": "q0,□->HALT,1,N" });
+    }).drafts).toEqual({ "write-one": "q0,□ -> HALT,1,N" });
   });
 });
 
@@ -209,7 +209,7 @@ describe("campaign reset and undo", () => {
       drafts: {},
     });
     expect(progress.completedLevelIds).toEqual(["write-one", "erase-one"]);
-    expect(isLevelUnlocked(progress, campaignLevels[4].id)).toBe(true);
+    expect(isLevelUnlocked(progress, "erase-unary")).toBe(true);
     expect(isLevelUnlocked(progress, "unknown")).toBe(false);
   });
 });

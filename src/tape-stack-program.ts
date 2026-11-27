@@ -128,7 +128,7 @@ export class TapeStackProgram {
     return this.take(stack, () => loop, next, loop);
   }
 
-  readInput(stack: TapeStack, next: string, rejectUnknown = true): void {
+  readInput(stack: TapeStack, next: string, rejectUnknown = true, normalizeSpaces = true): void {
     const scan = `${this.code}.i`, rewind = `${scan}.r`, ready = `${scan}.f`;
     const mark = `${scan}.o`, back = `${scan}.b`;
     this.explain(this.start, () => ({ purpose: "在不破坏输入的情况下，给工作区建立原点。", read: "允许初始读到任意符号，当前格属于用户输入。", write: "保持输入原样；这一条尚未进行算术。", move: "左移到输入前一格，给原点界标留位置。", next: "下一状态只负责在这格空白处写原点。" }));
@@ -155,7 +155,7 @@ export class TapeStackProgram {
       const put = `${scan}.${index}`;
       this.explain(put, rule => ({ purpose: `把已经记住的输入值 ${JSON.stringify(value)} 保存到 ${this.stackName(stack)}。`, read: rule.readSymbol ? "工作区左端的空白可放新栈项。" : "当前还在已有数据上，不能覆盖它。", write: rule.readSymbol ? `写入带 ${stack.name} 身份的 ${JSON.stringify(value)}，原始字符至此得到保存。` : "保持已有数据，继续寻找可写空白。", move: rule.readSymbol ? "右移开始回到原输入区。" : "继续向左找工作区边界。", next: rule.readSymbol ? "进入返回原点的状态，再扫描下一个输入字符。" : "保留记住的字符值，继续寻找写入位置。" }));
       this.rule(scan, value, put, this.consumed, "L");
-      if (value === " ") {
+      if (value === " " && normalizeSpaces) {
         for (const space of ["\u3000", "\u00a0", "\t"]) this.rule(scan, space, put, this.consumed, "L");
       }
       this.rule(put, "", put, "", "L");

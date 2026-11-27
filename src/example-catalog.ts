@@ -8,6 +8,8 @@ import { lambdaExample } from "./lambda-example";
 import { binaryExamples } from "./binary-examples";
 import { shortUnaryProject } from "./unary-state-names";
 import { bfPresets, makeBrainfuckProject } from "./brainfuck";
+import { sequenceExamples } from "./sequence-examples";
+import { makeUniversalTextProject } from "./universal-machine";
 
 import type { ExampleProject } from "./examples";
 
@@ -41,9 +43,11 @@ const exampleDefinitions: Record<string, ExampleProject> = {
   ...binaryExamples,
   lambda: lambdaExample,
   brainfuck: makeBrainfuckProject(bfPresets.letter.source),
+  universal: makeUniversalTextProject(),
   ...hyperoperationExamples,
   ...inverseOperationExamples,
   ...conjectureExamples,
+  ...sequenceExamples,
 };
 
 export const builtinExamples: Record<string, ExampleProject> = Object.fromEntries(Object.entries(exampleDefinitions).map(([id, project]) => {

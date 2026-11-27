@@ -14,14 +14,12 @@ import { RouteTraceView } from "./route-trace-view";
 import { renderExecutionLog } from "./execution-log";
 import { loadProject, parseProjectJson, saveProject, type ProjectData } from "./project-codec";
 import { shuffled } from "./shuffle";
-import { compileGijswijtMachine, readGijswijtOutput } from "./gijswijt-tm";
 import { editRuleSource } from "./rule-source";
 import { renderRuleRows } from "./rule-table";
 import { collectProjectSymbols, renameProjectSymbol } from "./project-symbols";
 import { attachNameTable } from "./name-table";
 import { collectProjectStates, renameProjectState } from "./project-states";
 import { visibleTapeSymbol } from "./symbol-annotations";
-import { attachDirectGijswijt } from "./gijswijt-direct";
 import { attachLambdaCalculator } from "./lambda-direct";
 import { loadSpeedPreference, saveSpeedPreference } from "./speed-preference";
 import { editorFields, loadEditorDraft, saveEditorDraft } from "./editor-draft";
@@ -31,16 +29,24 @@ import { createRoutePalette, routeHeadColor, ROUTE_BLANK_COLOR } from "./route-c
 import { exampleVariant, type ExampleNames, type ExampleStructure } from "./example-variants";
 import { migrateUnaryExample } from "./unary-example-migration";
 import { requestDownload } from "./download";
-import { captureExistingLocalSaves, saveArchive } from "./local-archive";
+import { captureExistingLocalSaves, readArchive, saveArchive } from "./local-archive";
 import { attachLocalArchive } from "./local-archive-view";
-import { makeUniversalProject, readUniversalAlphabet, readUniversalResult, splitUniversalSource, universalDefault, universalMaxBudget } from "./universal-machine";
-import { universalHalt, universalReject, universalStart } from "./universal-tape";
+import { hasUniversalTerminalNameOutput, isUniversalTextProject, makeUniversalTextProject, readUniversalAlphabet, readUniversalResult, validateUniversalTextSource } from "./universal-machine";
+import { universalStart } from "./universal-tape";
 import { bfBlank, bfPresets, bfStart, makeBrainfuckProject, readBrainfuckOutput, readBrainfuckSource } from "./brainfuck";
-import { lambdaBeta, lambdaLimit, makeLambdaProject, migrateLambdaInput, readLambdaOutput, readLambdaSource } from "./lambda-local";
+import { lambdaBeta, makeLambdaProject, migrateLambdaInput, readLambdaOutput, readLambdaSource } from "./lambda-local";
+import { shortCampaignProject } from "./campaign-terminals";
+import { keyboardCampaignProject } from "./campaign-keyboard";
 import { fullTapeDisplay, tapeDisplayPositions } from "./tape-display";
 
 const STORAGE_KEY = "turing-machine-simulator.project.v1";
+const PREVIOUS_PROJECT_KEY = "turing-machine-simulator.previous-lab.v1";
+const ORIGIN_KEY = "turing-machine-simulator.lab-origin.v1";
 const localArchiveReady = captureExistingLocalSaves();
+let previousLabProject: ProjectData | null = null;
+let previousProjectRevision = 0;
+let currentOriginLevelId: string | undefined;
+let exampleLoading = false;
 let machine: TuringMachine | null = null;
 let records: StepRecord[] = [];
 let status = "就绪";
@@ -52,8 +58,8 @@ let selectedTileId: string | null = null;
 let solutionVisible = false;
 let tileOrder: string[] = [];
 let tapeScroll = 0;
-let appliedGijswijtThreshold: number | null = null;
 let appliedUniversalAlphabet: ReturnType<typeof readUniversalAlphabet>;
+let appliedUniversalTextInput: string | undefined;
 let appliedBrainfuck: ReturnType<typeof readBrainfuckSource>;
 let bfProjectSource: { source: string; input: string; rules: string; tape: string } | undefined;
 let lambdaProjectSource: { source: string; capacity: number; betaState?: string; rules: string; tape: string } | undefined;
@@ -80,7 +86,10 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <div class="brand"><div class="brand-mark">TM</div><div><h1>图灵机实验台</h1><p>单纸带 · 确定性 · 可编程</p></div></div>
       <div class="toolbar">
         <a class="campaign-link" href="./campaign.html">进入关卡</a>
+        <a id="returnToLevel" class="campaign-link" hidden>返回来源关卡</a>
         <a class="campaign-link" href="./principles.html">示例原理</a>
+        <a class="campaign-link" href="./rule110.html">转为规则 110</a>
+        <a class="campaign-link" href="./life.html">康威生命游戏</a>
         <button id="exportProject">导出项目</button>
         <button data-local-saves>本地存档</button>
         <button id="importProject">导入项目</button>
@@ -102,6 +111,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <div class="controls simulation-controls" role="toolbar" aria-label="图灵机运行控制">
           <button id="step" class="btn">单步</button>
           <button id="run" class="btn primary">运行</button>
+          <button id="runUniversal" class="btn" hidden>快速运行通用图灵机</button>
           <button id="pause" class="btn">暂停</button>
           <button id="reset" class="btn">重置</button>
           <label class="view-mode">纸带视角<select id="tapeViewMode"><option value="follow-head">跟随读写头</option><option value="fixed-zero">固定在 0</option><option value="free-drag">随意拖动</option><option value="show-all">显示全部</option></select></label>
@@ -111,7 +121,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <section class="panel editor">
           <div class="panel-title"><h2>机器定义</h2><small>每行一条规则：状态,符号 → 状态,符号,方向</small></div>
           <div class="form-grid">
-            <label>初始输入<textarea id="input" rows="1" spellcheck="false"></textarea></label>
+            <label>初始输入<textarea id="input" rows="1" spellcheck="false"></textarea><small id="universalInputHint" hidden>初始输入/空白符/初始状态/接受状态/拒绝状态/普通停机状态/规则第一行/规则第二行/…；空项保留 /，字面斜杠写 \\/。</small></label>
             <label>空白符<input id="blankSymbol" maxlength="2" /></label>
             <label>初始状态<input id="initialState" /></label>
             <div class="step-limit-field"><label for="maxSteps">最大步数</label><div class="step-limit-control"><input id="maxSteps" type="number" min="1" max="1000000" /><label class="max-steps-option"><input id="unlimitedSteps" type="checkbox" /> Max</label></div></div>
@@ -130,7 +140,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
 追加
 追加</pre>
             <p>初始输入填 111，普通停机状态填 HALT，结果是 11111。初始状态框可指定状态、函数或公开入口，留空才默认从首个顶格调用开始。原来的单状态定义仍兼容，默认走到普通停机态就退出；指定退出状态后，其它普通停机态会终止整个程序。此版本不支持递归。</p>
-            <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。普通子函数完成后续行，声明 ret 才返回父函数或外部对应状态。</p>
+            <p>q1 后可列子函数名，或写“局部名=函数名”，如 主函数(q0,q1,写=写一):。普通子函数完成后续行；调用处写 写->q1 可直接退出主函数，写 写->H 可直接停机（普通停机状态设为 H），也可用 ret 声明返回。</p>
             <p>前两个位置固定为初始状态、退出状态，后面才是参数：组合(q0,done,移动=右移,函数,完成=finish,状态,1,符号):。类型放在对应参数后面，用逗号分隔。函数或外部状态写 内部名=外部名；符号直接填 1,符号，不用另起内部符号名。移动 是函数调用，完成 则直接跳到外部 finish。仍只写 组合 调用，不带括号。未标类型的等号绑定先查函数，否则按外部状态处理；明确标了类型则核对该类型。函数、状态类型也支持 function/fn、state，符号类型支持 symbol/char。外部状态别名也可用于规则来源；合并后的实际规则不能重复。</p>
             <p>写入处用 * 保留读取符号，移动处用 * 表示不移动，函数里也一样。目标后只剩一项时，R/L 优先表示移动，其它值表示写入：q0,1-&gt;目标,R 保留 1 并右移；q0,1-&gt;目标,R,* 才写入字母 R、不移动。q0,1-&gt;目标,*,* 保留符号且不移动。写入与移动可分别留空。</p>
             <p>字面星号多写一个：** 表示字符 *，*** 表示两个星号组成的符号，依此类推。在读取、写入或符号参数中，用 \\s 表示一个普通空格，例如 q0,\\s-&gt;q1,1,R。N 在单字段简写中是写入字符，不是方向，明确不移动可写 *,N 或 *,*。</p>
@@ -173,14 +183,17 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <div id="ruleTable" class="rule-table"></div>
           <div id="ruleCount" class="hint" role="status"></div>
           <div class="editor-actions"><button id="apply" class="btn primary">应用并重置</button><button data-save-local class="btn">保存存档</button><button id="clear" class="btn danger">清空规则</button><span id="errors" class="error"></span></div>
+          <div id="universalResult" hidden><label for="universalOutput">通用图灵机输出（实际终态名称/当前结果）<textarea id="universalOutput" rows="2" readonly spellcheck="false"></textarea></label><p id="universalStatus" class="hint" role="status"></p></div>
           <div class="hint">快捷键：空格运行/暂停，Alt + → 单步，Ctrl + R 重置（输入框聚焦时不触发）。</div>
         </section>
         <aside class="side">
           <section class="panel">
             <div class="panel-title"><h2>示例程序</h2><small>${Object.keys(examples).length} 个</small></div>
             <select id="example" style="width:100%">
-              ${["一进制运算", "二进制运算", "函数教程", "基础示例", "猜想验证", "关卡示例"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
+              ${["一进制运算", "二进制运算", "函数教程", "基础示例", "数列生成", "猜想验证", "关卡示例", "忙碌海狸"].map((category) => `<optgroup label="${category}">${Object.entries(examples).filter(([, item]) => item.category === category).map(([key, item]) => `<option value="${key}">${item.name}</option>`).join("")}</optgroup>`).join("")}
             </select>
+            <label style="margin-top:10px">载入内容<select id="exampleLoadSource"><option value="example">当前示例</option><option value="previous" disabled>上次实验台内容（暂无记录）</option></select></label>
+            <p id="labHistoryStatus" class="hint" role="status">切换前的内容会自动保存，可选择上次内容再载入。</p>
             <label style="margin-top:10px">示例源码<select id="exampleSourceStyle"><option value="plain">无注释</option><option value="commented">有注释</option></select></label>
             <div id="exampleProgramOptions">
               <label style="margin-top:10px">状态名称<select id="exampleStateNames"><option value="descriptive">示例原名</option><option value="numeric">数字状态名</option></select></label>
@@ -188,7 +201,8 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               <p class="hint">适用于所有示例。公共函数只定义一次，各入口指定自己的续接状态；无重复块时保留原规则。选择后点击“加载此示例”。</p>
             </div>
             <p id="exampleNote" class="example-note"></p>
-            <p><a id="examplePrinciple" href="./principles.html">查看此示例的原理</a> · <a id="exampleCampaign" href="./campaign.html">练习此示例关卡</a></p>
+            <p id="exampleLearningLinks"><a id="examplePrinciple" href="./principles.html">查看此示例的原理</a> · <a id="exampleCampaign" href="./campaign.html">练习此示例关卡</a></p>
+            <p id="exampleRecordLinks" hidden><a id="exampleRecordSource" target="_blank" rel="noopener noreferrer">查看记录来源</a></p>
             <button id="loadExample" class="btn" style="width:100%">加载此示例</button>
           </section>
           <section class="panel">
@@ -219,26 +233,6 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
         <h3 class="tray-title">待拼瓷砖 <small>点击一块，再点击空格；也支持拖放</small></h3>
         <div id="tileTray" class="tile-tray"></div>
         <div id="puzzleMessage" class="puzzle-message" aria-live="polite"></div>
-      </section>
-      <section class="panel gijswijt-converter" aria-labelledby="gijswijtTitle">
-        <div class="sequence-mode-bar"><h2 id="gijswijtTitle">吉斯维杰特数列</h2><label for="sequenceMode">计算模式<select id="sequenceMode"><option value="tm">图灵机计算 · 规则与单步</option><option value="direct">直接计算 · 快速生成</option></select></label></div>
-        <div id="tmSequenceMode">
-        <div class="converter-heading">
-          <div><p>输入阈值，转换后的规则会显示在下方。点击上方“运行”开始计算；新项严格超过阈值时写出并停机，等于时继续。</p></div>
-          <div class="converter-actions"><label for="gijswijtThreshold">整数阈值（0–16）<input id="gijswijtThreshold" type="number" min="0" max="16" step="1" value="2" /></label><button id="compileGijswijt" class="btn primary">开始转换</button></div>
-        </div>
-        <p class="hint">0 表示未写入；数字表示数列项。计算时 |O、S、A、B 为比较标记，#数字记录本轮最大重复次数，停机时会清除。建议先试 2；阈值越大，运行可能极长。</p>
-        <p id="gijswijtCompileStatus" class="converter-status" role="status"></p>
-        <div id="gijswijtResult" hidden><label for="gijswijtOutput">已写入的数列（直接读取纸带）</label><textarea id="gijswijtOutput" readonly rows="3" spellcheck="false"></textarea><p id="gijswijtOutputStatus" class="hint" aria-live="polite"></p></div>
-        </div>
-        <div id="directSequenceMode" hidden>
-          <div class="converter-heading"><p>按最大重复后缀的定义快速生成数列。切换模式会保留当前页中两种模式各自的进度。</p></div>
-          <div class="direct-actions"><button id="directNext" class="btn">写入下一项</button><label for="directTarget">生成到第几项<input id="directTarget" type="number" min="1" step="1" value="30" /></label><button id="directGenerate" class="btn primary">批量生成</button><button id="directCancel" class="btn" disabled>取消</button><button id="directReset" class="btn">重置数列</button></div>
-          <p id="directStatus" class="converter-status" role="status"></p>
-          <div id="directTape" class="sequence-tape" aria-label="直接计算的数列纸带"></div>
-          <p class="hint">0 = 尚未写入；正整数 = 数列项。纸带显示最新 40 项，完整数列见下方。</p>
-          <label for="directOutput">完整数列</label><textarea id="directOutput" readonly rows="3" spellcheck="false"></textarea>
-        </div>
       </section>
       <section id="lambdaCalculator" class="panel gijswijt-converter" aria-labelledby="lambdaTitle">
         <div class="sequence-mode-bar"><h2 id="lambdaTitle">λ 表达式归约</h2><label for="lambdaMode">计算模式<select id="lambdaMode"><option value="direct">直接计算</option><option value="tm">图灵机计算</option></select></label></div>
@@ -275,33 +269,6 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
           <p id="bfStatus" class="hint" role="status"></p>
         </div>
       </section>
-      <section class="panel gijswijt-converter" aria-labelledby="universalTitle">
-        <div class="sequence-mode-bar"><h2 id="universalTitle">通用图灵机</h2></div>
-        <form id="universalForm">
-          <label for="universalSource">被模拟机器的转移规则<textarea id="universalSource" class="universal-source" rows="5" spellcheck="false"></textarea></label>
-          <p class="hint">每行一条规则，可以直接粘贴机器源码。初始纸带和状态在下方分别填写；纸带里的斜杠、反斜杠、逗号和换行都按原样读入。</p>
-          <div class="form-grid">
-            <label for="universalInput">初始纸带<textarea id="universalInput" rows="2" spellcheck="false"></textarea></label>
-            <label for="universalInitial">初始状态<input id="universalInitial" value="q0" /></label>
-            <label for="universalHalt">停止状态<input id="universalHalt" value="HALT" /></label>
-            <label for="universalAccept">接受状态<input id="universalAccept" placeholder="可留空" /></label>
-            <label for="universalReject">拒绝状态<input id="universalReject" placeholder="可留空" /></label>
-          </div>
-          <p class="hint">多个终态用 <code>|</code> 分隔。最多模拟步数可不填，留空则一直运行到目标机器停止，也可随时暂停。</p>
-          <div class="direct-actions">
-            <label for="universalBlank">空白符<input id="universalBlank" value="□" maxlength="2" required /></label>
-            <label for="universalBudget">最多模拟步数（可省略）<input id="universalBudget" type="number" min="0" max="${universalMaxBudget}" step="1" placeholder="不限" /></label>
-            <button class="btn primary" type="submit">转换并载入</button>
-            <button id="runUniversal" class="btn" type="button" disabled>快速运行模拟</button>
-          </div>
-        </form>
-        <p id="universalCompileStatus" class="converter-status" role="status"></p>
-        <p id="universalAlphabet" class="hint"></p>
-        <div id="universalResult" hidden>
-          <label for="universalOutput">纸带结果,运行状态<textarea id="universalOutput" class="universal-source" rows="2" readonly spellcheck="false"></textarea></label>
-          <p id="universalStatus" class="hint" role="status"></p>
-        </div>
-      </section>
     </main>
   </div>`;
 
@@ -315,13 +282,6 @@ const nameTranslationOutput = byId<HTMLTextAreaElement>("nameTranslationOutput")
 nameTranslationInput.addEventListener("input", () => {
   nameTranslationOutput.value = nameTranslationInput.value.split("\n")
     .map(line => visibleTapeSymbol(decodeRuleSymbol(line))).join("\n");
-});
-
-attachDirectGijswijt(byId("directSequenceMode"));
-byId("sequenceMode").addEventListener("change", () => {
-  const direct = value("sequenceMode") === "direct";
-  byId("tmSequenceMode").hidden = direct;
-  byId("directSequenceMode").hidden = !direct;
 });
 
 function collectProject(): ProjectData {
@@ -339,6 +299,7 @@ function collectProject(): ProjectData {
     rules: value("rules"),
     maxSteps: byId<HTMLInputElement>("unlimitedSteps").checked ? null : Number(value("maxSteps")) || 10000,
     speed: Number(value("speed")) || 5,
+    ...(currentOriginLevelId ? { campaignLevelId: currentOriginLevelId } : {}),
     ...(bfProjectSource && bfProjectSource.rules === value("rules") && bfProjectSource.tape === value("input")
       ? { brainfuckSource: { source: bfProjectSource.source, input: bfProjectSource.input } } : {}),
     ...(lambdaProjectSource && lambdaProjectSource.rules === value("rules") && lambdaProjectSource.tape === value("input")
@@ -346,8 +307,34 @@ function collectProject(): ProjectData {
   };
 }
 
-function fillProject(project: ProjectData | ExampleProject): void {
-  if (value("rules")) void saveArchive({ kind: "project", title: "切换前的实验台草稿", content: JSON.stringify(collectProject()) }, "切换前备份").catch(() => {});
+function updateOrigin(levelId: string | undefined): void {
+  currentOriginLevelId = levelId && Object.hasOwn(examples, `campaign-${levelId}`) ? levelId : undefined;
+  const link = byId<HTMLAnchorElement>("returnToLevel");
+  link.hidden = !currentOriginLevelId;
+  if (currentOriginLevelId) {
+    link.href = `./campaign.html?level=${encodeURIComponent(currentOriginLevelId)}`;
+    link.textContent = `返回来源关卡 · ${examples[`campaign-${currentOriginLevelId}`].name.replace(/^第 \d+ 关 · /, "")}`;
+  }
+  try {
+    if (currentOriginLevelId) localStorage.setItem(ORIGIN_KEY, currentOriginLevelId);
+    else localStorage.removeItem(ORIGIN_KEY);
+  } catch { /* The visible return link remains usable without persistent storage. */ }
+}
+
+async function rememberPreviousProject(): Promise<void> {
+  const revision = ++previousProjectRevision;
+  // Unfinished source and intentionally empty fields must also survive switching.
+  previousLabProject = { ...collectProject(), blankSymbol: value("blankSymbol") };
+  previewExample();
+  const entry = await saveArchive({ kind: "project", title: "切换前的实验台草稿", content: JSON.stringify(previousLabProject) }, "切换前自动保存");
+  if (revision === previousProjectRevision) localStorage.setItem(PREVIOUS_PROJECT_KEY, entry.id);
+}
+
+function fillProject(project: ProjectData | ExampleProject, rememberPrevious = true): void {
+  if (rememberPrevious) void rememberPreviousProject().catch(() => {
+    byId("labHistoryStatus").textContent = "上次内容仍保留在本页，但未能存入本地，请下载备份。";
+  });
+  updateOrigin(project.campaignLevelId);
   const bfSource = project.brainfuckSource ?? readBrainfuckSource(project.rules);
   bfProjectSource = bfSource && typeof bfSource.source === "string" && typeof bfSource.input === "string"
     ? { ...bfSource, rules: compactRuleArrows(project.rules), tape: project.input } : undefined;
@@ -375,10 +362,27 @@ function persistEditorDraft(): void {
 
 function createMachine(preparedRules?: ReturnType<typeof parseTransitions>): boolean {
   pause();
-  const project = collectProject();
+  let project = collectProject();
   persistEditorDraft();
-  const terminalStates = { acceptStates: splitStates(project.acceptStates), rejectStates: splitStates(project.rejectStates), haltStates: splitStates(project.haltStates) };
-  const parsed = preparedRules ?? parseTransitions(project.rules, terminalStates);
+  let terminalStates = { acceptStates: splitStates(project.acceptStates), rejectStates: splitStates(project.rejectStates), haltStates: splitStates(project.haltStates) };
+  let parsed = preparedRules ?? parseTransitions(project.rules, terminalStates);
+  const rawUniversal = isUniversalTextProject(project.rules);
+  if (rawUniversal) {
+    try {
+      validateUniversalTextSource(project.input);
+      const known = new Set(parsed.transitions.map(rule => rule.readSymbol).filter(symbol => [...symbol].length === 1));
+      if (!hasUniversalTerminalNameOutput(project.rules) || appliedUniversalTextInput !== project.input && [...project.input].some(char => !known.has(char) || char === project.blankSymbol)) {
+        const generated = makeUniversalTextProject(project.input);
+        project = { ...project, ...(project.campaignLevelId ? keyboardCampaignProject(shortCampaignProject(generated)) : generated), speed: project.speed };
+        fillProject(project, false);
+        terminalStates = { acceptStates: splitStates(project.acceptStates), rejectStates: splitStates(project.rejectStates), haltStates: splitStates(project.haltStates) };
+        parsed = parseTransitions(project.rules, terminalStates);
+      }
+    } catch (error) {
+      byId("errors").textContent = error instanceof Error ? error.message : "通用机器输入无效。";
+      return false;
+    }
+  }
   ruleDiagnosticView.update(parsed.errors);
   const errors = [...parsed.errors];
   const initialState = resolveInitialState(parsed, project.initialState);
@@ -394,16 +398,15 @@ function createMachine(preparedRules?: ReturnType<typeof parseTransitions>): boo
     transitions: parsed.transitions,
   };
   try {
-    machine = new TuringMachine(definition, inputToTape(project.input, project.blankSymbol));
+    machine = new TuringMachine(definition, rawUniversal ? [...project.input].map((char, index) => [index, char]) : inputToTape(project.input, project.blankSymbol));
   } catch (error) {
     byId("errors").textContent = error instanceof Error ? error.message : "无法创建机器";
     return false;
   }
   records = [];
-  const thresholdMatch = project.initialState === "G.seed" && project.blankSymbol === "0"
-    ? project.rules.slice(0, 100).match(/^# Gijswijt threshold=(\d+)$/m) : null;
-  appliedGijswijtThreshold = thresholdMatch ? Number(thresholdMatch[1]) : null;
-  appliedUniversalAlphabet = initialState === universalStart ? readUniversalAlphabet(project.rules) : undefined;
+  appliedUniversalAlphabet = rawUniversal ? { states: [], symbols: [] } : initialState === universalStart ? readUniversalAlphabet(project.rules) : undefined;
+  appliedUniversalTextInput = rawUniversal ? project.input : undefined;
+  byId("universalInputHint").hidden = !rawUniversal;
   const bfSource = project.blankSymbol === bfBlank && (initialState === bfStart || project.rules.includes("#(F.o)#"))
     ? project.brainfuckSource ?? readBrainfuckSource(project.rules) : undefined;
   appliedBrainfuck = bfSource;
@@ -416,7 +419,6 @@ function createMachine(preparedRules?: ReturnType<typeof parseTransitions>): boo
   lambdaDisplay = undefined;
   lambdaHasReduced = false;
   if (appliedLambda) byId<HTMLTextAreaElement>("lambdaInput").value = appliedLambda.source;
-  if (appliedGijswijtThreshold !== null) byId<HTMLInputElement>("gijswijtThreshold").value = String(appliedGijswijtThreshold);
   tapeScroll = 0;
   tapeRenderCenter = null;
   appliedMachineKey = machineProjectKey(project);
@@ -745,7 +747,7 @@ function renderRuleTable(parsed = parseTransitions(value("rules"), editorParseOp
   byId<HTMLButtonElement>("addRule").disabled = Boolean(parsed.hasFunctions);
   byId("functionStatus").textContent = parsed.hasFunctions
     ? parsed.errors.length ? parsed.errors[0]
-      : `已识别 ${parsed.functionEntries?.length ?? 0} 个函数，展开为 ${parsed.transitions.length} 条普通规则。${value("initialState").trim() ? "从填写的初始状态或函数开始。" : parsed.initialState ? "初始状态留空，从第一个调用开始。" : "请填写初始状态、函数名或公开状态。"} 函数结束后续行，ret 才跳到对应外部状态。${parsed.stateExports?.length ? ` 已导出：${parsed.stateExports.slice(0, 10).map(item => item.name).join("、")}（共 ${parsed.stateExports.length} 个）。` : ""} 下方展开表只读，请在上方文本编辑函数。`
+      : `已识别 ${parsed.functionEntries?.length ?? 0} 个函数，展开为 ${parsed.transitions.length} 条普通规则。${value("initialState").trim() ? "从填写的初始状态或函数开始。" : parsed.initialState ? "初始状态留空，从第一个调用开始。" : "请填写初始状态、函数名或公开状态。"} 函数完成后续行；函数名->目标 可指定完成后的状态，ret 可声明返回。${parsed.stateExports?.length ? ` 已导出：${parsed.stateExports.slice(0, 10).map(item => item.name).join("、")}（共 ${parsed.stateExports.length} 个）。` : ""} 下方展开表只读，请在上方文本编辑函数。`
     : "";
   if (parsed.errors.length) {
     host.innerHTML = `<div class="empty">修正文本规则后即可同步结构化表格</div>`;
@@ -811,7 +813,6 @@ function render(): void {
   byId("stopMessage").textContent = stopMessage;
   renderTape();
   renderLog();
-  renderGijswijtOutput();
   renderUniversalOutput();
   renderBrainfuckOutput();
   renderLambdaOutput();
@@ -819,16 +820,18 @@ function render(): void {
 
 function renderLambdaOutput(): void {
   const ready = Boolean(machine && appliedLambda);
-  byId<HTMLButtonElement>("runLambdaTape").disabled = !ready || simulationRunning() || status === "定义已修改，待应用" || machine?.currentState === "lambda.accept" || machine?.currentState === lambdaLimit;
+  const accepted = Boolean(machine?.definition.acceptStates.includes(machine.currentState));
+  const limited = Boolean(machine?.definition.haltStates.includes(machine.currentState));
+  byId<HTMLButtonElement>("runLambdaTape").disabled = !ready || simulationRunning() || status === "定义已修改，待应用" || accepted || limited;
   byId<HTMLButtonElement>("pauseLambdaTape").disabled = !ready || !simulationRunning();
   if (!machine || !appliedLambda) return;
   const output = byId<HTMLTextAreaElement>("lambdaTapeOutput");
   output.value = lambdaHasReduced ? lambdaView?.output ?? appliedLambda.source : appliedLambda.source;
   const message = byId("lambdaTapeStatus");
-  message.classList.toggle("error", machine.currentState === lambdaLimit);
-  message.textContent = machine.currentState === lambdaLimit
+  message.classList.toggle("error", limited);
+  message.textContent = limited
     ? `本次纸带规则的绑定索引或嵌套超过 ${appliedLambda.capacity}，尚未得到正规形；可切换直接归约。`
-    : machine.currentState === "lambda.accept" ? `已得到正规形 · ${machine.stepCount} 个图灵机步。`
+    : accepted ? `已得到正规形 · ${machine.stepCount} 个图灵机步。`
       : `原位置局部归约 · ${status} · ${machine.stepCount} 个图灵机步。`;
 }
 
@@ -836,47 +839,34 @@ function renderBrainfuckOutput(): void {
   const hidden = !machine || !appliedBrainfuck;
   byId("bfResult").hidden = hidden;
   const changed = appliedBrainfuck && (value("bfSource") !== appliedBrainfuck.source || value("bfInput") !== appliedBrainfuck.input);
-  byId<HTMLButtonElement>("runBf").disabled = hidden || Boolean(changed) || simulationRunning() || status === "定义已修改，待应用" || machine?.currentState === "H" || machine?.currentState === "R";
+  const halted = Boolean(machine?.definition.haltStates.includes(machine.currentState));
+  const rejected = Boolean(machine?.definition.rejectStates.includes(machine.currentState));
+  byId<HTMLButtonElement>("runBf").disabled = hidden || Boolean(changed) || simulationRunning() || status === "定义已修改，待应用" || halted || rejected;
   byId<HTMLButtonElement>("pauseBf").disabled = hidden || !simulationRunning();
   if (!machine || !appliedBrainfuck) return;
   const result = readBrainfuckOutput(machine.tape);
   byId<HTMLTextAreaElement>("bfOutput").value = result.text;
   byId<HTMLTextAreaElement>("bfBytes").value = result.bytes.join(", ");
   byId("bfStatus").textContent = changed ? "源码或输入已修改，请先转换并载入。"
-    : `已输出 ${result.bytes.length} 字节 · ${machine.currentState === "H" ? "BF 程序已结束" : machine.currentState === "R" ? "纸带数据无效" : status} · ${machine.stepCount} 个图灵机步`;
+    : `已输出 ${result.bytes.length} 字节 · ${halted ? "BF 程序已结束" : rejected ? "纸带数据无效" : status} · ${machine.stepCount} 个图灵机步`;
 }
-
-const universalReasons: Record<string, string> = { H: "停止", A: "接受", J: "拒绝", M: "缺少转移规则", B: "达到步数上限" };
 
 function renderUniversalOutput(): void {
   const panel = byId("universalResult");
   panel.hidden = !machine || !appliedUniversalAlphabet;
+  byId("runUniversal").hidden = panel.hidden;
   byId<HTMLButtonElement>("runUniversal").disabled = panel.hidden || universalTimer !== undefined || status === "定义已修改，待应用";
   if (!machine || !appliedUniversalAlphabet) return;
   const output = byId<HTMLTextAreaElement>("universalOutput");
   const message = byId("universalStatus");
-  const result = machine.currentState === universalHalt ? readUniversalResult(machine.tape, appliedUniversalAlphabet) : undefined;
+  const result = machine.definition.haltStates.includes(machine.currentState) ? readUniversalResult(machine.tape, appliedUniversalAlphabet, appliedUniversalTextInput) : undefined;
   if (result) {
-    const reason = universalReasons[result.reason];
-    output.value = `${result.output},${reason}`;
-    message.textContent = `模拟了 ${result.steps} 步 · 当前状态 ${result.state} · 读取 ${JSON.stringify(result.read)}`;
+    output.value = result.formatted ?? `${result.state}/${result.output}`;
+    message.textContent = result.steps === undefined ? `当前状态 ${result.state} · 名称与结果均由图灵机逐字写入。` : `模拟了 ${result.steps} 步 · 当前状态 ${result.state} · 读取 ${JSON.stringify(result.read)}`;
   } else {
     output.value = "";
-    message.textContent = machine.currentState === universalReject ? "纸带编码无效。" : status === "运行中" ? "正在用纸带上的规则模拟…" : "运行完成后显示被模拟机器的纸带和状态。";
+    message.textContent = machine.definition.rejectStates.includes(machine.currentState) ? "纸带编码无效。" : status === "运行中" ? "正在用纸带上的规则模拟…" : "运行完成后显示被模拟机器的纸带和状态。";
   }
-}
-
-function renderGijswijtOutput(): void {
-  byId("gijswijtResult").hidden = appliedGijswijtThreshold === null;
-  if (appliedGijswijtThreshold === null || !machine) return;
-  const terms = readGijswijtOutput(machine.tape);
-  const output = byId<HTMLTextAreaElement>("gijswijtOutput");
-  const text = terms.join(", ");
-  if (output.value !== text) output.value = text;
-  const last = terms.at(-1);
-  byId("gijswijtOutputStatus").textContent = machine.currentState === "G.HALT"
-    ? `已停机：第 ${terms.length} 项为 ${last}${last !== undefined && last > appliedGijswijtThreshold ? `，严格大于阈值 ${appliedGijswijtThreshold}` : ""}。`
-    : `已写入 ${terms.length} 项${last === undefined ? "；点击运行或单步写入首项。" : `，最新项 ${last}；超过 ${appliedGijswijtThreshold} 才停机。`}`;
 }
 
 const reasonText = { accept: "接受", reject: "拒绝", halt: "已停机", "missing-transition": "缺少转移规则" } as const;
@@ -1025,19 +1015,6 @@ function persistTargetSpeed(speed: number): void {
 }
 
 byId("apply").addEventListener("click", () => createMachine());
-byId("compileGijswijt").addEventListener("click", () => {
-  try {
-    const raw = value("gijswijtThreshold").trim();
-    if (!raw) throw new Error("请输入整数阈值。");
-    const project = compileGijswijtMachine(Number(raw));
-    fillProject({ ...project, speed: Number(value("speed")) });
-    createMachine();
-    const runtimeNote = Number(raw) === 3 ? " 此机器超过 3 需约 1514 万步，在 1000 步/秒下约 4.2 小时。" : "";
-    byId("gijswijtCompileStatus").textContent = `转换完成，共 ${project.rules.split("\n").length - 3} 条规则。已开启 Max 步数；点击上方“运行”开始。${runtimeNote}`;
-  } catch (error) {
-    byId("gijswijtCompileStatus").textContent = error instanceof Error ? error.message : "转换失败";
-  }
-});
 byId("step").addEventListener("click", () => { tapeMotion = "manual"; pause(false); singleStep(); });
 byId("run").addEventListener("click", run);
 byId("pause").addEventListener("click", () => pause());
@@ -1096,18 +1073,45 @@ function selectedExample(): ExampleProject {
   return exampleVariant(examples[value("example")], value("exampleStateNames") as ExampleNames, value("exampleStructure") as ExampleStructure);
 }
 function previewExample(): void {
-  byId("exampleNote").textContent = selectedExample().description;
-  byId<HTMLAnchorElement>("examplePrinciple").href = `./principles.html?example=${encodeURIComponent(value("example"))}`;
-  byId<HTMLAnchorElement>("exampleCampaign").href = `./campaign.html?level=${encodeURIComponent(examples[value("example")].campaignLevelId!)}`;
+  const project = examples[value("example")];
+  const previous = value("exampleLoadSource") === "previous";
+  const previousOption = byId<HTMLSelectElement>("exampleLoadSource").options[1];
+  previousOption.disabled = !previousLabProject;
+  previousOption.textContent = previousLabProject ? "上次实验台内容（自动保存）" : "上次实验台内容（暂无记录）";
+  byId("exampleNote").textContent = previous ? "恢复上次切换前的输入、规则和机器设置，包含尚未写完的代码。"
+    : project.unavailableReason ? `${project.description} ${project.unavailableReason}` : selectedExample().description;
+  byId<HTMLButtonElement>("loadExample").disabled = exampleLoading || (previous ? !previousLabProject : Boolean(project.unavailableReason));
+  byId("loadExample").textContent = previous ? "恢复上次内容" : "加载当前示例";
+  for (const id of ["exampleStateNames", "exampleStructure", "exampleSourceStyle"]) byId<HTMLSelectElement>(id).disabled = previous || Boolean(project.unavailableReason);
+  byId("exampleLearningLinks").hidden = !project.campaignLevelId;
+  if (project.campaignLevelId) {
+    byId<HTMLAnchorElement>("examplePrinciple").href = `./principles.html?example=${encodeURIComponent(value("example"))}`;
+    byId<HTMLAnchorElement>("exampleCampaign").href = `./campaign.html?level=${encodeURIComponent(project.campaignLevelId)}`;
+  }
+  byId("exampleRecordLinks").hidden = !project.sourceUrl;
+  if (project.sourceUrl) byId<HTMLAnchorElement>("exampleRecordSource").href = project.sourceUrl;
 }
 byId("example").addEventListener("change", previewExample);
 byId("exampleStateNames").addEventListener("change", previewExample);
 byId("exampleStructure").addEventListener("change", previewExample);
-byId("loadExample").addEventListener("click", () => {
-  const example = selectedExample();
-  fillProject({ ...example, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) });
-  createMachine();
-  byId("exampleNote").textContent = example.description;
+byId("exampleLoadSource").addEventListener("change", previewExample);
+byId("loadExample").addEventListener("click", async () => {
+  if (exampleLoading) return;
+  const previous = value("exampleLoadSource") === "previous";
+  const example = previous ? previousLabProject : selectedExample();
+  if (!example) return;
+  const target = previous ? { ...example } : { ...example, rules: exampleSource(example, value("exampleSourceStyle") as ExampleSourceStyle) };
+  exampleLoading = true;
+  pause();
+  previewExample();
+  try {
+    await rememberPreviousProject();
+    fillProject(target, false);
+    createMachine();
+    byId("labHistoryStatus").textContent = previous ? "已恢复上次内容；切换前的内容也已自动保存。" : "已加载当前示例；切换前的内容已自动保存。";
+  } catch (error) {
+    byId("labHistoryStatus").textContent = error instanceof Error ? error.message : "未能保存当前内容，尚未切换。";
+  } finally { exampleLoading = false; previewExample(); }
 });
 byId("exportProject").addEventListener("click", () => requestDownload("turing-machine-project.json", JSON.stringify(collectProject(), null, 2), "application/json"));
 byId("importProject").addEventListener("click", () => byId<HTMLInputElement>("fileInput").click());
@@ -1201,7 +1205,9 @@ document.addEventListener("keydown", (event) => {
 const savedProject = loadProject(localStorage, STORAGE_KEY) ?? defaultProject;
 const editorDraft = loadEditorDraft(localStorage);
 const restoredProject = { ...savedProject, ...editorDraft, speed: loadSpeedPreference(localStorage) ?? savedProject.speed };
-fillProject(migrateLambdaInput(migrateUnaryExample(restoredProject)));
+let savedOrigin: string | undefined;
+try { savedOrigin = localStorage.getItem(ORIGIN_KEY) ?? undefined; } catch { /* Local storage may be unavailable. */ }
+fillProject(migrateLambdaInput(migrateUnaryExample({ ...restoredProject, campaignLevelId: restoredProject.campaignLevelId ?? savedOrigin })), false);
 byId<HTMLTextAreaElement>("lambdaInput").value = lambdaProjectSource?.source
   ?? (value("acceptStates") === examples.lambda.acceptStates && !value("input").includes("#(λ.token.")
     ? value("input") : examples.lambda.lambdaSource!.source);
@@ -1238,27 +1244,6 @@ byId("bfForm").addEventListener("submit", event => {
 });
 byId("runBf").addEventListener("click", runTapeFast);
 byId("pauseBf").addEventListener("click", () => pause());
-byId<HTMLTextAreaElement>("universalSource").value = splitUniversalSource(universalDefault).rules;
-byId<HTMLTextAreaElement>("universalInput").value = "/";
-byId("universalForm").addEventListener("submit", event => {
-  event.preventDefault();
-  const message = byId("universalCompileStatus"), alphabet = byId("universalAlphabet");
-  try {
-    const compiled = makeUniversalProject({ rules: value("universalSource"), input: value("universalInput"),
-      initialState: value("universalInitial"), haltStates: value("universalHalt"), acceptStates: value("universalAccept"), rejectStates: value("universalReject"),
-    }, value("universalBlank"), value("universalBudget").trim() ? Number(value("universalBudget")) : null);
-    fillProject(compiled.project);
-    if (!createMachine()) throw new Error("无法载入通用图灵机。");
-    message.classList.remove("error");
-    message.textContent = `已编码 ${compiled.sourceRules} 条规则（纸带上 ${compiled.encodedRules} 条）。可快速运行，也可在上方单步观察。`;
-    const print = (symbols: string[]) => symbols.map(symbol => JSON.stringify(symbol)).join("、") || "空纸带";
-    alphabet.textContent = `初始输入字符：${print(compiled.inputSymbols)}。纸带符号：${print(compiled.alphabet.symbols)}。`;
-  } catch (error) {
-    message.classList.add("error");
-    message.textContent = error instanceof Error ? error.message : "转换失败。";
-    alphabet.textContent = "";
-  }
-});
 byId("runUniversal").addEventListener("click", runTapeFast);
 const requestedExample = new URLSearchParams(location.search).get("example");
 if (requestedExample && Object.hasOwn(examples, requestedExample)) {
@@ -1267,16 +1252,35 @@ if (requestedExample && Object.hasOwn(examples, requestedExample)) {
   byId("exampleNote").scrollIntoView({ block: "center" });
 }
 previewExample();
+const originFromLink = new URLSearchParams(location.search).get("fromLevel");
+if (originFromLink && Object.hasOwn(examples, `campaign-${originFromLink}`)) {
+  updateOrigin(originFromLink);
+  const url = new URL(location.href);
+  url.searchParams.delete("fromLevel");
+  history.replaceState(null, "", url);
+}
+const historyRevisionAtStartup = previousProjectRevision;
+void localArchiveReady.then(async () => {
+  const id = localStorage.getItem(PREVIOUS_PROJECT_KEY);
+  if (!id) return;
+  const entry = await readArchive(id);
+  if (!entry || previousProjectRevision !== historyRevisionAtStartup) return;
+  const data = JSON.parse(entry.content) as ProjectData;
+  if (editorFields.some(field => typeof data[field] !== "string")) return;
+  previousLabProject = data;
+  previewExample();
+}).catch(() => { byId("labHistoryStatus").textContent = "未能读取上次实验台内容，可在本地存档中查找。"; });
 if (!createMachine()) renderRuleTable();
 attachLocalArchive({
   page: "project", ready: localArchiveReady,
   current: () => ({ kind: "project", title: "我的实验台存档", content: JSON.stringify(collectProject()) }),
-  restore: entry => {
+  restore: async entry => {
     const data = JSON.parse(entry.content) as Record<string, unknown>;
     if (editorFields.some(field => typeof data[field] !== "string")) throw new Error("存档缺少实验台字段，仍可查看或下载原内容。");
     pause();
     const previous = collectProject();
-    fillProject({ ...previous, ...data, format: "turing-machine-simulator", version: 1 } as ProjectData);
+    await rememberPreviousProject();
+    fillProject({ ...previous, ...data, campaignLevelId: typeof data.campaignLevelId === "string" ? data.campaignLevelId : undefined, format: "turing-machine-simulator", version: 1 } as ProjectData, false);
     saveEditorDraft(localStorage, Object.fromEntries(editorFields.map(field => [field, value(field)])) as ReturnType<typeof loadEditorDraft> & object);
     createMachine();
   },

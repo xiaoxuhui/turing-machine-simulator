@@ -1,128 +1,140 @@
 import type { Direction, Tape } from "./core";
 import type { ProjectData } from "./project-codec";
+import { readDecimalSequenceOutput } from "./decimal-sequence-output";
+export { readDecimalSequenceOutput as readGijswijtDecimalOutput } from "./decimal-sequence-output";
 
-// Four tracks encoded in one finite tape alphabet. O is the trial's original
-// boundary, S the current block start, A/B the two comparison cursors.
 const O = 1, S = 2, A = 4, B = 8;
-interface Cell { digit: number; flags: number; text: string }
-const symbol = (digit: number, flags = 0): string => flags === 0
-  ? String(digit)
-  : `${digit}|${[O, S, A, B].map((bit, index) => flags & bit ? "OSAB"[index] : "").join("")}`;
+const digits = [..."0123456789"], characters = [...digits, "|"];
+const C = "1#(count)", M = "1#(best)", BOTH = "1#(both)", USED = "0#(used)";
+const counters = [C, M, BOTH, USED], pending = "|#(pending)";
+const symbol = (char: string, flags = 0): string => flags
+  ? `${char}#(${[O, S, A, B].map((bit, i) => flags & bit ? "OSAB"[i] : "").join("")})` : char;
+const cells = characters.flatMap(char => Array.from({ length: 16 }, (_, flags) => ({ char, flags, text: symbol(char, flags) })));
 
-export function compileGijswijtMachine(threshold: number): ProjectData {
-  if (!Number.isSafeInteger(threshold) || threshold < 0) {
-    throw new Error("请输入大于或等于 0 的整数阈值。");
-  }
-  // Expansion is cubic in the threshold; check before allocating the alphabet.
-  // This is a rule-table memory budget, not a sequence-length or step limit.
-  if (threshold > 16) throw new Error("本次转换支持 0–16 的阈值；更大阈值会生成过大的规则表。");
+/** A finite ordinary rule table; both counters and decimal terms grow on the tape. */
+export function compileGijswijtMachine(threshold: number | null): ProjectData {
+  if (threshold !== null && (!Number.isSafeInteger(threshold) || threshold < 0)) throw new Error("请输入大于或等于 0 的安全整数阈值，或选择无限生成。");
   const lines = [
-    `# Gijswijt threshold=${threshold}`,
-    "# 0=未写入；数字=数列项；|O/S/A/B=计算标记；#数字=本轮最大重复次数",
-    "# 转换仅展开规则；数列项由图灵机运行时比较后缀计算。",
+    `# Gijswijt threshold=${threshold ?? "inf"} decimal=1`,
+    "# 十进制一位一格，| 分隔数列项，□ 为空白；隐藏标记记录比较位置。",
+    "# @ 左侧的一进制工作计数器可增长；全部计算均由下面的转移规则执行。",
   ];
   const seen = new Set<string>();
   const rule = (state: string, read: string, next: string, write = read, direction: Direction = "N") => {
     const key = `${state},${read}`;
     if (seen.has(key)) throw new Error(`编译器产生重复规则：${key}`);
-    seen.add(key);
-    lines.push(`${state},${read} -> ${next},${write},${direction}`);
+    seen.add(key); lines.push(`${state},${read}->${next},${write},${direction}`);
   };
-  const cells: Cell[] = [];
-  for (let digit = 1; digit <= threshold; digit += 1) {
-    for (let flags = 0; flags < 16; flags += 1) cells.push({ digit, flags, text: symbol(digit, flags) });
+  const sweep = (state: string, direction: Direction, alphabet = cells.map(c => c.text), next = state) => {
+    for (const char of alphabet) rule(state, char, next, char, direction);
+  };
+  const workSweep = (state: string, direction: Direction) => sweep(state, direction, counters);
+
+  rule("G.seed", "□", "G.seedDigit", "|", "R");
+  rule("G.seedDigit", "□", "G.seedBack", "1", "L");
+  rule("G.seedBack", "|", "G.seedFence", "|", "L");
+  rule("G.seedFence", "□", "G.seedCounter", "@", "L");
+  rule("G.seedCounter", "□", "G.seedReady", BOTH, "R");
+  rule("G.seedReady", "@", "G.checkSeekEnd", "@", "R");
+
+  // A block always starts at a term separator, never halfway through a number.
+  rule("G.next", "□", "G.origin", "□", "L"); sweep("G.origin", "L", digits);
+  rule("G.origin", "|", "G.trial", symbol("|", O));
+  for (const c of cells) {
+    if (c.flags & O) rule("G.trial", c.text, "G.markB", symbol(c.char, c.flags | S), "L");
+    rule("G.markB", c.text, "G.endA", symbol(c.char, c.flags | B), "R");
+    rule("G.markA", c.text, "G.compare", symbol(c.char, c.flags | A));
+    if (c.flags & A) rule("G.compare", c.text, `G.findB.${c.char === "|" ? "sep" : c.char}.${c.flags & S ? 1 : 0}`, c.text, "L");
   }
-  const each = (_state: string, fn: (cell: Cell) => void) => {
-    for (const cell of cells) fn(cell);
-  };
-  const sweep = (state: string, direction: Direction, next = state) =>
-    each(state, (cell) => rule(state, cell.text, next, cell.text, direction));
-
-  rule("G.seed", "0", threshold === 0 ? "G.HALT" : "G.fence", "1", threshold === 0 ? "N" : "L");
-  if (threshold > 0) {
-    rule("G.fence", "0", "G.end", "#1", "R");
-    sweep("G.end", "R");
-    rule("G.end", "0", "G.origin", "0", "L");
-    rule("G.next", "0", "G.origin", "0", "L");
-    each("G.origin", (c) => rule("G.origin", c.text, "G.trial", symbol(c.digit, c.flags | O)));
-    each("G.trial", (c) => {
-      if (c.flags & O) rule("G.trial", c.text, "G.markB", symbol(c.digit, c.flags | S), "L");
-    });
-    each("G.markB", (c) => rule("G.markB", c.text, "G.endA", symbol(c.digit, c.flags | B), "R"));
-    for (let best = 1; best <= threshold; best += 1) rule("G.markB", `#${best}`, "G.cleanL.1");
-    sweep("G.endA", "R");
-    rule("G.endA", "0", "G.markA", "0", "L");
-    each("G.markA", (c) => rule("G.markA", c.text, "G.compare.1", symbol(c.digit, c.flags | A)));
-
-    for (let count = 1; count <= threshold; count += 1) {
-      const compare = `G.compare.${count}`;
-      each(compare, (c) => {
-        if (c.flags & A) rule(compare, c.text, `G.findB.${count}.${c.digit}.${c.flags & S ? 1 : 0}`, c.text, "L");
-      });
-      for (let digit = 1; digit <= threshold; digit += 1) {
-        for (const boundary of [0, 1]) {
-          const state = `G.findB.${count}.${digit}.${boundary}`;
-          each(state, (c) => {
-            if (!(c.flags & B)) rule(state, c.text, state, c.text, "L");
-            else if (c.digit !== digit) rule(state, c.text, `G.cleanL.${count}`);
-            // The first term above T is exactly T+1: deleting the last symbol
-            // of Y^k leaves a rotated block repeated k-1 times, so curling
-            // numbers can increase by at most one along their own sequence.
-            else if (boundary && count === threshold) rule(state, c.text, "G.stopL");
-            else {
-              const nextCount = count + boundary;
-              const flags = (c.flags & ~B) | (boundary ? S : 0);
-              rule(state, c.text, `G.moveB.${nextCount}.${boundary}`, symbol(c.digit, flags), "L");
-            }
-          });
-        }
-      }
-      for (const boundary of [0, 1]) {
-        const moveB = `G.moveB.${count}.${boundary}`;
-        each(moveB, (c) => rule(moveB, c.text, `G.returnA.${count}.${boundary}`, symbol(c.digit, c.flags | B), "R"));
-        for (let best = 1; best <= threshold; best += 1) rule(moveB, `#${best}`, `G.cleanL.${count}`);
-        const returnA = `G.returnA.${count}.${boundary}`;
-        each(returnA, (c) => {
-          if (c.flags & A) rule(returnA, c.text, `G.moveA.${count}`, symbol(c.digit, c.flags & ~A & (boundary ? ~S : -1)), "L");
-          else rule(returnA, c.text, returnA, c.text, "R");
-        });
-      }
-      each(`G.moveA.${count}`, (c) => rule(`G.moveA.${count}`, c.text, compare, symbol(c.digit, c.flags | A)));
-      sweep(`G.cleanL.${count}`, "L");
-      for (let best = 1; best <= threshold; best += 1) {
-        rule(`G.cleanL.${count}`, `#${best}`, "G.cleanR", `#${Math.max(best, count)}`, "R");
-      }
+  rule("G.markB", "@", "G.cleanL");
+  sweep("G.endA", "R"); rule("G.endA", "□", "G.markA", "□", "L");
+  for (const char of characters) for (const boundary of [0, 1]) {
+    const state = `G.findB.${char === "|" ? "sep" : char}.${boundary}`;
+    for (const c of cells) {
+      if (!(c.flags & B)) rule(state, c.text, state, c.text, "L");
+      else if (c.char !== char) rule(state, c.text, "G.cleanL");
+      else rule(state, c.text, boundary ? "G.incSeekFence" : "G.moveB.0", symbol(c.char, (c.flags & ~B) | (boundary ? S : 0)), "L");
     }
-
-    each("G.cleanR", (c) => rule("G.cleanR", c.text, "G.cleanR", symbol(c.digit, c.flags & O), "R"));
-    rule("G.cleanR", "0", "G.findO", "0", "L");
-    each("G.findO", (c) => {
-      if (c.flags & O) rule("G.findO", c.text, "G.shiftO", symbol(c.digit), "L");
-      else rule("G.findO", c.text, "G.findO", c.text, "L");
-    });
-    each("G.shiftO", (c) => rule("G.shiftO", c.text, "G.trial", symbol(c.digit, O)));
-    for (let best = 1; best <= threshold; best += 1) {
-      rule("G.shiftO", `#${best}`, `G.append.${best}`, "#1", "R");
-      sweep(`G.append.${best}`, "R");
-      rule(`G.append.${best}`, "0", "G.next", String(best), "R");
-      rule("G.stopL", `#${best}`, "G.stopR", "0", "R");
+  }
+  // Completed-block count lives on the tape, with no bound encoded in the states.
+  sweep("G.incSeekFence", "L"); rule("G.incSeekFence", "@", "G.inc", "@", "L");
+  sweep("G.inc", "L", [C, BOTH]);
+  rule("G.inc", M, "G.incReturn", BOTH, "R"); rule("G.inc", "□", "G.incReturn", C, "R");
+  workSweep("G.incReturn", "R"); rule("G.incReturn", "@", "G.incFindS", "@", "R");
+  for (const c of cells) rule("G.incFindS", c.text, c.flags & S ? "G.moveB.1" : "G.incFindS", c.text, c.flags & S ? "L" : "R");
+  for (const boundary of [0, 1]) {
+    for (const c of cells) {
+      rule(`G.moveB.${boundary}`, c.text, `G.returnA.${boundary}`, symbol(c.char, c.flags | B), "R");
+      rule(`G.returnA.${boundary}`, c.text, c.flags & A ? "G.moveA" : `G.returnA.${boundary}`,
+        c.flags & A ? symbol(c.char, c.flags & ~A & (boundary ? ~S : -1)) : c.text, c.flags & A ? "L" : "R");
     }
-    sweep("G.stopL", "L");
-    each("G.stopR", (c) => rule("G.stopR", c.text, "G.stopR", symbol(c.digit), "R"));
-    rule("G.stopR", "0", "G.HALT", String(threshold + 1));
+    rule(`G.moveB.${boundary}`, "@", "G.cleanL");
+  }
+  for (const c of cells) rule("G.moveA", c.text, "G.compare", symbol(c.char, c.flags | A));
+
+  // best := max(best,count), count := 1; then try the previous whole-term suffix.
+  sweep("G.cleanL", "L"); rule("G.cleanL", "@", "G.merge", "@", "L");
+  for (const char of [C, M, BOTH]) rule("G.merge", char, "G.merge", M, "L");
+  rule("G.merge", "□", "G.mergeReturn", "□", "R"); workSweep("G.mergeReturn", "R");
+  rule("G.mergeReturn", "@", "G.resetCount", "@", "L");
+  rule("G.resetCount", M, "G.cleanStart", BOTH, "R"); rule("G.cleanStart", "@", "G.cleanR", "@", "R");
+  for (const c of cells) rule("G.cleanR", c.text, "G.cleanR", symbol(c.char, c.flags & O), "R");
+  rule("G.cleanR", "□", "G.findO", "□", "L");
+  for (const c of cells) rule("G.findO", c.text, c.flags & O ? "G.shiftO" : "G.findO", c.flags & O ? c.char : c.text, "L");
+  sweep("G.shiftO", "L", digits); rule("G.shiftO", "|", "G.trial", symbol("|", O));
+  rule("G.shiftO", "@", "G.appendEnd", "@", "R");
+
+  // Consume best one unit at a time, incrementing an ordinary decimal word.
+  sweep("G.appendEnd", "R", characters); rule("G.appendEnd", "□", "G.appendZero", pending, "R");
+  rule("G.appendZero", "□", "G.takeSeekFence", "0", "L");
+  sweep("G.takeSeekFence", "L", [...characters, pending]); rule("G.takeSeekFence", "@", "G.take", "@", "L");
+  rule("G.take", USED, "G.take", USED, "L");
+  for (const char of [M, BOTH]) rule("G.take", char, "G.addSeekFence", USED, "R");
+  workSweep("G.addSeekFence", "R"); rule("G.addSeekFence", "@", "G.addSeekEnd", "@", "R");
+  sweep("G.addSeekEnd", "R", [...characters, pending]); rule("G.addSeekEnd", "□", "G.addDigit", "□", "L");
+  for (let digit = 0; digit < 9; digit++) rule("G.addDigit", String(digit), "G.takeSeekFence", String(digit + 1), "L");
+  rule("G.addDigit", "9", "G.addDigit", "0", "L");
+  rule("G.addDigit", pending, "G.growOne", pending, "R");
+  rule("G.growOne", "0", "G.growEnd", "1", "R"); sweep("G.growEnd", "R", digits);
+  rule("G.growEnd", "□", "G.takeSeekFence", "0", "L");
+  rule("G.take", "□", "G.eraseUsed", "□", "R"); rule("G.eraseUsed", USED, "G.eraseUsed", "□", "R");
+  rule("G.eraseUsed", "@", "G.initCounter", "@", "L"); rule("G.initCounter", "□", "G.commitStart", BOTH, "R");
+  rule("G.commitStart", "@", "G.commit", "@", "R"); sweep("G.commit", "R", characters);
+  rule("G.commit", pending, "G.checkSeekEnd", "|", "R");
+
+  // Optional threshold comparison: decimal length, then lexicographic order.
+  sweep("G.checkSeekEnd", "R", characters);
+  if (threshold === null) rule("G.checkSeekEnd", "□", "G.next");
+  else {
+    const limit = String(threshold);
+    rule("G.checkSeekEnd", "□", "G.checkStart", "□", "L"); sweep("G.checkStart", "L", digits);
+    rule("G.checkStart", "|", "G.length.0", "|", "R");
+    for (let i = 0; i <= limit.length; i++) {
+      sweep(`G.length.${i}`, i === limit.length ? "N" : "R", digits, i === limit.length ? "G.stopSeekFence" : `G.length.${i + 1}`);
+      rule(`G.length.${i}`, "□", i === limit.length ? "G.lexStart" : "G.next", "□", i === limit.length ? "L" : "N");
+    }
+    sweep("G.lexStart", "L", digits); rule("G.lexStart", "|", "G.lex.0", "|", "R");
+    for (let i = 0; i < limit.length; i++) for (const digit of digits) {
+      rule(`G.lex.${i}`, digit, digit > limit[i] ? "G.stopSeekFence" : digit < limit[i] ? "G.continueEnd" : `G.lex.${i + 1}`, digit, digit === limit[i] ? "R" : "N");
+    }
+    rule(`G.lex.${limit.length}`, "□", "G.next");
+    sweep("G.continueEnd", "R", digits); rule("G.continueEnd", "□", "G.next");
+    sweep("G.stopSeekFence", "L", characters); rule("G.stopSeekFence", "@", "G.eraseCounters", "@", "L");
+    for (const char of counters) rule("G.eraseCounters", char, "G.eraseCounters", "□", "L");
+    rule("G.eraseCounters", "□", "G.stopReturn", "□", "R"); rule("G.stopReturn", "□", "G.stopReturn", "□", "R");
+    rule("G.stopReturn", "@", "G.stopEnd", "□", "R"); sweep("G.stopEnd", "R", characters);
+    rule("G.stopEnd", "□", "G.HALT", "□", "L");
   }
   return {
     format: "turing-machine-simulator", version: 1,
-    name: `吉斯维杰特数列（超过 ${threshold} 停机）`,
-    description: "单纸带规则逐格比较重复后缀；0 表示未写入。",
-    input: "", blankSymbol: "0", initialState: "G.seed",
-    acceptStates: "", rejectStates: "", haltStates: "G.HALT",
-    maxSteps: null, speed: 1000, rules: lines.join("\n"),
+    name: `吉斯维杰特数列（${threshold === null ? "无限生成" : `超过 ${threshold} 停机`}）`,
+    description: "逐格比较重复后缀；十进制一位一格，| 分隔各项；工作计数器可无限增长。",
+    input: "", blankSymbol: "□", initialState: "G.seed", acceptStates: "", rejectStates: "",
+    haltStates: threshold === null ? "" : "G.HALT", maxSteps: null, speed: 1000, rules: lines.join("\n"),
   };
 }
 
-/** Presentation only: read the numeric track without changing the machine. */
+/** Numeric convenience for bounded prefixes and existing consumers. */
 export function readGijswijtOutput(tape: Tape): number[] {
-  return tape.entries().filter(([position]) => position >= 0)
-    .map(([, text]) => Number(text.split("|")[0]));
+  return readDecimalSequenceOutput(tape).map(Number);
 }

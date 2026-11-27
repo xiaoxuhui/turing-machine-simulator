@@ -2,6 +2,7 @@ import { unaryExamples } from "./unary-examples";
 import { hyperoperationExamples } from "./hyperoperation-examples";
 import { extraCampaignSolutions } from "./campaign-extra";
 import { exampleCampaignSolutions } from "./campaign-from-examples";
+import { normalizeCampaignSource } from "./campaign";
 
 export const advancedSolutions = {
   "function-wrap": "追加(q0,done):\n    q0,1 -> q0,1,R\n    q0,□ -> done,1,R\n\n追加",
@@ -18,7 +19,7 @@ export const advancedSolutions = {
   "unary-pentation": hyperoperationExamples.unaryPentation.rules,
 };
 
-export const solutionRules: Record<string, string> = {
+const originalSolutionRules: Record<string, string> = {
   ...advancedSolutions,
   ...extraCampaignSolutions,
   ...exampleCampaignSolutions,
@@ -39,3 +40,5 @@ export const solutionRules: Record<string, string> = {
   "twos-complement": "scan,0 -> scan,0,R\nscan,1 -> scan,1,R\nscan,□ -> seek,□,L\nseek,0 -> seek,0,L\nseek,1 -> flip,1,L\nseek,□ -> HALT,□,N\nflip,0 -> flip,1,L\nflip,1 -> flip,0,L\nflip,□ -> HALT,□,N",
   "unary-double": "seek,X -> seek,X,R\nseek,1 -> toEnd,X,R\nseek,Y -> restoreLeft,Y,L\ntoEnd,X -> toEnd,X,R\ntoEnd,1 -> toEnd,1,R\ntoEnd,Y -> toEnd,Y,R\ntoEnd,□ -> return,Y,L\nreturn,X -> return,X,L\nreturn,1 -> return,1,L\nreturn,Y -> return,Y,L\nreturn,□ -> seek,□,R\nrestoreLeft,X -> restoreLeft,1,L\nrestoreLeft,1 -> restoreLeft,1,L\nrestoreLeft,□ -> restoreRight,□,R\nrestoreRight,1 -> restoreRight,1,R\nrestoreRight,Y -> restoreRight,1,R\nrestoreRight,□ -> HALT,□,N",
 };
+export const solutionRules: Record<string, string> = Object.fromEntries(Object.entries(originalSolutionRules)
+  .map(([id, source]) => [id, normalizeCampaignSource(id, source)]));

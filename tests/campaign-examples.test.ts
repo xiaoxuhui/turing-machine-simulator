@@ -23,7 +23,7 @@ it.each(campaignLevels)("offers a runnable laboratory solution for $id, in both 
 
 it("covers every laboratory example and every level with a principle and a valid link", () => {
   expect(new Set(examplePrinciples.map(item => item.id)).size).toBe(examplePrinciples.length);
-  for (const [id, project] of Object.entries(examples)) {
+  for (const [id, project] of Object.entries(examples).filter(([, item]) => item.category !== "忙碌海狸")) {
     const principle = examplePrinciples.find(item => item.id === id)!;
     expect(principle, id).toBeDefined();
     expect(principle.name).toBe(project.name);
@@ -33,8 +33,9 @@ it("covers every laboratory example and every level with a principle and a valid
     expect(new URL(principle.laboratoryUrl, "https://example.test/turing-machine-simulator/").searchParams.get("example")).toBe(id);
     if (principle.levelId) expect(campaignLevels.some(level => level.id === principle.levelId)).toBe(true);
   }
-  expect(examplePrinciples.some(item => item.id === "gijswijt-tool")).toBe(true);
-  expect(examplePrinciples.some(item => item.id === "universal-tool")).toBe(true);
+  expect(examplePrinciples.some(item => item.id === "gijswijt")).toBe(true);
+  expect(examplePrinciples.some(item => item.id === "fibonacciDecimal")).toBe(true);
+  expect(examplePrinciples.some(item => item.id === "universal")).toBe(true);
 });
 
 it("places simple binary drills before combined algorithms and preserves stable level IDs", () => {

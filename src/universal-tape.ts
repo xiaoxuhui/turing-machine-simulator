@@ -1,4 +1,5 @@
 import { TapeStackProgram, type TapeStack } from "./tape-stack-program";
+import { UniversalTextIO, universalTextToken } from "./universal-text-io";
 
 export const universalStart = "universal.start";
 export const universalHalt = "universal.halt";
@@ -12,8 +13,8 @@ const programAlphabet = [...codes, ...rowKinds, ...moves];
 const stack = (name: string, values: readonly string[] = [digit]): TapeStack => ({ name, values });
 
 /** A fixed interpreter. The program it executes is read exclusively from the tape. */
-export function universalRules(): string {
-  const p = new TapeStackProgram("universal", "U", universalHalt, universalReject);
+export function universalRules(textInput?: { alphabet: readonly string[]; blank: string; budget: number | null }): string {
+  const p = new TapeStackProgram("universal", "U", universalHalt, universalReject, textInput ? universalTextToken : undefined, textInput?.blank);
   const raw = stack("I", [...programAlphabet, endHeader, "∞"]);
   const table = stack("P", raw.values);
   const visited = stack("V", programAlphabet);
@@ -24,6 +25,7 @@ export function universalRules(): string {
   const candidate = stack("C"), compared = stack("M");
   const scan = p.label();
   const invalid = universalReject;
+  const text = textInput ? new UniversalTextIO(p, textInput.alphabet, { table, state, head, left, right, fuel, unlimited }, invalid, textInput.budget) : undefined;
 
   const printStack = (source: TapeStack, next: string) => {
     const loop = p.label();
@@ -32,7 +34,7 @@ export function universalRules(): string {
   const printId = (source: TapeStack, next: string) => printStack(source, p.emit(endId, next));
   const print = printId(steps, printId(state, printStack(left, p.emit(endHeader,
     printId(head, p.emit(endHeader, printStack(right, p.end)))))));
-  const stopped = (reason: string) => p.emit(reason, print);
+  const stopped = (reason: string) => text ? text.stopped(reason) : p.emit(reason, print);
   const noRule = stopped("M"), stepLimit = stopped("B");
 
   // Move the simulated head using two stacks whose tops are next to it.
@@ -94,6 +96,7 @@ export function universalRules(): string {
   p.take(table, token => token === endHeader ? initial : token === digit ? p.push(fuel, digit, budget)
     : token === "∞" ? p.push(unlimited, digit, budget) : invalid, invalid, budget);
   p.note("读入编码：剩余步数、初态、原始纸带、规则表都来自输入。");
-  p.readInput(raw, p.move(raw, table, budget));
+  if (text) text.initialize(scan);
+  else p.readInput(raw, p.move(raw, table, budget));
   return p.finish();
 }

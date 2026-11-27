@@ -4,6 +4,7 @@ import { readLambdaOutput } from "./lambda-local";
 import { readBrainfuckOutput } from "./brainfuck";
 import { readUniversalResult } from "./universal-machine";
 import { visibleTapeSymbol } from "./symbol-annotations";
+import { readDecimalSequenceOutput } from "./decimal-sequence-output";
 
 export function tapeOutput(tape: Tape): string {
   const entries = tape.entries();
@@ -28,6 +29,11 @@ export function verifyCampaignCases(cases: CampaignCase[], maxSteps: number, def
     }
     let actualOutput = "", goalPassed = false;
     switch (testCase.mode ?? "tape") {
+      case "decimal-sequence-prefix": {
+        actualOutput = readDecimalSequenceOutput(machine.tape).join("|");
+        goalPassed = actualOutput === testCase.expectedOutput || actualOutput.startsWith(`${testCase.expectedOutput}|`);
+        break;
+      }
       case "status": actualOutput = statusText[reason]; goalPassed = actualOutput === testCase.expectedOutput; break;
       case "nonblank-count": actualOutput = `${machine.tape.entries().length} 个非空格`; goalPassed = actualOutput === testCase.expectedOutput; break;
       case "lambda": actualOutput = readLambdaOutput(machine.tape)?.output ?? "无法解码归约结果"; goalPassed = actualOutput === testCase.expectedOutput; break;
@@ -40,9 +46,9 @@ export function verifyCampaignCases(cases: CampaignCase[], maxSteps: number, def
         break;
       }
       case "universal": {
-        const decoded = testCase.alphabet && readUniversalResult(machine.tape, testCase.alphabet);
+        const decoded = readUniversalResult(machine.tape, testCase.alphabet, testCase.input);
         const labels: Record<string, string> = { H: "停止", A: "接受", J: "拒绝", M: "缺少规则", B: "达到上限" };
-        actualOutput = decoded ? `${decoded.output}（${labels[decoded.reason] ?? decoded.reason}）` : "无法解码模拟结果";
+        actualOutput = decoded ? decoded.formatted !== undefined ? decoded.formatted : `${decoded.output}（${labels[decoded.reason] ?? decoded.reason}）` : "无法解码模拟结果";
         goalPassed = actualOutput === testCase.expectedOutput;
         break;
       }

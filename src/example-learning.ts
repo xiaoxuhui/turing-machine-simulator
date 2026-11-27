@@ -1,7 +1,9 @@
 import { builtinExamples as examples } from "./example-catalog";
+import { sequenceExplanations } from "./sequence-examples";
 
 export interface Explanation { summary: string; steps: string[]; walkthrough: string[]; notes?: string[] }
 export const builtinExplanations: Record<string, Explanation> = {
+  ...sequenceExplanations,
   unaryDivide: {
     summary: "除法用重复减法。商从 0 开始，每完整减掉一次除数，商就加一；不够再减时结束，舍去余数。",
     steps: ["固定区保存除数 B，商 Q=0。", "把 B 复制到本轮计数 T：每从 B 取一个 1，同时向 T 和临时区 C 各写一个 1；随后把 C 搬回 B，恢复 B。", "T 每减一，被除数 A 也减一。T 恰好耗尽时才 Q 加一，开始下一轮。", "若 A 先耗尽，不增加这轮商；清理 A、B、T、C，只输出 Q。"],
@@ -53,7 +55,7 @@ const functionWalkthroughs: Record<string, string[]> = {
   functionBasics: ["调用 写一 → 从 q0 读 □ → 写 1 → 正常完成 → HALT"],
   functions: ["111 → 第一次追加 → 1111 → 第二次追加 → 11111"],
   functionReturn: ["内部 ret q1 → 到达 q1 时跳外部 q1 → 写 2，结果 12", "删掉 ret 则正常续行，写 9，结果 19"],
-  functionComposition: ["首=写一、写二、末=写三 → 依次调用 → 123"],
+  functionComposition: ["首=写一、写二、末=写三 → 依次写出 123", "末->完成：写三正常完成后直接退出组合，不要求父子出口同名", "组合->HALT：组合完成后直接停机，不增加转移步骤"],
   functionParentReturn: ["父写 1 → 子写 2 → ret 接着 → 父的 接着 写 3 → 123"],
   functionExportEntry: ["入口 流程.第二步 → 写 2、3 → 23；入口 流程 则写 123"],
   functionExportRepeat: ["同一个 写一对 调用两次 → 12 + 12 → 1212"],
@@ -70,7 +72,7 @@ const functionWalkthroughs: Record<string, string[]> = {
 
 for (const [id, walkthrough] of Object.entries(functionWalkthroughs)) builtinExplanations[id] = {
   summary: examples[id].description,
-  steps: ["先看函数括号中的入口、退出，再看初始状态选择了哪个入口。", "从入口按读取符号选择转移；目标为函数时进入该次调用的内部状态。", "正常完成后继续调用位置后面的阶段；只有显式 ret 指定的状态才跳到外部或父函数。", "打开“转换后的实际转移规则”，对照调用归属和当前状态逐步观察。"],
+  steps: ["先看函数括号中的入口、退出，再看初始状态选择了哪个入口。", "从入口按读取符号选择转移；目标为函数时进入该次调用的内部状态。", "正常完成后继续调用下面的阶段；调用处写 函数名->目标 可指定完成后的去向，目标为父函数出口就退出父函数，为全局终态就直接结束。ret 仍可在函数内部声明返回。", "打开“转换后的实际转移规则”，对照调用归属和当前状态逐步观察。"],
   walkthrough, notes: ["函数是规则的复用写法，展开后仍是普通图灵机。局部状态隔离，外部返回状态沿用外部名字。", "R/L 优先作为方向；保持写入用 *。字面星号多写一个 *，如 ** 写一个星号。"],
 };
 for (const [id, rank, root] of [

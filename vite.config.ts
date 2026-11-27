@@ -12,6 +12,8 @@ export default defineConfig({
         main: "index.html",
         campaign: "campaign.html",
         principles: "principles.html",
+        rule110: "rule110.html",
+        life: "life.html",
       },
     },
   },

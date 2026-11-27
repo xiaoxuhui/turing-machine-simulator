@@ -11,11 +11,19 @@ try {
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(`${url}?level=unary-tetration`);
   await page.waitForSelector("[data-level-id]");
-  assert.equal(await page.locator("[data-level-id]").count(), 78);
+  assert.equal(await page.locator("[data-level-id]").count(), 79);
   const groups = await page.locator(".level-group").evaluateAll(items => items.map(item => item.querySelectorAll("[data-level-id]").length));
-  assert.deepEqual(groups, [6, 6, 6, 6, 5, 11, 5, 2, 9, 4, 5, 7, 1, 3, 2]);
+  assert.deepEqual(groups, [6, 5, 7, 4, 2, 4, 6, 6, 4, 5, 5, 5, 2, 5, 2, 2, 4, 2, 2, 1]);
+  const modelIds = await page.evaluate(async () => {
+    const { campaignLevels } = await import("./src/campaign.ts");
+    return campaignLevels.map(level => level.id);
+  });
+  const displayedIds = await page.locator("[data-level-id]").evaluateAll(items => items.map(item => item.dataset.levelId));
+  assert.deepEqual(displayedIds, modelIds);
+  assert.deepEqual(displayedIds.slice(0, 8), ["write-one", "move-right-write", "unary-increment", "erase-one", "erase-unary", "unary-decrement", "zeros-to-ones", "binary-complement"]);
+  assert.ok(displayedIds.indexOf("twos-complement") > displayedIds.indexOf("binary-increment"));
   const stageCounts = await page.locator("[data-level-id]").evaluateAll(items => ["tutorial", "challenge", "hard"].map(stage => items.filter(item => item.dataset.stage === stage).length));
-  assert.deepEqual(stageCounts, [40, 19, 19]);
+  assert.deepEqual(stageCounts, [40, 19, 20]);
   const principles = [];
   for (const [id, expected] of [["unary-power", "1 → 2 → 4 → 8"], ["unary-tetration", "T₃=2⁴=16"], ["unary-pentation", "65536"]]) {
     await page.click(`[data-level-id="${id}"]`);
@@ -27,6 +35,11 @@ try {
     principles.push({ id, preview: true, practiceLocked: true });
   }
 
+  await page.evaluate(() => localStorage.setItem("turing-machine-simulator.campaign.v1", JSON.stringify({ version: 1, completedLevelIds: ["write-one", "move-right-write"], drafts: {} })));
+  await page.goto(`${url}?level=move-right-write`);
+  await page.click("#nextLevel");
+  assert.equal(new URL(page.url()).searchParams.get("level"), "unary-increment");
+
   const oldIds = ["write-one", "move-right-write", "unary-increment", "erase-one", "erase-unary", "unary-decrement", "zeros-to-ones", "binary-complement", "turn-back", "binary-increment"];
   const oldReturnDraft = "选择(q0,done):\n    q0,0 -> outside,0,R\n    q0,1 -> done,1,R\n\nstart,0 -> 选择,0,N\nstart,1 -> 选择,1,N\nnext,□ -> HALT,1,N\noutside,□ -> HALT,0,N";
   const saved = { version: 1, completedLevelIds: oldIds, drafts: { "write-one": "q0,□  ->  HALT,1,N", "function-wrap": "追加(q0,done):\n    q0,1 -> q0,1,R\n\n追加", "function-ret": oldReturnDraft } };
@@ -37,13 +50,14 @@ try {
   assert.equal(await page.locator("#verifyLevel").isDisabled(), false);
   assert.doesNotMatch(await page.inputValue("#rulesEditor"), /[ \t]+->|->[ \t]+/);
   const migrated = await page.evaluate(() => JSON.parse(localStorage.getItem("turing-machine-simulator.campaign.v1")));
-  assert.equal(migrated.drafts["write-one"], "q0,□->HALT,1,N");
-  assert.equal(migrated.drafts["function-wrap"], "追加(q0,done):\n    q0,1->q0,1,R\n\n追加");
+  assert.equal(migrated.drafts["write-one"], "q0,_->H,1,N");
+  assert.equal(migrated.drafts["function-wrap"], "f1(q0,done):\n    q0,1->q0,1,R\n\nf1");
   assert.deepEqual(migrated.completedLevelIds, oldIds);
-  assert.match(migrated.drafts["function-ret"], /\ndone,□->HALT,1,N/);
+  assert.match(migrated.drafts["function-ret"], /\ndone,_->H,1,N/);
   assert.doesNotMatch(migrated.drafts["function-ret"], /\nnext,/);
   await page.fill("#rulesEditor", "追加(q0,done):\n    q0,1 -> q0,1,R\n    q0,□ -> done,1,R\n\n追加");
   await page.click("#verifyLevel");
+  await page.waitForFunction(() => document.querySelector("#verifyResult")?.textContent?.includes("通过"));
   assert.match(await page.locator("#verifyResult").textContent(), /通过/);
   await page.reload();
   await page.waitForSelector("#rulesEditor");
@@ -55,26 +69,30 @@ try {
   assert.equal(await page.locator("#verifyLevel").isDisabled(), false);
   await page.fill("#rulesEditor", "追加(q0,done):\n    q0,1->q0,1,R\n    q0,□->done,1,R\n\n追加\n追加");
   await page.click("#verifyLevel");
+  await page.waitForFunction(() => document.querySelector("#verifyResult")?.textContent?.includes("通过"));
   assert.match(await page.locator("#verifyResult").textContent(), /通过/);
   await page.click('[data-level-id="function-conditional"]');
   await page.fill("#rulesEditor", "flip(q0,done):\n    q0,0->done,1,R\n    q0,1->done,0,R\n\nstart,0->flip,0,N\nstart,1->flip,1,N\ndone,□->HALT,1,N");
   await page.click("#verifyLevel");
+  await page.waitForFunction(() => document.querySelector("#verifyResult")?.textContent?.includes("通过"));
   assert.match(await page.locator("#verifyResult").textContent(), /通过/);
   await page.click('[data-level-id="function-ret"]');
   assert.equal(await page.locator("#verifyLevel").isDisabled(), false);
   const returnDraft = await page.inputValue("#rulesEditor");
-  assert.match(returnDraft, /\ndone,□->HALT,1,N/);
+  assert.match(returnDraft, /\ndone,_->H,1,N/);
   assert.doesNotMatch(returnDraft, /\nnext,/);
   await page.fill("#rulesEditor", returnDraft.replace("    q0,1->done,1,R\n", "    q0,1->done,1,R\n    ret outside\n"));
   await page.click("#verifyLevel");
+  await page.waitForFunction(() => document.querySelector("#verifyResult")?.textContent?.includes("通过"));
   assert.match(await page.locator("#verifyResult").textContent(), /通过/);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.click('[data-level-id="unary-pentation"]');
   assert.equal(await page.locator("#workedExample").isVisible(), true);
+  await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > innerWidth);
   assert.equal(overflow, false);
   assert.deepEqual(errors, []);
-  const report = { total: 78, groups, principles, oldProgressPreserved: true, allDraftArrowsMigrated: true, oldNextMigratedToDone: true, functionLessonsSubmitted: 4, progressPersistedAfterReload: true, mobileOverflow: false, pageErrors: errors };
+  const report = { total: 79, groups, principles, oldProgressPreserved: true, allDraftArrowsMigrated: true, oldNextMigratedToDone: true, functionLessonsSubmitted: 4, progressPersistedAfterReload: true, mobileOverflow: false, pageErrors: errors };
   const directory = new URL("../doc/教学更新/evidence/", import.meta.url);
   await mkdir(directory, { recursive: true });
   await writeFile(new URL("browser.json", directory), JSON.stringify(report, null, 2) + "\n");
